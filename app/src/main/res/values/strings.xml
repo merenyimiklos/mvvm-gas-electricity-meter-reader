@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mérőóra Napló</string>
+    <string name="widget_title">Mérőóra Napló</string>
+    <string name="widget_tap_to_add">Koppints a rögzítéshez</string>
+    <string name="widget_description">A legutóbbi normál, éjszakai és gázmérőállások.</string>
+    <string name="shortcut_add">Mérőállás</string>
+    <string name="shortcut_add_long">Új mérőállás rögzítése</string>
 </resources>
