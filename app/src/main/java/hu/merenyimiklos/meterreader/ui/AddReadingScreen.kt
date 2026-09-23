@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hu.merenyimiklos.meterreader.domain.UsageCalculator
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.model.MeterReading
@@ -622,6 +623,29 @@ private fun QuickMeterField(
                         .error
             )
         }
+
+        if (
+            isConsumptionAnomaly(
+                readings = readings,
+                type = type,
+                date = date,
+                consumption = consumption
+            )
+        ) {
+            Text(
+                "⚠ Szokatlanul nagy ugrás a saját korábbi fogyasztásodhoz képest. Ellenőrizd a beírt mérőállást.",
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodySmall,
+                color =
+                    MaterialTheme
+                        .colorScheme
+                        .error,
+                fontWeight =
+                    FontWeight.SemiBold
+            )
+        }
     }
 }
 
@@ -889,6 +913,29 @@ private fun SingleReadingEntry(
                 )
             }
 
+            if (
+                isConsumptionAnomaly(
+                    readings = readings,
+                    type = meterType,
+                    date = date,
+                    consumption = consumption
+                )
+            ) {
+                Text(
+                    "⚠ Ez a fogyasztás jóval magasabb a saját közelmúltbeli átlagodnál. Érdemes ellenőrizni az értéket.",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodySmall,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .error,
+                    fontWeight =
+                        FontWeight.SemiBold
+                )
+            }
+
             OutlinedTextField(
                 value = note,
                 onValueChange = {
@@ -1074,6 +1121,48 @@ private fun SingleReadingEntry(
             }
         }
     }
+}
+
+private fun isConsumptionAnomaly(
+    readings: List<MeterReading>,
+    type: MeterType,
+    date: LocalDate,
+    consumption: Double?
+): Boolean {
+    val currentConsumption =
+        consumption ?: return false
+
+    val usageById =
+        UsageCalculator
+            .consumptionByReading(
+                readings
+            )
+
+    val previousUsages =
+        readings
+            .filter {
+                it.type == type &&
+                    it.dateEpochDay <
+                        date.toEpochDay()
+            }
+            .sortedByDescending {
+                it.dateEpochDay
+            }
+            .mapNotNull {
+                usageById[it.id]
+            }
+            .take(3)
+
+    if (previousUsages.size < 2) {
+        return false
+    }
+
+    val average =
+        previousUsages.average()
+
+    return average > 0.0 &&
+        currentConsumption >
+            average * 2.5
 }
 
 private fun estimateCost(
