@@ -1,13 +1,15 @@
-name: Android CI
+name: Build Android APK
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  build:
+  build-apk:
+    name: Build debug APK
     runs-on: ubuntu-latest
 
     steps:
@@ -15,13 +17,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: meter-reader-debug-apk-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
