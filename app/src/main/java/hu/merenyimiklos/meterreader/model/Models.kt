@@ -40,6 +40,7 @@ data class BillingSettings(
     val gasMonthlyGoalM3: Double = 0.0,
     val gasHeatingValueMjPerM3: Double = 34.8,
     val reminderEnabled: Boolean = true,
+    val backupFolderUri: String = "",
     val gasBillingMode: GasBillingMode = GasBillingMode.FLAT_RATE,
     val gasUnitPrice: Double = 0.0,
     val gasMonthlyFixedFee: Double = 0.0,
