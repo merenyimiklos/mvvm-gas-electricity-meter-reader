@@ -40,6 +40,8 @@ class SettingsRepository(
             doublePreferencesKey("gas_heating_value_mj_per_m3")
         val reminderEnabled =
             booleanPreferencesKey("reminder_enabled")
+        val backupFolderUri =
+            stringPreferencesKey("backup_folder_uri")
         val gasBillingMode =
             stringPreferencesKey("gas_billing_mode")
         val gasUnitPrice =
@@ -79,6 +81,8 @@ class SettingsRepository(
                         preferences[Keys.gasHeatingValueMjPerM3] ?: 34.8,
                     reminderEnabled =
                         preferences[Keys.reminderEnabled] ?: true,
+                    backupFolderUri =
+                        preferences[Keys.backupFolderUri] ?: "",
                     gasBillingMode =
                         preferences[Keys.gasBillingMode]
                             ?.let { value ->
@@ -116,6 +120,8 @@ class SettingsRepository(
                 settings.gasHeatingValueMjPerM3
             preferences[Keys.reminderEnabled] =
                 settings.reminderEnabled
+            preferences[Keys.backupFolderUri] =
+                settings.backupFolderUri
             preferences[Keys.gasBillingMode] =
                 settings.gasBillingMode.name
             preferences[Keys.gasUnitPrice] =
