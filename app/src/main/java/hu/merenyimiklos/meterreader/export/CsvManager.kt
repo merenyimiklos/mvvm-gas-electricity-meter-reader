@@ -203,19 +203,19 @@ class CsvManager(
     ): String {
         val escaped =
             value.replace(
-                """,
-                """"
+                "\"",
+                "\"\""
             )
 
         return if (
             value.contains(';') ||
-            value.contains('"') ||
+            value.contains('\"') ||
             value.contains('\n') ||
             value.contains('\r')
         ) {
-            """ +
+            "\"" +
                 escaped +
-                """
+                "\""
         } else {
             escaped
         }
