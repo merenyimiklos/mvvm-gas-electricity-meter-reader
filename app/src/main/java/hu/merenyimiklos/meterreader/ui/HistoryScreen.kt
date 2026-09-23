@@ -1,7 +1,10 @@
 package hu.merenyimiklos.meterreader.ui
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -40,11 +45,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -54,7 +63,9 @@ import hu.merenyimiklos.meterreader.export.XlsxExporter
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private enum class HistoryFilter(
@@ -111,6 +122,10 @@ internal fun HistoryScreen(
         mutableStateOf<MeterReading?>(
             null
         )
+    }
+
+    var previewPhotoUri by remember {
+        mutableStateOf<String?>(null)
     }
 
     val filteredReadings =
@@ -423,6 +438,23 @@ internal fun HistoryScreen(
                             )
 
                             Column {
+                                if (
+                                    reading.photoUri != null
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            previewPhotoUri =
+                                                reading.photoUri
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Image,
+                                            contentDescription =
+                                                "Mérőfotó"
+                                        )
+                                    }
+                                }
+
                                 IconButton(
                                     onClick = {
                                         editingReading =
@@ -456,6 +488,29 @@ internal fun HistoryScreen(
                 }
             }
         }
+    }
+
+    previewPhotoUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = {
+                previewPhotoUri = null
+            },
+            title = {
+                Text("Eredeti mérőfotó")
+            },
+            text = {
+                PhotoPreview(uri)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        previewPhotoUri = null
+                    }
+                ) {
+                    Text("Bezárás")
+                }
+            }
+        )
     }
 
     editingReading?.let {
@@ -685,4 +740,56 @@ private fun EditReadingDialog(
             }
         }
     )
+}
+
+
+@Composable
+private fun PhotoPreview(
+    uriString: String
+) {
+    val context = LocalContext.current
+
+    val bitmap by produceState<
+        android.graphics.Bitmap?
+    >(
+        initialValue = null,
+        uriString
+    ) {
+        value = withContext(
+            Dispatchers.IO
+        ) {
+            runCatching {
+                context.contentResolver
+                    .openInputStream(
+                        Uri.parse(
+                            uriString
+                        )
+                    )
+                    ?.use {
+                        BitmapFactory
+                            .decodeStream(it)
+                    }
+            }.getOrNull()
+        }
+    }
+
+    if (bitmap == null) {
+        Text(
+            "A fotó már nem érhető el."
+        )
+    } else {
+        Image(
+            bitmap =
+                bitmap!!.asImageBitmap(),
+            contentDescription =
+                "Mérőfotó",
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(
+                    max = 520.dp
+                ),
+            contentScale =
+                ContentScale.Fit
+        )
+    }
 }
