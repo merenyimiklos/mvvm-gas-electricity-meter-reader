@@ -119,6 +119,13 @@ internal fun StatisticsScreen(
         )
     }
 
+    val yearOverYearPercent =
+        remember(values) {
+            yearOverYearChange(
+                values
+            )
+        }
+
     val costInsights = remember(
         summaries
     ) {
@@ -227,7 +234,9 @@ internal fun StatisticsScreen(
                     MetricOverview(
                         metric = it,
                         insights = insights,
-                        settings = settings
+                        settings = settings,
+                        yearOverYearPercent =
+                            yearOverYearPercent
                     )
                 }
             }
@@ -560,7 +569,8 @@ private fun LimitRow(
 private fun MetricOverview(
     metric: StatisticsMetric,
     insights: UsageInsights,
-    settings: BillingSettings
+    settings: BillingSettings,
+    yearOverYearPercent: Double?
 ) {
     val goal =
         goalForMetric(
@@ -636,6 +646,41 @@ private fun MetricOverview(
                 ChangeLabel(
                     insights.changePercent
                 )
+
+                yearOverYearPercent
+                    ?.let { change ->
+                        val sign =
+                            if (change > 0) {
+                                "+"
+                            } else {
+                                ""
+                            }
+
+                        Text(
+                            "Előző év azonos hónapjához képest: " +
+                                sign +
+                                formatDecimal(
+                                    change
+                                ) +
+                                "%",
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodySmall,
+                            color =
+                                if (
+                                    change > 0.5
+                                ) {
+                                    MaterialTheme
+                                        .colorScheme
+                                        .error
+                                } else {
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                }
+                        )
+                    }
 
                 if (goal > 0.0) {
                     Spacer(
@@ -1703,6 +1748,36 @@ private fun GasReferenceCurveCard(
             }
         }
     }
+}
+
+private fun yearOverYearChange(
+    values: List<Pair<YearMonth, Double>>
+): Double? {
+    val latest =
+        values.maxByOrNull {
+            it.first
+        } ?: return null
+
+    val previousYearMonth =
+        latest.first.minusYears(1)
+
+    val previous =
+        values.firstOrNull {
+            it.first ==
+                previousYearMonth
+        }?.second ?: return null
+
+    if (previous <= 0.0) {
+        return null
+    }
+
+    return (
+        (
+            latest.second -
+                previous
+            ) /
+            previous
+        ) * 100.0
 }
 
 private fun goalForMetric(
