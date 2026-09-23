@@ -1,6 +1,7 @@
 package hu.merenyimiklos.meterreader.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -29,6 +30,16 @@ class SettingsRepository(
             doublePreferencesKey("electricity_night_unit_price")
         val electricityNightMonthlyFixedFee =
             doublePreferencesKey("electricity_night_monthly_fixed_fee")
+        val electricityMonthlyGoalKwh =
+            doublePreferencesKey("electricity_monthly_goal_kwh")
+        val electricityNightMonthlyGoalKwh =
+            doublePreferencesKey("electricity_night_monthly_goal_kwh")
+        val gasMonthlyGoalM3 =
+            doublePreferencesKey("gas_monthly_goal_m3")
+        val gasHeatingValueMjPerM3 =
+            doublePreferencesKey("gas_heating_value_mj_per_m3")
+        val reminderEnabled =
+            booleanPreferencesKey("reminder_enabled")
         val gasBillingMode =
             stringPreferencesKey("gas_billing_mode")
         val gasUnitPrice =
@@ -58,6 +69,16 @@ class SettingsRepository(
                         preferences[Keys.electricityNightUnitPrice] ?: 0.0,
                     electricityNightMonthlyFixedFee =
                         preferences[Keys.electricityNightMonthlyFixedFee] ?: 0.0,
+                    electricityMonthlyGoalKwh =
+                        preferences[Keys.electricityMonthlyGoalKwh] ?: 0.0,
+                    electricityNightMonthlyGoalKwh =
+                        preferences[Keys.electricityNightMonthlyGoalKwh] ?: 0.0,
+                    gasMonthlyGoalM3 =
+                        preferences[Keys.gasMonthlyGoalM3] ?: 0.0,
+                    gasHeatingValueMjPerM3 =
+                        preferences[Keys.gasHeatingValueMjPerM3] ?: 34.8,
+                    reminderEnabled =
+                        preferences[Keys.reminderEnabled] ?: true,
                     gasBillingMode =
                         preferences[Keys.gasBillingMode]
                             ?.let { value ->
@@ -85,6 +106,16 @@ class SettingsRepository(
                 settings.electricityNightUnitPrice
             preferences[Keys.electricityNightMonthlyFixedFee] =
                 settings.electricityNightMonthlyFixedFee
+            preferences[Keys.electricityMonthlyGoalKwh] =
+                settings.electricityMonthlyGoalKwh
+            preferences[Keys.electricityNightMonthlyGoalKwh] =
+                settings.electricityNightMonthlyGoalKwh
+            preferences[Keys.gasMonthlyGoalM3] =
+                settings.gasMonthlyGoalM3
+            preferences[Keys.gasHeatingValueMjPerM3] =
+                settings.gasHeatingValueMjPerM3
+            preferences[Keys.reminderEnabled] =
+                settings.reminderEnabled
             preferences[Keys.gasBillingMode] =
                 settings.gasBillingMode.name
             preferences[Keys.gasUnitPrice] =
