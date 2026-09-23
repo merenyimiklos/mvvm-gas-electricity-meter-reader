@@ -1,5 +1,6 @@
 package hu.merenyimiklos.meterreader.ui
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -51,6 +53,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -72,6 +75,7 @@ internal fun SettingsScreen(
             .collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val snackbarHostState =
         remember { SnackbarHostState() }
 
@@ -161,6 +165,11 @@ internal fun SettingsScreen(
     var reminderEnabled by remember(settings) {
         mutableStateOf(
             settings.reminderEnabled
+        )
+    }
+    var backupFolderUri by remember(settings) {
+        mutableStateOf(
+            settings.backupFolderUri
         )
     }
 
@@ -265,6 +274,8 @@ internal fun SettingsScreen(
                 } ?: 34.8,
             reminderEnabled =
                 reminderEnabled,
+            backupFolderUri =
+                backupFolderUri,
             gasBillingMode =
                 gasMode,
             gasUnitPrice =
@@ -280,6 +291,31 @@ internal fun SettingsScreen(
                     gasFlatPayment
                 )
         )
+
+    val backupFolderLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocumentTree()
+        ) { uri ->
+            if (uri != null) {
+                runCatching {
+                    context.contentResolver
+                        .takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                }
+                backupFolderUri =
+                    uri.toString()
+
+                scope.launch {
+                    snackbarHostState
+                        .showSnackbar(
+                            "Automatikus mentési mappa kiválasztva. Mentsd el a beállításokat."
+                        )
+                }
+            }
+        }
 
     val csvExportLauncher =
         rememberLauncherForActivityResult(
@@ -760,7 +796,7 @@ internal fun SettingsScreen(
                         )
 
                         Text(
-                            "Minden módosítás után automatikus helyi biztonsági mentés készül. A kézi JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
+                            "Minden módosítás után automatikus helyi biztonsági mentés készül. Ha választasz saját mappát, az auto-backup.json oda is frissül. A kézi JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
                             style =
                                 MaterialTheme
                                     .typography
@@ -770,6 +806,61 @@ internal fun SettingsScreen(
                                     .colorScheme
                                     .onSurfaceVariant
                         )
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            onClick = {
+                                backupFolderLauncher
+                                    .launch(null)
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Folder,
+                                contentDescription = null
+                            )
+                            Spacer(
+                                Modifier.width(8.dp)
+                            )
+                            Text(
+                                if (
+                                    backupFolderUri
+                                        .isBlank()
+                                ) {
+                                    "Automatikus mentési mappa kiválasztása"
+                                } else {
+                                    "Automatikus mentési mappa módosítása"
+                                }
+                            )
+                        }
+
+                        if (
+                            backupFolderUri.isNotBlank()
+                        ) {
+                            Text(
+                                "Külső automatikus mentés: bekapcsolva",
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodySmall,
+                                color =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .primary,
+                                fontWeight =
+                                    FontWeight.SemiBold
+                            )
+
+                            TextButton(
+                                onClick = {
+                                    backupFolderUri = ""
+                                }
+                            ) {
+                                Text(
+                                    "Külső automatikus mentés kikapcsolása"
+                                )
+                            }
+                        }
 
                         OutlinedButton(
                             modifier =
