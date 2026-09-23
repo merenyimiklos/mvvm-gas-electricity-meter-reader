@@ -30,7 +30,10 @@ private const val ROUTE_STATISTICS = "statistics"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
-fun MeterReaderApp(viewModel: MeterViewModel) {
+fun MeterReaderApp(
+    viewModel: MeterViewModel,
+    startOnAdd: Boolean = false
+) {
     val navController = rememberNavController()
     val currentRoute =
         navController.currentBackStackEntryAsState()
@@ -119,7 +122,9 @@ fun MeterReaderApp(viewModel: MeterViewModel) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = ROUTE_HOME,
+            startDestination =
+                if (startOnAdd) ROUTE_ADD
+                else ROUTE_HOME,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
