@@ -16,6 +16,7 @@ import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.model.OcrResult
+import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.time.YearMonth
 
 class MeterViewModel(application: Application) : AndroidViewModel(application) {
     private val database = MeterDatabase.getInstance(application)
@@ -73,6 +75,14 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         val parsed = parseAndValidate(type, valueText, dateText, null)
             ?: return validationMessage
 
+        val duplicateOnDay = readings.value.any {
+            it.type == type &&
+                it.dateEpochDay == parsed.date.toEpochDay()
+        }
+        if (duplicateOnDay) {
+            return "Erre a napra már van ilyen mérőállás."
+        }
+
         meterRepository.add(
             type = type,
             value = parsed.value,
@@ -80,6 +90,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             note = note,
             photoUri = photoUri
         )
+        refreshReminder()
         return null
     }
 
@@ -96,6 +107,15 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             original.id
         ) ?: return validationMessage
 
+        val duplicateOnDay = readings.value.any {
+            it.id != original.id &&
+                it.type == original.type &&
+                it.dateEpochDay == parsed.date.toEpochDay()
+        }
+        if (duplicateOnDay) {
+            return "Erre a napra már van ilyen mérőállás."
+        }
+
         meterRepository.update(
             original.copy(
                 value = parsed.value,
@@ -103,17 +123,104 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 note = note
             )
         )
+        refreshReminder()
         return null
     }
 
     fun deleteReading(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             meterRepository.delete(id)
+            ReadingReminderWorker.evaluateAndNotify(
+                getApplication()
+            )
         }
+    }
+
+    fun monthlyDuplicates(
+        date: LocalDate
+    ): List<MeterType> {
+        val month = YearMonth.from(date)
+        return readings.value
+            .filter {
+                YearMonth.from(
+                    LocalDate.ofEpochDay(
+                        it.dateEpochDay
+                    )
+                ) == month
+            }
+            .map { it.type }
+            .distinct()
+    }
+
+    suspend fun saveQuickReadings(
+        values: Map<MeterType, String>,
+        date: LocalDate,
+        note: String,
+        allowMonthlyDuplicate: Boolean = false
+    ): QuickSaveResult {
+        val missing = MeterType.entries.filter {
+            values[it].isNullOrBlank()
+        }
+
+        if (missing.isNotEmpty()) {
+            return QuickSaveResult(
+                error = "Add meg mindhárom mérőállást."
+            )
+        }
+
+        val duplicates = monthlyDuplicates(date)
+        if (
+            duplicates.isNotEmpty() &&
+            !allowMonthlyDuplicate
+        ) {
+            return QuickSaveResult(
+                duplicateTypes = duplicates
+            )
+        }
+
+        val parsedValues =
+            mutableMapOf<MeterType, ParsedReading>()
+
+        for (type in MeterType.entries) {
+            val parsed = parseAndValidate(
+                type = type,
+                valueText = values[type].orEmpty(),
+                dateText = date.toString(),
+                excludeId = null
+            ) ?: return QuickSaveResult(
+                error =
+                    type.displayName +
+                        ": " +
+                        validationMessage
+            )
+
+            parsedValues[type] = parsed
+        }
+
+        for (type in MeterType.entries) {
+            val parsed =
+                requireNotNull(parsedValues[type])
+
+            meterRepository.add(
+                type = type,
+                value = parsed.value,
+                dateEpochDay =
+                    parsed.date.toEpochDay(),
+                note = note,
+                photoUri = null
+            )
+        }
+
+        refreshReminder()
+
+        return QuickSaveResult(
+            savedCount = MeterType.entries.size
+        )
     }
 
     suspend fun updateSettings(settings: BillingSettings) {
         settingsRepository.update(settings)
+        refreshReminder()
     }
 
     suspend fun detectReading(uri: Uri, type: MeterType): Result<OcrResult> =
@@ -154,8 +261,21 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             runCatching {
                 meterRepository.clear()
                 settingsRepository.reset()
+                ReadingReminderWorker.evaluateAndNotify(
+                    getApplication()
+                )
             }
         }
+
+    private suspend fun refreshReminder() {
+        withContext(Dispatchers.IO) {
+            runCatching {
+                ReadingReminderWorker.evaluateAndNotify(
+                    getApplication()
+                )
+            }
+        }
+    }
 
     private var validationMessage: String = ""
 
@@ -209,6 +329,15 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
         validationMessage = ""
         return ParsedReading(value, date)
+    }
+
+    data class QuickSaveResult(
+        val savedCount: Int = 0,
+        val duplicateTypes: List<MeterType> = emptyList(),
+        val error: String? = null
+    ) {
+        val success: Boolean
+            get() = savedCount > 0 && error == null
     }
 
     private data class ParsedReading(
