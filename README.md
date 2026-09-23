@@ -4,17 +4,21 @@ Jetpack Compose alapú Android alkalmazás havi áram- és gázmérőállások r
 
 ## Funkciók
 
-- áram- és gázmérőállás kézi rögzítése
+- külön **normál**, **éjszakai** áram- és gázmérőállás rögzítése
 - fotózás vagy galériakép alapján ML Kit OCR-es mérőállás-felismerés
 - mentés előtti OCR-ellenőrzés
 - havi fogyasztás számítása kumulatív mérőállások különbségéből
 - havi és éves összesítések
-- 6 havi fogyasztási diagramok
+- külön **Statisztika** nézet 12 havi fogyasztási diagramokkal
+- normál / éjszakai / összes áram / gáz trendek
+- előző havi változás, 3 havi átlag és legutóbbi napi átlag
+- minimum/maximum hónap és automatikus fogyasztási kiugrásjelzés
+- becsült havi költségdiagram
 - becsült fizetendő összeg
 - külön gáz **átalánydíjas** és **mérőállás alapú** mód
-- állítható egységárak és havi fix díjak
+- külön állítható normál és éjszakai áram egységárak és havi fix díjak
 - mérőállások utólagos szerkesztése és törlése
-- áram/gáz előzmény-szűrés
+- normál / éjszakai / gáz előzmény-szűrés
 - valódi **.xlsx** export Excelhez
 - **JSON biztonsági mentés és visszaállítás**
 - Room adatbázis a mérőállásokhoz
@@ -67,6 +71,7 @@ MeterViewModel
    │   Preferences DataStore
    │
    ├── UsageCalculator
+   ├── AnalyticsCalculator
    ├── OcrMeterReader
    ├── XlsxExporter
    └── BackupManager
