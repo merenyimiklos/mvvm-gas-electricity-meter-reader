@@ -11,51 +11,102 @@ import java.time.YearMonth
 object UsageCalculator {
     fun consumptionByReading(readings: List<MeterReading>): Map<String, Double> {
         val result = mutableMapOf<String, Double>()
+
         MeterType.entries.forEach { type ->
-            val typedReadings = readings.filter { it.type == type }
-                .sortedWith(compareBy<MeterReading> { it.dateEpochDay }.thenBy { it.createdAtMillis })
-            typedReadings.zipWithNext().forEach { (previous, current) ->
+            val typedReadings = readings
+                .filter { it.type == type }
+                .sortedWith(
+                    compareBy<MeterReading> { it.dateEpochDay }
+                        .thenBy { it.createdAtMillis }
+                )
+
+            typedReadings.zipWithNext().forEach { pair ->
+                val previous = pair.first
+                val current = pair.second
                 val difference = current.value - previous.value
-                if (difference >= 0.0) result[current.id] = difference
+
+                if (difference >= 0.0) {
+                    result[current.id] = difference
+                }
             }
         }
+
         return result
     }
 
-    fun monthlySummaries(readings: List<MeterReading>, settings: BillingSettings): List<MonthlySummary> {
+    fun monthlySummaries(
+        readings: List<MeterReading>,
+        settings: BillingSettings
+    ): List<MonthlySummary> {
         if (readings.isEmpty()) return emptyList()
+
         val usageById = consumptionByReading(readings)
-        val usageByMonth = mutableMapOf<YearMonth, MutableMap<MeterType, Double>>()
+        val usageByMonth =
+            mutableMapOf<YearMonth, MutableMap<MeterType, Double>>()
 
         readings.forEach { reading ->
             val usage = usageById[reading.id] ?: return@forEach
-            val month = YearMonth.from(LocalDate.ofEpochDay(reading.dateEpochDay))
-            val values = usageByMonth.getOrPut(month) { mutableMapOf() }
-            values[reading.type] = (values[reading.type] ?: 0.0) + usage
+            val month = YearMonth.from(
+                LocalDate.ofEpochDay(reading.dateEpochDay)
+            )
+            val values = usageByMonth.getOrPut(month) {
+                mutableMapOf()
+            }
+
+            values[reading.type] =
+                (values[reading.type] ?: 0.0) + usage
         }
 
-        val months = readings.map { YearMonth.from(LocalDate.ofEpochDay(it.dateEpochDay)) }.distinct().sorted()
-        return months.map { month ->
-            val electricityUsage = usageByMonth[month]?.get(MeterType.ELECTRICITY)
-            val gasUsage = usageByMonth[month]?.get(MeterType.GAS)
-            val electricityCost = electricityUsage?.let {
-                it * settings.electricityUnitPrice + settings.electricityMonthlyFixedFee
-            } ?: 0.0
-            val gasConsumptionCost = gasUsage?.let {
-                it * settings.gasUnitPrice + settings.gasMonthlyFixedFee
-            } ?: 0.0
-            val gasPayable = when (settings.gasBillingMode) {
-                GasBillingMode.FLAT_RATE -> settings.gasFlatMonthlyPayment
-                GasBillingMode.METERED -> gasConsumptionCost
+        val months = readings
+            .map {
+                YearMonth.from(
+                    LocalDate.ofEpochDay(it.dateEpochDay)
+                )
             }
+            .distinct()
+            .sorted()
+
+        return months.map { month ->
+            val normalUsage =
+                usageByMonth[month]?.get(MeterType.ELECTRICITY)
+            val nightUsage =
+                usageByMonth[month]?.get(MeterType.ELECTRICITY_NIGHT)
+            val gasUsage =
+                usageByMonth[month]?.get(MeterType.GAS)
+
+            val normalCost = normalUsage?.let {
+                it * settings.electricityUnitPrice +
+                    settings.electricityMonthlyFixedFee
+            } ?: 0.0
+
+            val nightCost = nightUsage?.let {
+                it * settings.electricityNightUnitPrice +
+                    settings.electricityNightMonthlyFixedFee
+            } ?: 0.0
+
+            val gasConsumptionCost = gasUsage?.let {
+                it * settings.gasUnitPrice +
+                    settings.gasMonthlyFixedFee
+            } ?: 0.0
+
+            val gasPayable = when (settings.gasBillingMode) {
+                GasBillingMode.FLAT_RATE ->
+                    settings.gasFlatMonthlyPayment
+                GasBillingMode.METERED ->
+                    gasConsumptionCost
+            }
+
             MonthlySummary(
                 month = month,
-                electricityUsage = electricityUsage,
+                electricityUsage = normalUsage,
+                electricityNightUsage = nightUsage,
                 gasUsage = gasUsage,
-                electricityCost = electricityCost,
+                electricityCost = normalCost,
+                electricityNightCost = nightCost,
                 gasConsumptionCost = gasConsumptionCost,
                 gasPayable = gasPayable,
-                totalEstimatedPayable = electricityCost + gasPayable
+                totalEstimatedPayable =
+                    normalCost + nightCost + gasPayable
             )
         }
     }
@@ -67,17 +118,30 @@ object UsageCalculator {
     ): Pair<Double?, Double?> = when (reading.type) {
         MeterType.ELECTRICITY -> {
             val estimated = consumption?.let {
-                it * settings.electricityUnitPrice + settings.electricityMonthlyFixedFee
+                it * settings.electricityUnitPrice +
+                    settings.electricityMonthlyFixedFee
             }
             estimated to estimated
         }
+
+        MeterType.ELECTRICITY_NIGHT -> {
+            val estimated = consumption?.let {
+                it * settings.electricityNightUnitPrice +
+                    settings.electricityNightMonthlyFixedFee
+            }
+            estimated to estimated
+        }
+
         MeterType.GAS -> {
             val consumptionCost = consumption?.let {
-                it * settings.gasUnitPrice + settings.gasMonthlyFixedFee
+                it * settings.gasUnitPrice +
+                    settings.gasMonthlyFixedFee
             }
             val payable = when (settings.gasBillingMode) {
-                GasBillingMode.FLAT_RATE -> settings.gasFlatMonthlyPayment
-                GasBillingMode.METERED -> consumptionCost
+                GasBillingMode.FLAT_RATE ->
+                    settings.gasFlatMonthlyPayment
+                GasBillingMode.METERED ->
+                    consumptionCost
             }
             consumptionCost to payable
         }
