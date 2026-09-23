@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -53,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -277,6 +280,65 @@ internal fun SettingsScreen(
                     gasFlatPayment
                 )
         )
+
+    val csvExportLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument(
+                CsvManager.MIME_TYPE
+            )
+        ) { uri ->
+            if (uri != null) {
+                scope.launch {
+                    viewModel
+                        .exportCsv(uri)
+                        .onSuccess {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "CSV export elkészült."
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "CSV export hiba: " +
+                                        (
+                                            it.message
+                                                ?: "ismeretlen hiba"
+                                            )
+                                )
+                        }
+                }
+            }
+        }
+
+    val csvImportLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument()
+        ) { uri ->
+            if (uri != null) {
+                scope.launch {
+                    viewModel
+                        .importCsv(uri)
+                        .onSuccess { count ->
+                            snackbarHostState
+                                .showSnackbar(
+                                    count.toString() +
+                                        " CSV mérés importálva."
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "CSV import hiba: " +
+                                        (
+                                            it.message
+                                                ?: "ismeretlen hiba"
+                                            )
+                                )
+                        }
+                }
+            }
+        }
 
     Scaffold(
         topBar = {
@@ -698,7 +760,7 @@ internal fun SettingsScreen(
                         )
 
                         Text(
-                            "A JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
+                            "Minden módosítás után automatikus helyi biztonsági mentés készül. A kézi JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
                             style =
                                 MaterialTheme
                                     .typography
@@ -734,6 +796,64 @@ internal fun SettingsScreen(
                             )
                             Text(
                                 "Biztonsági mentés"
+                            )
+                        }
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
+                            onClick = {
+                                csvExportLauncher
+                                    .launch(
+                                        "meroallasok-" +
+                                            LocalDate.now() +
+                                            ".csv"
+                                    )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.FileDownload,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                "CSV export"
+                            )
+                        }
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
+                            onClick = {
+                                csvImportLauncher
+                                    .launch(
+                                        arrayOf(
+                                            "text/csv",
+                                            "text/plain",
+                                            "text/comma-separated-values"
+                                        )
+                                    )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.FileUpload,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                "CSV import"
                             )
                         }
 
