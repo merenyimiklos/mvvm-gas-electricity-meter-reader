@@ -4,26 +4,31 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -49,330 +54,630 @@ import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SettingsScreen(viewModel: MeterViewModel) {
-    val settings by viewModel.settings.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+internal fun SettingsScreen(
+    viewModel: MeterViewModel
+) {
+    val settings by
+        viewModel.settings
+            .collectAsStateWithLifecycle()
 
-    var electricityUnitPrice by remember(settings) {
-        mutableStateOf(editableNumber(settings.electricityUnitPrice))
-    }
-    var electricityFixedFee by remember(settings) {
-        mutableStateOf(editableNumber(settings.electricityMonthlyFixedFee))
-    }
-    var gasMode by remember(settings) {
-        mutableStateOf(settings.gasBillingMode)
-    }
-    var gasUnitPrice by remember(settings) {
-        mutableStateOf(editableNumber(settings.gasUnitPrice))
-    }
-    var gasFixedFee by remember(settings) {
-        mutableStateOf(editableNumber(settings.gasMonthlyFixedFee))
-    }
-    var gasFlatPayment by remember(settings) {
-        mutableStateOf(editableNumber(settings.gasFlatMonthlyPayment))
-    }
-    var showClearConfirmation by remember {
-        mutableStateOf(false)
-    }
+    val scope =
+        rememberCoroutineScope()
 
-    val backupLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
-        if (uri != null) {
-            scope.launch {
-                viewModel.exportBackup(uri)
-                    .onSuccess {
-                        snackbarHostState.showSnackbar(
-                            "Biztonsági mentés elkészült."
-                        )
-                    }
-                    .onFailure {
-                        snackbarHostState.showSnackbar(
-                            "Mentési hiba: " +
-                                (it.message ?: "ismeretlen hiba")
-                        )
-                    }
+    val snackbarHostState =
+        remember {
+            SnackbarHostState()
+        }
+
+    var electricityUnitPrice by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .electricityUnitPrice
+                )
+            )
+        }
+
+    var electricityFixedFee by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .electricityMonthlyFixedFee
+                )
+            )
+        }
+
+    var nightUnitPrice by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .electricityNightUnitPrice
+                )
+            )
+        }
+
+    var nightFixedFee by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .electricityNightMonthlyFixedFee
+                )
+            )
+        }
+
+    var gasMode by
+        remember(settings) {
+            mutableStateOf(
+                settings.gasBillingMode
+            )
+        }
+
+    var gasUnitPrice by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings.gasUnitPrice
+                )
+            )
+        }
+
+    var gasFixedFee by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .gasMonthlyFixedFee
+                )
+            )
+        }
+
+    var gasFlatPayment by
+        remember(settings) {
+            mutableStateOf(
+                editableNumber(
+                    settings
+                        .gasFlatMonthlyPayment
+                )
+            )
+        }
+
+    var showClearConfirmation by
+        remember {
+            mutableStateOf(false)
+        }
+
+    val backupLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts
+                .CreateDocument(
+                    "application/json"
+                )
+        ) { uri ->
+            if (uri != null) {
+                scope.launch {
+                    viewModel
+                        .exportBackup(uri)
+                        .onSuccess {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "Biztonsági mentés elkészült."
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "Mentési hiba: " +
+                                        (
+                                            it.message
+                                                ?: "ismeretlen hiba"
+                                            )
+                                )
+                        }
+                }
             }
         }
-    }
 
-    val restoreLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            scope.launch {
-                viewModel.importBackup(uri)
-                    .onSuccess { count ->
-                        snackbarHostState.showSnackbar(
-                            count.toString() +
-                                " mérőállás visszaállítva."
-                        )
-                    }
-                    .onFailure {
-                        snackbarHostState.showSnackbar(
-                            "Visszaállítási hiba: " +
-                                (it.message ?: "ismeretlen hiba")
-                        )
-                    }
+    val restoreLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts
+                .OpenDocument()
+        ) { uri ->
+            if (uri != null) {
+                scope.launch {
+                    viewModel
+                        .importBackup(uri)
+                        .onSuccess {
+                            count ->
+                            snackbarHostState
+                                .showSnackbar(
+                                    count
+                                        .toString() +
+                                        " mérőállás visszaállítva."
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    "Visszaállítási hiba: " +
+                                        (
+                                            it.message
+                                                ?: "ismeretlen hiba"
+                                            )
+                                )
+                        }
+                }
             }
         }
-    }
 
     Scaffold(
+        topBar = {
+            LargeTopAppBar(
+                title = {
+                    Column {
+                        Text("Beállítások")
+                        Text(
+                            "Tarifák és adatkezelés",
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodyMedium,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+                }
+            )
+        },
         snackbarHost = {
-            SnackbarHost(snackbarHostState)
+            SnackbarHost(
+                snackbarHostState
+            )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(
+                    innerPadding
+                ),
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 24.dp
+                ),
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    16.dp
+                )
         ) {
-            Text(
-                "Beállítások",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                "Áram",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            MoneyField(
-                value = electricityUnitPrice,
-                onValueChange = {
-                    electricityUnitPrice = it
-                },
-                label = "Egységár (Ft/kWh)"
-            )
-
-            MoneyField(
-                value = electricityFixedFee,
-                onValueChange = {
-                    electricityFixedFee = it
-                },
-                label = "Havi fix díj (Ft)"
-            )
-
-            HorizontalDivider()
-
-            Text(
-                "Gáz",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text("Elszámolás módja")
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                GasBillingMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = gasMode == mode,
-                        onClick = {
-                            gasMode = mode
+            item {
+                TariffCard(
+                    title =
+                        "Normál áram",
+                    subtitle =
+                        "A nappali / normál mérő díjai",
+                    icon =
+                        Icons.Default.Bolt,
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .primaryContainer
+                ) {
+                    MoneyField(
+                        value =
+                            electricityUnitPrice,
+                        onValueChange = {
+                            electricityUnitPrice =
+                                it
                         },
-                        label = {
-                            Text(mode.displayName)
-                        }
+                        label =
+                            "Egységár (Ft/kWh)"
+                    )
+
+                    MoneyField(
+                        value =
+                            electricityFixedFee,
+                        onValueChange = {
+                            electricityFixedFee =
+                                it
+                        },
+                        label =
+                            "Havi fix díj (Ft)"
                     )
                 }
             }
 
-            MoneyField(
-                value = gasFlatPayment,
-                onValueChange = {
-                    gasFlatPayment = it
-                },
-                label = "Havi gázátalány (Ft)"
-            )
-
-            MoneyField(
-                value = gasUnitPrice,
-                onValueChange = {
-                    gasUnitPrice = it
-                },
-                label = if (
-                    gasMode == GasBillingMode.FLAT_RATE
+            item {
+                TariffCard(
+                    title =
+                        "Éjszakai áram",
+                    subtitle =
+                        "Külön mérő és külön tarifa",
+                    icon =
+                        Icons.Default.Bedtime,
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .secondaryContainer
                 ) {
-                    "Gáz egységár – opcionális kimutatáshoz (Ft/m³)"
-                } else {
-                    "Gáz egységár (Ft/m³)"
+                    MoneyField(
+                        value =
+                            nightUnitPrice,
+                        onValueChange = {
+                            nightUnitPrice =
+                                it
+                        },
+                        label =
+                            "Éjszakai egységár (Ft/kWh)"
+                    )
+
+                    MoneyField(
+                        value =
+                            nightFixedFee,
+                        onValueChange = {
+                            nightFixedFee =
+                                it
+                        },
+                        label =
+                            "Éjszakai havi fix díj (Ft)"
+                    )
                 }
-            )
-
-            MoneyField(
-                value = gasFixedFee,
-                onValueChange = {
-                    gasFixedFee = it
-                },
-                label = "Gáz havi fix díj (Ft)"
-            )
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    scope.launch {
-                        viewModel.updateSettings(
-                            BillingSettings(
-                                electricityUnitPrice = parseDecimal(
-                                    electricityUnitPrice
-                                ),
-                                electricityMonthlyFixedFee = parseDecimal(
-                                    electricityFixedFee
-                                ),
-                                gasBillingMode = gasMode,
-                                gasUnitPrice = parseDecimal(
-                                    gasUnitPrice
-                                ),
-                                gasMonthlyFixedFee = parseDecimal(
-                                    gasFixedFee
-                                ),
-                                gasFlatMonthlyPayment = parseDecimal(
-                                    gasFlatPayment
-                                )
-                            )
-                        )
-
-                        snackbarHostState.showSnackbar(
-                            "Beállítások elmentve."
-                        )
-                    }
-                }
-            ) {
-                Text("Díjbeállítások mentése")
             }
 
-            HorizontalDivider()
-
-            Text(
-                "Adatkezelés",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Card(
-                Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            item {
+                TariffCard(
+                    title = "Gáz",
+                    subtitle =
+                        "Átalány vagy fogyasztás alapján",
+                    icon =
+                        Icons.Default
+                            .LocalFireDepartment,
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .tertiaryContainer
                 ) {
                     Text(
-                        "Biztonsági mentés",
-                        fontWeight = FontWeight.SemiBold
+                        "Elszámolás módja",
+                        fontWeight =
+                            FontWeight.SemiBold
                     )
 
-                    Text(
-                        "A JSON mentés tartalmazza az összes mérőállást és díjbeállítást. A fotók nincsenek beágyazva.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            backupLauncher.launch(
-                                "meroora-backup-" +
-                                    LocalDate.now() +
-                                    ".json"
+                    Row(
+                        horizontalArrangement =
+                            Arrangement.spacedBy(
+                                8.dp
                             )
-                        }
                     ) {
-                        Icon(
-                            Icons.Default.Backup,
-                            contentDescription = null
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Biztonsági mentés készítése")
+                        GasBillingMode
+                            .entries
+                            .forEach {
+                                mode ->
+                                FilterChip(
+                                    selected =
+                                        gasMode ==
+                                            mode,
+                                    onClick = {
+                                        gasMode =
+                                            mode
+                                    },
+                                    label = {
+                                        Text(
+                                            mode
+                                                .displayName
+                                        )
+                                    }
+                                )
+                            }
                     }
 
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            restoreLauncher.launch(
-                                arrayOf(
-                                    "application/json",
-                                    "text/plain"
+                    MoneyField(
+                        value =
+                            gasFlatPayment,
+                        onValueChange = {
+                            gasFlatPayment =
+                                it
+                        },
+                        label =
+                            "Havi gázátalány (Ft)"
+                    )
+
+                    MoneyField(
+                        value =
+                            gasUnitPrice,
+                        onValueChange = {
+                            gasUnitPrice =
+                                it
+                        },
+                        label =
+                            if (
+                                gasMode ==
+                                GasBillingMode
+                                    .FLAT_RATE
+                            ) {
+                                "Gáz egységár – kimutatáshoz (Ft/m³)"
+                            } else {
+                                "Gáz egységár (Ft/m³)"
+                            }
+                    )
+
+                    MoneyField(
+                        value =
+                            gasFixedFee,
+                        onValueChange = {
+                            gasFixedFee =
+                                it
+                        },
+                        label =
+                            "Gáz havi fix díj (Ft)"
+                    )
+                }
+            }
+
+            item {
+                Button(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    contentPadding =
+                        PaddingValues(
+                            vertical = 14.dp
+                        ),
+                    onClick = {
+                        scope.launch {
+                            viewModel
+                                .updateSettings(
+                                    BillingSettings(
+                                        electricityUnitPrice =
+                                            parseDecimal(
+                                                electricityUnitPrice
+                                            ),
+                                        electricityMonthlyFixedFee =
+                                            parseDecimal(
+                                                electricityFixedFee
+                                            ),
+                                        electricityNightUnitPrice =
+                                            parseDecimal(
+                                                nightUnitPrice
+                                            ),
+                                        electricityNightMonthlyFixedFee =
+                                            parseDecimal(
+                                                nightFixedFee
+                                            ),
+                                        gasBillingMode =
+                                            gasMode,
+                                        gasUnitPrice =
+                                            parseDecimal(
+                                                gasUnitPrice
+                                            ),
+                                        gasMonthlyFixedFee =
+                                            parseDecimal(
+                                                gasFixedFee
+                                            ),
+                                        gasFlatMonthlyPayment =
+                                            parseDecimal(
+                                                gasFlatPayment
+                                            )
+                                    )
+                                )
+
+                            snackbarHostState
+                                .showSnackbar(
+                                    "Beállítások elmentve."
+                                )
+                        }
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Save,
+                        contentDescription =
+                            null
+                    )
+                    Spacer(
+                        Modifier.width(8.dp)
+                    )
+                    Text(
+                        "Tarifák mentése"
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                10.dp
+                            )
+                    ) {
+                        Text(
+                            "Adatkezelés",
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .titleLarge,
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+
+                        Text(
+                            "A JSON mentés tartalmazza a méréseket és az összes tarifa-beállítást. A fotók nincsenek beágyazva.",
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodyMedium,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant
+                        )
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
+                            onClick = {
+                                backupLauncher
+                                    .launch(
+                                        "meroora-backup-" +
+                                            LocalDate
+                                                .now() +
+                                            ".json"
+                                    )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default
+                                    .Backup,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
                                 )
                             )
+                            Text(
+                                "Biztonsági mentés"
+                            )
                         }
-                    ) {
-                        Icon(
-                            Icons.Default.Restore,
-                            contentDescription = null
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Mentés visszaállítása")
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
+                            onClick = {
+                                restoreLauncher
+                                    .launch(
+                                        arrayOf(
+                                            "application/json",
+                                            "text/plain"
+                                        )
+                                    )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default
+                                    .Restore,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                "Mentés visszaállítása"
+                            )
+                        }
                     }
                 }
             }
 
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    showClearConfirmation = true
+            item {
+                OutlinedButton(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    onClick = {
+                        showClearConfirmation =
+                            true
+                    }
+                ) {
+                    Icon(
+                        Icons.Default
+                            .DeleteForever,
+                        contentDescription =
+                            null
+                    )
+                    Spacer(
+                        Modifier.width(8.dp)
+                    )
+                    Text(
+                        "Minden adat törlése"
+                    )
                 }
-            ) {
-                Icon(
-                    Icons.Default.DeleteForever,
-                    contentDescription = null
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Minden adat törlése")
             }
 
-            Card(
-                Modifier.fillMaxWidth()
-            ) {
+            item {
                 Text(
-                    "A költségszámítás becslés. A tényleges számla függhet tarifától, kedvezményes sávtól, korrekciós tényezőtől és egyéb szolgáltatói díjaktól.",
-                    modifier = Modifier.padding(12.dp),
-                    style = MaterialTheme.typography.bodySmall
+                    "A költségszámítás becslés. A tényleges számla a szolgáltatói tarifától, kedvezményes sávtól és egyéb díjaktól eltérhet.",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodySmall,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
                 )
             }
-
-            Spacer(Modifier.height(12.dp))
         }
     }
 
     if (showClearConfirmation) {
         AlertDialog(
             onDismissRequest = {
-                showClearConfirmation = false
+                showClearConfirmation =
+                    false
             },
             title = {
-                Text("Minden adat törlése")
+                Text(
+                    "Minden adat törlése"
+                )
             },
             text = {
                 Text(
-                    "Ez törli az összes mérőállást és díjbeállítást. Előtte érdemes biztonsági mentést készíteni."
+                    "Ez törli az összes mérőállást és tarifa-beállítást. Előtte érdemes biztonsági mentést készíteni."
                 )
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        showClearConfirmation = false
+                        showClearConfirmation =
+                            false
+
                         scope.launch {
-                            viewModel.clearAllData()
+                            viewModel
+                                .clearAllData()
                                 .onSuccess {
-                                    snackbarHostState.showSnackbar(
-                                        "Minden adat törölve."
-                                    )
+                                    snackbarHostState
+                                        .showSnackbar(
+                                            "Minden adat törölve."
+                                        )
                                 }
                                 .onFailure {
-                                    snackbarHostState.showSnackbar(
-                                        "Törlési hiba: " +
-                                            (it.message
-                                                ?: "ismeretlen hiba")
-                                    )
+                                    snackbarHostState
+                                        .showSnackbar(
+                                            "Törlési hiba: " +
+                                                (
+                                                    it.message
+                                                        ?: "ismeretlen hiba"
+                                                    )
+                                        )
                                 }
                         }
                     }
@@ -383,7 +688,8 @@ internal fun SettingsScreen(viewModel: MeterViewModel) {
             dismissButton = {
                 TextButton(
                     onClick = {
-                        showClearConfirmation = false
+                        showClearConfirmation =
+                            false
                     }
                 ) {
                     Text("Mégse")
@@ -394,21 +700,91 @@ internal fun SettingsScreen(viewModel: MeterViewModel) {
 }
 
 @Composable
+private fun TariffCard(
+    title: String,
+    subtitle: String,
+    icon:
+        androidx.compose.ui.graphics.vector.ImageVector,
+    containerColor:
+        androidx.compose.ui.graphics.Color,
+    content: @Composable
+        ColumnScope.() -> Unit
+) {
+    ElevatedCard(
+        modifier =
+            Modifier.fillMaxWidth(),
+        colors =
+            CardDefaults
+                .elevatedCardColors(
+                    containerColor =
+                        containerColor
+                )
+    ) {
+        Column(
+            modifier =
+                Modifier.padding(18.dp),
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    12.dp
+                )
+        ) {
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(
+                        10.dp
+                    )
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null
+                )
+
+                Column {
+                    Text(
+                        title,
+                        style =
+                            MaterialTheme
+                                .typography
+                                .titleLarge,
+                        fontWeight =
+                            FontWeight.SemiBold
+                    )
+                    Text(
+                        subtitle,
+                        style =
+                            MaterialTheme
+                                .typography
+                                .bodySmall
+                    )
+                }
+            }
+
+            content()
+        }
+    }
+}
+
+@Composable
 private fun MoneyField(
     value: String,
-    onValueChange: (String) -> Unit,
+    onValueChange:
+        (String) -> Unit,
     label: String
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        onValueChange =
+            onValueChange,
+        modifier =
+            Modifier.fillMaxWidth(),
         label = {
             Text(label)
         },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal
-        ),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType =
+                    KeyboardType.Decimal
+            ),
         singleLine = true
     )
 }
