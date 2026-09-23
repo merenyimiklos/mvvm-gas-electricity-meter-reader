@@ -19,7 +19,9 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
@@ -36,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,101 +68,108 @@ internal fun SettingsScreen(
         viewModel.settings
             .collectAsStateWithLifecycle()
 
-    val scope =
-        rememberCoroutineScope()
-
+    val scope = rememberCoroutineScope()
     val snackbarHostState =
-        remember {
-            SnackbarHostState()
-        }
+        remember { SnackbarHostState() }
 
-    var electricityUnitPrice by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .electricityUnitPrice
-                )
+    var electricityUnitPrice by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityUnitPrice
             )
-        }
-
-    var electricityFixedFee by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .electricityMonthlyFixedFee
-                )
+        )
+    }
+    var electricityFixedFee by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityMonthlyFixedFee
             )
-        }
-
-    var nightUnitPrice by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .electricityNightUnitPrice
-                )
+        )
+    }
+    var nightUnitPrice by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityNightUnitPrice
             )
-        }
-
-    var nightFixedFee by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .electricityNightMonthlyFixedFee
-                )
+        )
+    }
+    var nightFixedFee by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityNightMonthlyFixedFee
             )
-        }
-
-    var gasMode by
-        remember(settings) {
-            mutableStateOf(
-                settings.gasBillingMode
+        )
+    }
+    var gasMode by remember(settings) {
+        mutableStateOf(
+            settings.gasBillingMode
+        )
+    }
+    var gasUnitPrice by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.gasUnitPrice
             )
-        }
-
-    var gasUnitPrice by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings.gasUnitPrice
-                )
+        )
+    }
+    var gasFixedFee by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.gasMonthlyFixedFee
             )
-        }
-
-    var gasFixedFee by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .gasMonthlyFixedFee
-                )
+        )
+    }
+    var gasFlatPayment by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.gasFlatMonthlyPayment
             )
-        }
+        )
+    }
 
-    var gasFlatPayment by
-        remember(settings) {
-            mutableStateOf(
-                editableNumber(
-                    settings
-                        .gasFlatMonthlyPayment
-                )
+    var normalGoal by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityMonthlyGoalKwh
             )
-        }
+        )
+    }
+    var nightGoal by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.electricityNightMonthlyGoalKwh
+            )
+        )
+    }
+    var gasGoal by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.gasMonthlyGoalM3
+            )
+        )
+    }
+    var gasHeatingValue by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.gasHeatingValueMjPerM3
+            )
+        )
+    }
+    var reminderEnabled by remember(settings) {
+        mutableStateOf(
+            settings.reminderEnabled
+        )
+    }
 
-    var showClearConfirmation by
-        remember {
-            mutableStateOf(false)
-        }
+    var showClearConfirmation by remember {
+        mutableStateOf(false)
+    }
 
     val backupLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts
-                .CreateDocument(
-                    "application/json"
-                )
+            ActivityResultContracts.CreateDocument(
+                "application/json"
+            )
         ) { uri ->
             if (uri != null) {
                 scope.launch {
@@ -186,19 +197,16 @@ internal fun SettingsScreen(
 
     val restoreLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts
-                .OpenDocument()
+            ActivityResultContracts.OpenDocument()
         ) { uri ->
             if (uri != null) {
                 scope.launch {
                     viewModel
                         .importBackup(uri)
-                        .onSuccess {
-                            count ->
+                        .onSuccess { count ->
                             snackbarHostState
                                 .showSnackbar(
-                                    count
-                                        .toString() +
+                                    count.toString() +
                                         " mérőállás visszaállítva."
                                 )
                         }
@@ -216,6 +224,60 @@ internal fun SettingsScreen(
             }
         }
 
+    fun currentSettings() =
+        BillingSettings(
+            electricityUnitPrice =
+                parseDecimal(
+                    electricityUnitPrice
+                ),
+            electricityMonthlyFixedFee =
+                parseDecimal(
+                    electricityFixedFee
+                ),
+            electricityNightUnitPrice =
+                parseDecimal(
+                    nightUnitPrice
+                ),
+            electricityNightMonthlyFixedFee =
+                parseDecimal(
+                    nightFixedFee
+                ),
+            electricityMonthlyGoalKwh =
+                parseDecimal(
+                    normalGoal
+                ),
+            electricityNightMonthlyGoalKwh =
+                parseDecimal(
+                    nightGoal
+                ),
+            gasMonthlyGoalM3 =
+                parseDecimal(
+                    gasGoal
+                ),
+            gasHeatingValueMjPerM3 =
+                parseDecimal(
+                    gasHeatingValue
+                ).takeIf {
+                    it > 0.0
+                } ?: 34.8,
+            reminderEnabled =
+                reminderEnabled,
+            gasBillingMode =
+                gasMode,
+            gasUnitPrice =
+                parseDecimal(
+                    gasUnitPrice
+                ),
+            gasMonthlyFixedFee =
+                parseDecimal(
+                    gasFixedFee
+                ),
+            gasFlatMonthlyPayment =
+                parseDecimal(
+                    gasFlatPayment
+                )
+        )
+
     Scaffold(
         topBar = {
             LargeTopAppBar(
@@ -223,7 +285,7 @@ internal fun SettingsScreen(
                     Column {
                         Text("Beállítások")
                         Text(
-                            "Tarifák és adatkezelés",
+                            "Tarifák, célok és emlékeztetők",
                             style =
                                 MaterialTheme
                                     .typography
@@ -262,12 +324,10 @@ internal fun SettingsScreen(
         ) {
             item {
                 TariffCard(
-                    title =
-                        "Normál áram",
+                    title = "Normál áram",
                     subtitle =
                         "A nappali / normál mérő díjai",
-                    icon =
-                        Icons.Default.Bolt,
+                    icon = Icons.Default.Bolt,
                     containerColor =
                         MaterialTheme
                             .colorScheme
@@ -283,7 +343,6 @@ internal fun SettingsScreen(
                         label =
                             "Egységár (Ft/kWh)"
                     )
-
                     MoneyField(
                         value =
                             electricityFixedFee,
@@ -299,34 +358,27 @@ internal fun SettingsScreen(
 
             item {
                 TariffCard(
-                    title =
-                        "Éjszakai áram",
+                    title = "Éjszakai áram",
                     subtitle =
                         "Külön mérő és külön tarifa",
-                    icon =
-                        Icons.Default.Bedtime,
+                    icon = Icons.Default.Bedtime,
                     containerColor =
                         MaterialTheme
                             .colorScheme
                             .secondaryContainer
                 ) {
                     MoneyField(
-                        value =
-                            nightUnitPrice,
+                        value = nightUnitPrice,
                         onValueChange = {
-                            nightUnitPrice =
-                                it
+                            nightUnitPrice = it
                         },
                         label =
                             "Éjszakai egységár (Ft/kWh)"
                     )
-
                     MoneyField(
-                        value =
-                            nightFixedFee,
+                        value = nightFixedFee,
                         onValueChange = {
-                            nightFixedFee =
-                                it
+                            nightFixedFee = it
                         },
                         label =
                             "Éjszakai havi fix díj (Ft)"
@@ -359,10 +411,8 @@ internal fun SettingsScreen(
                                 8.dp
                             )
                     ) {
-                        GasBillingMode
-                            .entries
-                            .forEach {
-                                mode ->
+                        GasBillingMode.entries
+                            .forEach { mode ->
                                 FilterChip(
                                     selected =
                                         gasMode ==
@@ -373,8 +423,7 @@ internal fun SettingsScreen(
                                     },
                                     label = {
                                         Text(
-                                            mode
-                                                .displayName
+                                            mode.displayName
                                         )
                                     }
                                 )
@@ -382,45 +431,202 @@ internal fun SettingsScreen(
                     }
 
                     MoneyField(
-                        value =
-                            gasFlatPayment,
+                        value = gasFlatPayment,
                         onValueChange = {
-                            gasFlatPayment =
-                                it
+                            gasFlatPayment = it
                         },
                         label =
                             "Havi gázátalány (Ft)"
                     )
-
                     MoneyField(
-                        value =
-                            gasUnitPrice,
+                        value = gasUnitPrice,
                         onValueChange = {
-                            gasUnitPrice =
-                                it
+                            gasUnitPrice = it
                         },
                         label =
                             if (
                                 gasMode ==
-                                GasBillingMode
-                                    .FLAT_RATE
+                                GasBillingMode.FLAT_RATE
                             ) {
                                 "Gáz egységár – kimutatáshoz (Ft/m³)"
                             } else {
                                 "Gáz egységár (Ft/m³)"
                             }
                     )
-
                     MoneyField(
-                        value =
-                            gasFixedFee,
+                        value = gasFixedFee,
                         onValueChange = {
-                            gasFixedFee =
-                                it
+                            gasFixedFee = it
                         },
                         label =
                             "Gáz havi fix díj (Ft)"
                     )
+                    MoneyField(
+                        value = gasHeatingValue,
+                        onValueChange = {
+                            gasHeatingValue = it
+                        },
+                        label =
+                            "Fűtőérték a rezsikerethez (MJ/m³)"
+                    )
+                    Text(
+                        "Alapérték: 34,8 MJ/m³. A pontos érték szolgáltatási területenként és időben is eltérhet.",
+                        style =
+                            MaterialTheme
+                                .typography
+                                .bodySmall
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                12.dp
+                            )
+                    ) {
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically,
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    10.dp
+                                )
+                        ) {
+                            Icon(
+                                Icons.Default.Flag,
+                                contentDescription =
+                                    null
+                            )
+                            Column {
+                                Text(
+                                    "Havi célok",
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .titleLarge,
+                                    fontWeight =
+                                        FontWeight
+                                            .SemiBold
+                                )
+                                Text(
+                                    "0 = nincs cél beállítva",
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .bodySmall
+                                )
+                            }
+                        }
+
+                        MoneyField(
+                            value = normalGoal,
+                            onValueChange = {
+                                normalGoal = it
+                            },
+                            label =
+                                "Normál áram cél (kWh/hó)"
+                        )
+                        MoneyField(
+                            value = nightGoal,
+                            onValueChange = {
+                                nightGoal = it
+                            },
+                            label =
+                                "Éjszakai áram cél (kWh/hó)"
+                        )
+                        MoneyField(
+                            value = gasGoal,
+                            onValueChange = {
+                                gasGoal = it
+                            },
+                            label =
+                                "Gáz cél (m³/hó)"
+                        )
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Row(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default
+                                .NotificationsActive,
+                            contentDescription =
+                                null
+                        )
+                        Spacer(
+                            Modifier.width(12.dp)
+                        )
+                        Column(
+                            modifier =
+                                Modifier.weight(
+                                    1f
+                                )
+                        ) {
+                            Text(
+                                "Havi leolvasási emlékeztető",
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .titleMedium,
+                                fontWeight =
+                                    FontWeight
+                                        .SemiBold
+                            )
+                            Text(
+                                "Minden hónap 23-ától naponta kb. 18:00-kor jelez, amíg a normál, éjszakai és gázmérőből nincs e havi rögzítés.",
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodySmall
+                            )
+                        }
+                        Switch(
+                            checked =
+                                reminderEnabled,
+                            onCheckedChange = {
+                                reminderEnabled =
+                                    it
+                            }
+                        )
+                    }
                 }
             }
 
@@ -436,40 +642,8 @@ internal fun SettingsScreen(
                         scope.launch {
                             viewModel
                                 .updateSettings(
-                                    BillingSettings(
-                                        electricityUnitPrice =
-                                            parseDecimal(
-                                                electricityUnitPrice
-                                            ),
-                                        electricityMonthlyFixedFee =
-                                            parseDecimal(
-                                                electricityFixedFee
-                                            ),
-                                        electricityNightUnitPrice =
-                                            parseDecimal(
-                                                nightUnitPrice
-                                            ),
-                                        electricityNightMonthlyFixedFee =
-                                            parseDecimal(
-                                                nightFixedFee
-                                            ),
-                                        gasBillingMode =
-                                            gasMode,
-                                        gasUnitPrice =
-                                            parseDecimal(
-                                                gasUnitPrice
-                                            ),
-                                        gasMonthlyFixedFee =
-                                            parseDecimal(
-                                                gasFixedFee
-                                            ),
-                                        gasFlatMonthlyPayment =
-                                            parseDecimal(
-                                                gasFlatPayment
-                                            )
-                                    )
+                                    currentSettings()
                                 )
-
                             snackbarHostState
                                 .showSnackbar(
                                     "Beállítások elmentve."
@@ -479,14 +653,13 @@ internal fun SettingsScreen(
                 ) {
                     Icon(
                         Icons.Default.Save,
-                        contentDescription =
-                            null
+                        contentDescription = null
                     )
                     Spacer(
                         Modifier.width(8.dp)
                     )
                     Text(
-                        "Tarifák mentése"
+                        "Beállítások mentése"
                     )
                 }
             }
@@ -525,7 +698,7 @@ internal fun SettingsScreen(
                         )
 
                         Text(
-                            "A JSON mentés tartalmazza a méréseket és az összes tarifa-beállítást. A fotók nincsenek beágyazva.",
+                            "A JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
                             style =
                                 MaterialTheme
                                     .typography
@@ -544,15 +717,13 @@ internal fun SettingsScreen(
                                 backupLauncher
                                     .launch(
                                         "meroora-backup-" +
-                                            LocalDate
-                                                .now() +
+                                            LocalDate.now() +
                                             ".json"
                                     )
                             }
                         ) {
                             Icon(
-                                Icons.Default
-                                    .Backup,
+                                Icons.Default.Backup,
                                 contentDescription =
                                     null
                             )
@@ -581,8 +752,7 @@ internal fun SettingsScreen(
                             }
                         ) {
                             Icon(
-                                Icons.Default
-                                    .Restore,
+                                Icons.Default.Restore,
                                 contentDescription =
                                     null
                             )
@@ -625,7 +795,7 @@ internal fun SettingsScreen(
 
             item {
                 Text(
-                    "A költségszámítás becslés. A tényleges számla a szolgáltatói tarifától, kedvezményes sávtól és egyéb díjaktól eltérhet.",
+                    "A költség- és rezsikeret-számítás becslés. A tényleges számla függhet a szolgáltatói tarifától, fűtőértéktől, korrekciós tényezőtől és az elszámolási időszaktól.",
                     style =
                         MaterialTheme
                             .typography
@@ -652,7 +822,7 @@ internal fun SettingsScreen(
             },
             text = {
                 Text(
-                    "Ez törli az összes mérőállást és tarifa-beállítást. Előtte érdemes biztonsági mentést készíteni."
+                    "Ez törli az összes mérőállást és beállítást. Előtte érdemes biztonsági mentést készíteni."
                 )
             },
             confirmButton = {
@@ -660,7 +830,6 @@ internal fun SettingsScreen(
                     onClick = {
                         showClearConfirmation =
                             false
-
                         scope.launch {
                             viewModel
                                 .clearAllData()
@@ -708,18 +877,17 @@ private fun TariffCard(
         androidx.compose.ui.graphics.vector.ImageVector,
     containerColor:
         androidx.compose.ui.graphics.Color,
-    content: @Composable
-        ColumnScope.() -> Unit
+    content:
+        @Composable ColumnScope.() -> Unit
 ) {
     ElevatedCard(
         modifier =
             Modifier.fillMaxWidth(),
         colors =
-            CardDefaults
-                .elevatedCardColors(
-                    containerColor =
-                        containerColor
-                )
+            CardDefaults.elevatedCardColors(
+                containerColor =
+                    containerColor
+            )
     ) {
         Column(
             modifier =
@@ -739,7 +907,6 @@ private fun TariffCard(
                     icon,
                     contentDescription = null
                 )
-
                 Column {
                     Text(
                         title,
@@ -759,7 +926,6 @@ private fun TariffCard(
                     )
                 }
             }
-
             content()
         }
     }
