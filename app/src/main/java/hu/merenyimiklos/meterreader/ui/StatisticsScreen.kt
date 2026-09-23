@@ -126,6 +126,19 @@ internal fun StatisticsScreen(
             )
         }
 
+    val projectedMonthlyCost =
+        remember(
+            readings,
+            settings,
+            metric
+        ) {
+            projectedMonthlyCost(
+                readings = readings,
+                settings = settings,
+                metric = metric
+            )
+        }
+
     val costInsights = remember(
         summaries
     ) {
@@ -236,7 +249,9 @@ internal fun StatisticsScreen(
                         insights = insights,
                         settings = settings,
                         yearOverYearPercent =
-                            yearOverYearPercent
+                            yearOverYearPercent,
+                        projectedMonthlyCost =
+                            projectedMonthlyCost
                     )
                 }
             }
@@ -570,7 +585,8 @@ private fun MetricOverview(
     metric: StatisticsMetric,
     insights: UsageInsights,
     settings: BillingSettings,
-    yearOverYearPercent: Double?
+    yearOverYearPercent: Double?,
+    projectedMonthlyCost: Double?
 ) {
     val goal =
         goalForMetric(
@@ -751,7 +767,15 @@ private fun MetricOverview(
                         "Napi átlag alapján egy teljes hónapra vetítve: ~" +
                             formatDecimal(it) +
                             " " +
-                            metric.unit,
+                            metric.unit +
+                            projectedMonthlyCost
+                                ?.let { cost ->
+                                    " · ~" +
+                                        formatMoney(
+                                            cost
+                                        )
+                                }
+                                .orEmpty(),
                         style =
                             MaterialTheme
                                 .typography
@@ -1745,6 +1769,162 @@ private fun GasReferenceCurveCard(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+private fun projectedMonthlyCost(
+    readings: List<MeterReading>,
+    settings: BillingSettings,
+    metric: StatisticsMetric
+): Double? {
+    val days =
+        YearMonth.now()
+            .lengthOfMonth()
+            .toDouble()
+
+    fun projectedUsage(
+        type: MeterType
+    ): Double? =
+        AnalyticsCalculator
+            .latestDailyAverage(
+                readings,
+                type
+            )
+            ?.times(days)
+
+    return when (metric) {
+        StatisticsMetric.NORMAL -> {
+            val usage =
+                projectedUsage(
+                    MeterType.ELECTRICITY
+                ) ?: return null
+
+            if (
+                settings
+                    .electricityUnitPrice <=
+                0.0
+            ) {
+                null
+            } else {
+                usage *
+                    settings
+                        .electricityUnitPrice +
+                    settings
+                        .electricityMonthlyFixedFee
+            }
+        }
+
+        StatisticsMetric.NIGHT -> {
+            val usage =
+                projectedUsage(
+                    MeterType
+                        .ELECTRICITY_NIGHT
+                ) ?: return null
+
+            if (
+                settings
+                    .electricityNightUnitPrice <=
+                0.0
+            ) {
+                null
+            } else {
+                usage *
+                    settings
+                        .electricityNightUnitPrice +
+                    settings
+                        .electricityNightMonthlyFixedFee
+            }
+        }
+
+        StatisticsMetric.TOTAL_ELECTRICITY -> {
+            val normal =
+                projectedUsage(
+                    MeterType.ELECTRICITY
+                )
+            val night =
+                projectedUsage(
+                    MeterType
+                        .ELECTRICITY_NIGHT
+                )
+
+            if (
+                normal == null &&
+                night == null
+            ) {
+                null
+            } else {
+                var cost = 0.0
+                var hasPrice = false
+
+                normal?.let {
+                    if (
+                        settings
+                            .electricityUnitPrice >
+                        0.0
+                    ) {
+                        cost +=
+                            it *
+                                settings
+                                    .electricityUnitPrice +
+                                settings
+                                    .electricityMonthlyFixedFee
+                        hasPrice = true
+                    }
+                }
+
+                night?.let {
+                    if (
+                        settings
+                            .electricityNightUnitPrice >
+                        0.0
+                    ) {
+                        cost +=
+                            it *
+                                settings
+                                    .electricityNightUnitPrice +
+                                settings
+                                    .electricityNightMonthlyFixedFee
+                        hasPrice = true
+                    }
+                }
+
+                cost.takeIf {
+                    hasPrice
+                }
+            }
+        }
+
+        StatisticsMetric.GAS -> {
+            val usage =
+                projectedUsage(
+                    MeterType.GAS
+                ) ?: return null
+
+            when (
+                settings.gasBillingMode
+            ) {
+                hu.merenyimiklos.meterreader.model.GasBillingMode.FLAT_RATE ->
+                    settings
+                        .gasFlatMonthlyPayment
+                        .takeIf {
+                            it > 0.0
+                        }
+
+                hu.merenyimiklos.meterreader.model.GasBillingMode.METERED ->
+                    if (
+                        settings.gasUnitPrice >
+                        0.0
+                    ) {
+                        usage *
+                            settings
+                                .gasUnitPrice +
+                            settings
+                                .gasMonthlyFixedFee
+                    } else {
+                        null
+                    }
             }
         }
     }
