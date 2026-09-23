@@ -11,18 +11,22 @@ import hu.merenyimiklos.meterreader.data.SettingsRepository
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
 import hu.merenyimiklos.meterreader.domain.OcrMeterReader
 import hu.merenyimiklos.meterreader.domain.UsageCalculator
+import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.export.XlsxExporter
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.model.OcrResult
 import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
+import hu.merenyimiklos.meterreader.widget.MeterWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -37,7 +41,12 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     )
     private val ocrReader = OcrMeterReader(application)
     private val exporter = XlsxExporter(application.contentResolver)
+    private val csvManager = CsvManager(application.contentResolver)
     private val backupManager = BackupManager(application.contentResolver)
+    private val autoBackupFile = File(
+        application.filesDir,
+        "backups/auto-backup.json"
+    )
 
     val readings = meterRepository.readings.stateIn(
         scope = viewModelScope,
@@ -61,7 +70,10 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { legacyDataMigrator.migrateIfNeeded() }
+            runCatching {
+                legacyDataMigrator.migrateIfNeeded()
+                syncAfterChange()
+            }
         }
     }
 
@@ -90,7 +102,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             note = note,
             photoUri = photoUri
         )
-        refreshReminder()
+        syncAfterChange()
         return null
     }
 
@@ -123,16 +135,14 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 note = note
             )
         )
-        refreshReminder()
+        syncAfterChange()
         return null
     }
 
     fun deleteReading(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             meterRepository.delete(id)
-            ReadingReminderWorker.evaluateAndNotify(
-                getApplication()
-            )
+            syncAfterChange()
         }
     }
 
@@ -211,7 +221,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        refreshReminder()
+        syncAfterChange()
 
         return QuickSaveResult(
             savedCount = MeterType.entries.size
@@ -220,7 +230,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun updateSettings(settings: BillingSettings) {
         settingsRepository.update(settings)
-        refreshReminder()
+        syncAfterChange(settings)
     }
 
     suspend fun detectReading(uri: Uri, type: MeterType): Result<OcrResult> =
@@ -232,6 +242,29 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         withContext(Dispatchers.IO) {
             runCatching {
                 exporter.export(uri, readings.value, settings.value)
+            }
+        }
+
+    suspend fun exportCsv(uri: Uri): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                csvManager.export(
+                    uri = uri,
+                    readings = meterRepository.getAll()
+                )
+            }
+        }
+
+    suspend fun importCsv(uri: Uri): Result<Int> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val imported =
+                    csvManager.import(uri)
+                meterRepository.upsertAll(
+                    imported
+                )
+                syncAfterChange()
+                imported.size
             }
         }
 
@@ -252,6 +285,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 val payload = backupManager.import(uri)
                 meterRepository.replaceAll(payload.readings)
                 settingsRepository.update(payload.settings)
+                syncAfterChange(payload.settings)
                 payload.readings.size
             }
         }
@@ -261,19 +295,46 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             runCatching {
                 meterRepository.clear()
                 settingsRepository.reset()
+                autoBackupFile.delete()
                 ReadingReminderWorker.evaluateAndNotify(
+                    getApplication()
+                )
+                MeterWidgetProvider.updateAll(
                     getApplication()
                 )
             }
         }
 
-    private suspend fun refreshReminder() {
+    private suspend fun syncAfterChange(
+        settingsOverride: BillingSettings? = null
+    ) {
         withContext(Dispatchers.IO) {
+            val currentSettings =
+                settingsOverride
+                    ?: settingsRepository
+                        .settings
+                        .first()
+
             runCatching {
-                ReadingReminderWorker.evaluateAndNotify(
-                    getApplication()
+                backupManager.exportToFile(
+                    file = autoBackupFile,
+                    readings =
+                        meterRepository.getAll(),
+                    settings =
+                        currentSettings
                 )
             }
+
+            runCatching {
+                ReadingReminderWorker
+                    .evaluateAndNotify(
+                        getApplication()
+                    )
+            }
+
+            MeterWidgetProvider.updateAll(
+                getApplication()
+            )
         }
     }
 
