@@ -144,6 +144,26 @@ class BackupManager(
             settings.electricityNightMonthlyFixedFee
         )
         .put(
+            "electricityMonthlyGoalKwh",
+            settings.electricityMonthlyGoalKwh
+        )
+        .put(
+            "electricityNightMonthlyGoalKwh",
+            settings.electricityNightMonthlyGoalKwh
+        )
+        .put(
+            "gasMonthlyGoalM3",
+            settings.gasMonthlyGoalM3
+        )
+        .put(
+            "gasHeatingValueMjPerM3",
+            settings.gasHeatingValueMjPerM3
+        )
+        .put(
+            "reminderEnabled",
+            settings.reminderEnabled
+        )
+        .put(
             "gasBillingMode",
             settings.gasBillingMode.name
         )
@@ -182,6 +202,31 @@ class BackupManager(
             item.optDouble(
                 "electricityNightMonthlyFixedFee",
                 0.0
+            ),
+        electricityMonthlyGoalKwh =
+            item.optDouble(
+                "electricityMonthlyGoalKwh",
+                0.0
+            ),
+        electricityNightMonthlyGoalKwh =
+            item.optDouble(
+                "electricityNightMonthlyGoalKwh",
+                0.0
+            ),
+        gasMonthlyGoalM3 =
+            item.optDouble(
+                "gasMonthlyGoalM3",
+                0.0
+            ),
+        gasHeatingValueMjPerM3 =
+            item.optDouble(
+                "gasHeatingValueMjPerM3",
+                34.8
+            ),
+        reminderEnabled =
+            item.optBoolean(
+                "reminderEnabled",
+                true
             ),
         gasBillingMode = runCatching {
             GasBillingMode.valueOf(
