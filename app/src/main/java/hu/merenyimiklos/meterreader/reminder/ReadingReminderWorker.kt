@@ -151,7 +151,7 @@ class ReadingReminderWorker(
                     CHANNEL_ID
                 )
                     .setSmallIcon(
-                        R.mipmap.ic_launcher
+                        R.drawable.ic_stat_meter
                     )
                     .setContentTitle(
                         "Ideje leolvasni a mérőórákat"
