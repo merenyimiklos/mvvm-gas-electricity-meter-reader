@@ -2,6 +2,7 @@ package hu.merenyimiklos.meterreader.viewmodel
 
 import android.app.Application
 import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import hu.merenyimiklos.meterreader.backup.BackupManager
@@ -283,9 +284,22 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         withContext(Dispatchers.IO) {
             runCatching {
                 val payload = backupManager.import(uri)
-                meterRepository.replaceAll(payload.readings)
-                settingsRepository.update(payload.settings)
-                syncAfterChange(payload.settings)
+                val current =
+                    settingsRepository.settings.first()
+                val restoredSettings =
+                    payload.settings.copy(
+                        backupFolderUri =
+                            current.backupFolderUri
+                    )
+                meterRepository.replaceAll(
+                    payload.readings
+                )
+                settingsRepository.update(
+                    restoredSettings
+                )
+                syncAfterChange(
+                    restoredSettings
+                )
                 payload.readings.size
             }
         }
@@ -315,14 +329,57 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                         .settings
                         .first()
 
+            val currentReadings =
+                meterRepository.getAll()
+
             runCatching {
                 backupManager.exportToFile(
                     file = autoBackupFile,
                     readings =
-                        meterRepository.getAll(),
+                        currentReadings,
                     settings =
                         currentSettings
                 )
+            }
+
+            if (
+                currentSettings
+                    .backupFolderUri
+                    .isNotBlank()
+            ) {
+                runCatching {
+                    val folder =
+                        DocumentFile.fromTreeUri(
+                            getApplication(),
+                            Uri.parse(
+                                currentSettings
+                                    .backupFolderUri
+                            )
+                        )
+                            ?: error(
+                                "A mentési mappa nem érhető el."
+                            )
+
+                    val backupFile =
+                        folder.findFile(
+                            "auto-backup.json"
+                        )
+                            ?: folder.createFile(
+                                "application/json",
+                                "auto-backup.json"
+                            )
+                            ?: error(
+                                "Nem sikerült létrehozni az automatikus mentést."
+                            )
+
+                    backupManager.export(
+                        uri = backupFile.uri,
+                        readings =
+                            currentReadings,
+                        settings =
+                            currentSettings
+                    )
+                }
             }
 
             runCatching {
