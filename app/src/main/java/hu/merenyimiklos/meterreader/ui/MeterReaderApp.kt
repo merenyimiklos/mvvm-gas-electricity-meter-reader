@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
@@ -25,6 +26,7 @@ import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 private const val ROUTE_HOME = "home"
 private const val ROUTE_ADD = "add"
 private const val ROUTE_HISTORY = "history"
+private const val ROUTE_STATISTICS = "statistics"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
@@ -51,6 +53,11 @@ fun MeterReaderApp(viewModel: MeterViewModel) {
             ROUTE_HISTORY,
             "Napló",
             Icons.Default.ReceiptLong
+        ),
+        Destination(
+            ROUTE_STATISTICS,
+            "Statisztika",
+            Icons.Default.BarChart
         ),
         Destination(
             ROUTE_SETTINGS,
@@ -127,6 +134,10 @@ fun MeterReaderApp(viewModel: MeterViewModel) {
 
             composable(ROUTE_HISTORY) {
                 HistoryScreen(viewModel)
+            }
+
+            composable(ROUTE_STATISTICS) {
+                StatisticsScreen(viewModel)
             }
 
             composable(ROUTE_SETTINGS) {
