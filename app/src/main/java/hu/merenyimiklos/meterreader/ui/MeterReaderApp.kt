@@ -3,13 +3,15 @@ package hu.merenyimiklos.meterreader.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,36 +30,81 @@ private const val ROUTE_SETTINGS = "settings"
 @Composable
 fun MeterReaderApp(viewModel: MeterViewModel) {
     val navController = rememberNavController()
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val currentRoute =
+        navController.currentBackStackEntryAsState()
+            .value
+            ?.destination
+            ?.route
 
     val destinations = listOf(
-        Destination(ROUTE_HOME, "Áttekintés", Icons.Default.Home),
-        Destination(ROUTE_ADD, "Rögzítés", Icons.Default.Add),
-        Destination(ROUTE_HISTORY, "Előzmények", Icons.Default.History),
-        Destination(ROUTE_SETTINGS, "Beállítások", Icons.Default.Settings)
+        Destination(
+            ROUTE_HOME,
+            "Áttekintés",
+            Icons.Default.Home
+        ),
+        Destination(
+            ROUTE_ADD,
+            "Rögzítés",
+            Icons.Default.AddCircle
+        ),
+        Destination(
+            ROUTE_HISTORY,
+            "Napló",
+            Icons.Default.ReceiptLong
+        ),
+        Destination(
+            ROUTE_SETTINGS,
+            "Beállítások",
+            Icons.Default.Settings
+        )
     )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor =
+            MaterialTheme.colorScheme.surface,
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor =
+                    MaterialTheme.colorScheme.surfaceContainer
+            ) {
                 destinations.forEach { destination ->
                     NavigationBarItem(
-                        selected = currentRoute == destination.route,
+                        selected =
+                            currentRoute == destination.route,
                         onClick = {
-                            if (currentRoute != destination.route) {
-                                navController.navigate(destination.route) {
+                            if (
+                                currentRoute !=
+                                destination.route
+                            ) {
+                                navController.navigate(
+                                    destination.route
+                                ) {
                                     launchSingleTop = true
+                                    restoreState = true
+                                    popUpTo(ROUTE_HOME) {
+                                        saveState = true
+                                    }
                                 }
                             }
                         },
                         icon = {
                             Icon(
                                 destination.icon,
-                                contentDescription = destination.label
+                                contentDescription =
+                                    destination.label
                             )
                         },
-                        label = { Text(destination.label) }
+                        label = {
+                            Text(destination.label)
+                        },
+                        colors =
+                            NavigationBarItemDefaults.colors(
+                                indicatorColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .secondaryContainer
+                            )
                     )
                 }
             }
@@ -73,19 +120,15 @@ fun MeterReaderApp(viewModel: MeterViewModel) {
             composable(ROUTE_HOME) {
                 DashboardScreen(viewModel)
             }
+
             composable(ROUTE_ADD) {
-                AddReadingScreen(
-                    viewModel = viewModel,
-                    onSaved = {
-                        navController.navigate(ROUTE_HOME) {
-                            launchSingleTop = true
-                        }
-                    }
-                )
+                AddReadingScreen(viewModel)
             }
+
             composable(ROUTE_HISTORY) {
                 HistoryScreen(viewModel)
             }
+
             composable(ROUTE_SETTINGS) {
                 SettingsScreen(viewModel)
             }
@@ -96,5 +139,6 @@ fun MeterReaderApp(viewModel: MeterViewModel) {
 private data class Destination(
     val route: String,
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val icon:
+        androidx.compose.ui.graphics.vector.ImageVector
 )
