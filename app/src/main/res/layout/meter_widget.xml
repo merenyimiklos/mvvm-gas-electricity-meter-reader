@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_title"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="#FFFFFFFF"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/widget_normal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Normál: –"
+        android:textSize="15sp"
+        android:textColor="#FFFFFFFF"
+        android:paddingVertical="3dp" />
+
+    <TextView
+        android:id="@+id/widget_night"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Éjszakai: –"
+        android:textSize="15sp"
+        android:textColor="#FFFFFFFF"
+        android:paddingVertical="3dp" />
+
+    <TextView
+        android:id="@+id/widget_gas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gáz: –"
+        android:textSize="15sp"
+        android:textColor="#FFFFFFFF"
+        android:paddingVertical="3dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_tap_to_add"
+        android:textSize="12sp"
+        android:textColor="#CCFFFFFF"
+        android:paddingTop="8dp" />
+</LinearLayout>

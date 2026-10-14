@@ -2,6 +2,7 @@ package hu.merenyimiklos.meterreader.viewmodel
 
 import android.app.Application
 import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import hu.merenyimiklos.meterreader.backup.BackupManager
@@ -11,18 +12,24 @@ import hu.merenyimiklos.meterreader.data.SettingsRepository
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
 import hu.merenyimiklos.meterreader.domain.OcrMeterReader
 import hu.merenyimiklos.meterreader.domain.UsageCalculator
+import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.export.XlsxExporter
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.model.OcrResult
+import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
+import hu.merenyimiklos.meterreader.widget.MeterWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.time.LocalDate
+import java.time.YearMonth
 
 class MeterViewModel(application: Application) : AndroidViewModel(application) {
     private val database = MeterDatabase.getInstance(application)
@@ -35,7 +42,12 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     )
     private val ocrReader = OcrMeterReader(application)
     private val exporter = XlsxExporter(application.contentResolver)
+    private val csvManager = CsvManager(application.contentResolver)
     private val backupManager = BackupManager(application.contentResolver)
+    private val autoBackupFile = File(
+        application.filesDir,
+        "backups/auto-backup.json"
+    )
 
     val readings = meterRepository.readings.stateIn(
         scope = viewModelScope,
@@ -59,7 +71,10 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { legacyDataMigrator.migrateIfNeeded() }
+            runCatching {
+                legacyDataMigrator.migrateIfNeeded()
+                syncAfterChange()
+            }
         }
     }
 
@@ -73,6 +88,14 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         val parsed = parseAndValidate(type, valueText, dateText, null)
             ?: return validationMessage
 
+        val duplicateOnDay = readings.value.any {
+            it.type == type &&
+                it.dateEpochDay == parsed.date.toEpochDay()
+        }
+        if (duplicateOnDay) {
+            return "Erre a napra már van ilyen mérőállás."
+        }
+
         meterRepository.add(
             type = type,
             value = parsed.value,
@@ -80,6 +103,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             note = note,
             photoUri = photoUri
         )
+        syncAfterChange()
         return null
     }
 
@@ -96,6 +120,15 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             original.id
         ) ?: return validationMessage
 
+        val duplicateOnDay = readings.value.any {
+            it.id != original.id &&
+                it.type == original.type &&
+                it.dateEpochDay == parsed.date.toEpochDay()
+        }
+        if (duplicateOnDay) {
+            return "Erre a napra már van ilyen mérőállás."
+        }
+
         meterRepository.update(
             original.copy(
                 value = parsed.value,
@@ -103,17 +136,102 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 note = note
             )
         )
+        syncAfterChange()
         return null
     }
 
     fun deleteReading(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             meterRepository.delete(id)
+            syncAfterChange()
         }
+    }
+
+    fun monthlyDuplicates(
+        date: LocalDate
+    ): List<MeterType> {
+        val month = YearMonth.from(date)
+        return readings.value
+            .filter {
+                YearMonth.from(
+                    LocalDate.ofEpochDay(
+                        it.dateEpochDay
+                    )
+                ) == month
+            }
+            .map { it.type }
+            .distinct()
+    }
+
+    suspend fun saveQuickReadings(
+        values: Map<MeterType, String>,
+        date: LocalDate,
+        note: String,
+        allowMonthlyDuplicate: Boolean = false
+    ): QuickSaveResult {
+        val missing = MeterType.entries.filter {
+            values[it].isNullOrBlank()
+        }
+
+        if (missing.isNotEmpty()) {
+            return QuickSaveResult(
+                error = "Add meg mindhárom mérőállást."
+            )
+        }
+
+        val duplicates = monthlyDuplicates(date)
+        if (
+            duplicates.isNotEmpty() &&
+            !allowMonthlyDuplicate
+        ) {
+            return QuickSaveResult(
+                duplicateTypes = duplicates
+            )
+        }
+
+        val parsedValues =
+            mutableMapOf<MeterType, ParsedReading>()
+
+        for (type in MeterType.entries) {
+            val parsed = parseAndValidate(
+                type = type,
+                valueText = values[type].orEmpty(),
+                dateText = date.toString(),
+                excludeId = null
+            ) ?: return QuickSaveResult(
+                error =
+                    type.displayName +
+                        ": " +
+                        validationMessage
+            )
+
+            parsedValues[type] = parsed
+        }
+
+        for (type in MeterType.entries) {
+            val parsed =
+                requireNotNull(parsedValues[type])
+
+            meterRepository.add(
+                type = type,
+                value = parsed.value,
+                dateEpochDay =
+                    parsed.date.toEpochDay(),
+                note = note,
+                photoUri = null
+            )
+        }
+
+        syncAfterChange()
+
+        return QuickSaveResult(
+            savedCount = MeterType.entries.size
+        )
     }
 
     suspend fun updateSettings(settings: BillingSettings) {
         settingsRepository.update(settings)
+        syncAfterChange(settings)
     }
 
     suspend fun detectReading(uri: Uri, type: MeterType): Result<OcrResult> =
@@ -125,6 +243,29 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         withContext(Dispatchers.IO) {
             runCatching {
                 exporter.export(uri, readings.value, settings.value)
+            }
+        }
+
+    suspend fun exportCsv(uri: Uri): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                csvManager.export(
+                    uri = uri,
+                    readings = meterRepository.getAll()
+                )
+            }
+        }
+
+    suspend fun importCsv(uri: Uri): Result<Int> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val imported =
+                    csvManager.import(uri)
+                meterRepository.upsertAll(
+                    imported
+                )
+                syncAfterChange()
+                imported.size
             }
         }
 
@@ -143,8 +284,22 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         withContext(Dispatchers.IO) {
             runCatching {
                 val payload = backupManager.import(uri)
-                meterRepository.replaceAll(payload.readings)
-                settingsRepository.update(payload.settings)
+                val current =
+                    settingsRepository.settings.first()
+                val restoredSettings =
+                    payload.settings.copy(
+                        backupFolderUri =
+                            current.backupFolderUri
+                    )
+                meterRepository.replaceAll(
+                    payload.readings
+                )
+                settingsRepository.update(
+                    restoredSettings
+                )
+                syncAfterChange(
+                    restoredSettings
+                )
                 payload.readings.size
             }
         }
@@ -154,8 +309,91 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             runCatching {
                 meterRepository.clear()
                 settingsRepository.reset()
+                autoBackupFile.delete()
+                ReadingReminderWorker.evaluateAndNotify(
+                    getApplication()
+                )
+                MeterWidgetProvider.updateAll(
+                    getApplication()
+                )
             }
         }
+
+    private suspend fun syncAfterChange(
+        settingsOverride: BillingSettings? = null
+    ) {
+        withContext(Dispatchers.IO) {
+            val currentSettings =
+                settingsOverride
+                    ?: settingsRepository
+                        .settings
+                        .first()
+
+            val currentReadings =
+                meterRepository.getAll()
+
+            runCatching {
+                backupManager.exportToFile(
+                    file = autoBackupFile,
+                    readings =
+                        currentReadings,
+                    settings =
+                        currentSettings
+                )
+            }
+
+            if (
+                currentSettings
+                    .backupFolderUri
+                    .isNotBlank()
+            ) {
+                runCatching {
+                    val folder =
+                        DocumentFile.fromTreeUri(
+                            getApplication(),
+                            Uri.parse(
+                                currentSettings
+                                    .backupFolderUri
+                            )
+                        )
+                            ?: error(
+                                "A mentési mappa nem érhető el."
+                            )
+
+                    val backupFile =
+                        folder.findFile(
+                            "auto-backup.json"
+                        )
+                            ?: folder.createFile(
+                                "application/json",
+                                "auto-backup.json"
+                            )
+                            ?: error(
+                                "Nem sikerült létrehozni az automatikus mentést."
+                            )
+
+                    backupManager.export(
+                        uri = backupFile.uri,
+                        readings =
+                            currentReadings,
+                        settings =
+                            currentSettings
+                    )
+                }
+            }
+
+            runCatching {
+                ReadingReminderWorker
+                    .evaluateAndNotify(
+                        getApplication()
+                    )
+            }
+
+            MeterWidgetProvider.updateAll(
+                getApplication()
+            )
+        }
+    }
 
     private var validationMessage: String = ""
 
@@ -209,6 +447,15 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
         validationMessage = ""
         return ParsedReading(value, date)
+    }
+
+    data class QuickSaveResult(
+        val savedCount: Int = 0,
+        val duplicateTypes: List<MeterType> = emptyList(),
+        val error: String? = null
+    ) {
+        val success: Boolean
+            get() = savedCount > 0 && error == null
     }
 
     private data class ParsedReading(

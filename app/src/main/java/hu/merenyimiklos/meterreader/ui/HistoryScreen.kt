@@ -1,7 +1,11 @@
 package hu.merenyimiklos.meterreader.ui
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -40,21 +46,28 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.domain.UsageCalculator
 import hu.merenyimiklos.meterreader.export.XlsxExporter
+import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private enum class HistoryFilter(
@@ -77,6 +90,9 @@ internal fun HistoryScreen(
 ) {
     val readings by
         viewModel.readings
+            .collectAsStateWithLifecycle()
+    val settings by
+        viewModel.settings
             .collectAsStateWithLifecycle()
 
     val consumptionById =
@@ -111,6 +127,14 @@ internal fun HistoryScreen(
         mutableStateOf<MeterReading?>(
             null
         )
+    }
+
+    var previewPhotoUri by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var detailReading by remember {
+        mutableStateOf<MeterReading?>(null)
     }
 
     val filteredReadings =
@@ -305,6 +329,10 @@ internal fun HistoryScreen(
                                     16.dp
                             )
                             .fillMaxWidth()
+                            .clickable {
+                                detailReading =
+                                    reading
+                            }
                     ) {
                         Row(
                             modifier =
@@ -423,6 +451,23 @@ internal fun HistoryScreen(
                             )
 
                             Column {
+                                if (
+                                    reading.photoUri != null
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            previewPhotoUri =
+                                                reading.photoUri
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Image,
+                                            contentDescription =
+                                                "Mérőfotó"
+                                        )
+                                    }
+                                }
+
                                 IconButton(
                                     onClick = {
                                         editingReading =
@@ -456,6 +501,44 @@ internal fun HistoryScreen(
                 }
             }
         }
+    }
+
+    detailReading?.let { reading ->
+        ReadingDetailDialog(
+            reading = reading,
+            readings = readings,
+            settings = settings,
+            consumption =
+                consumptionById[
+                    reading.id
+                ],
+            onDismiss = {
+                detailReading = null
+            }
+        )
+    }
+
+    previewPhotoUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = {
+                previewPhotoUri = null
+            },
+            title = {
+                Text("Eredeti mérőfotó")
+            },
+            text = {
+                PhotoPreview(uri)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        previewPhotoUri = null
+                    }
+                ) {
+                    Text("Bezárás")
+                }
+            }
+        )
     }
 
     editingReading?.let {
@@ -685,4 +768,244 @@ private fun EditReadingDialog(
             }
         }
     )
+}
+
+
+@Composable
+private fun PhotoPreview(
+    uriString: String
+) {
+    val context = LocalContext.current
+
+    val bitmap by produceState<
+        android.graphics.Bitmap?
+    >(
+        initialValue = null,
+        uriString
+    ) {
+        value = withContext(
+            Dispatchers.IO
+        ) {
+            runCatching {
+                context.contentResolver
+                    .openInputStream(
+                        Uri.parse(
+                            uriString
+                        )
+                    )
+                    ?.use {
+                        BitmapFactory
+                            .decodeStream(it)
+                    }
+            }.getOrNull()
+        }
+    }
+
+    if (bitmap == null) {
+        Text(
+            "A fotó már nem érhető el."
+        )
+    } else {
+        Image(
+            bitmap =
+                bitmap!!.asImageBitmap(),
+            contentDescription =
+                "Mérőfotó",
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(
+                    max = 520.dp
+                ),
+            contentScale =
+                ContentScale.Fit
+        )
+    }
+}
+
+
+@Composable
+private fun ReadingDetailDialog(
+    reading: MeterReading,
+    readings: List<MeterReading>,
+    settings: BillingSettings,
+    consumption: Double?,
+    onDismiss: () -> Unit
+) {
+    val previous =
+        readings
+            .filter {
+                it.type ==
+                    reading.type &&
+                    it.dateEpochDay <
+                        reading.dateEpochDay
+            }
+            .maxByOrNull {
+                it.dateEpochDay
+            }
+
+    val days =
+        previous?.let {
+            reading.dateEpochDay -
+                it.dateEpochDay
+        }
+
+    val dailyAverage =
+        if (
+            consumption != null &&
+            days != null &&
+            days > 0
+        ) {
+            consumption /
+                days.toDouble()
+        } else {
+            null
+        }
+
+    val costs =
+        UsageCalculator
+            .estimatedPayableForReading(
+                reading = reading,
+                consumption =
+                    consumption,
+                settings = settings
+            )
+
+    AlertDialog(
+        onDismissRequest =
+            onDismiss,
+        title = {
+            Text(
+                reading.type.displayName
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement =
+                    Arrangement.spacedBy(
+                        8.dp
+                    )
+            ) {
+                DetailLine(
+                    "Dátum",
+                    LocalDate
+                        .ofEpochDay(
+                            reading.dateEpochDay
+                        )
+                        .toString()
+                )
+                DetailLine(
+                    "Mérőállás",
+                    formatDecimal(
+                        reading.value
+                    ) +
+                        " " +
+                        reading.type.unit
+                )
+
+                previous?.let {
+                    DetailLine(
+                        "Előző állás",
+                        formatDecimal(
+                            it.value
+                        ) +
+                            " " +
+                            reading.type.unit
+                    )
+                }
+
+                consumption?.let {
+                    DetailLine(
+                        "Fogyasztás",
+                        formatDecimal(it) +
+                            " " +
+                            reading.type.unit
+                    )
+                }
+
+                days?.takeIf {
+                    it > 0
+                }?.let {
+                    DetailLine(
+                        "Eltelt idő",
+                        it.toString() +
+                            " nap"
+                    )
+                }
+
+                dailyAverage?.let {
+                    DetailLine(
+                        "Napi átlag",
+                        formatDecimal(it) +
+                            " " +
+                            reading.type.unit +
+                            "/nap"
+                    )
+                }
+
+                costs.second?.let {
+                    DetailLine(
+                        "Becsült fizetendő",
+                        formatMoney(it)
+                    )
+                }
+
+                if (
+                    reading.note.isNotBlank()
+                ) {
+                    DetailLine(
+                        "Megjegyzés",
+                        reading.note
+                    )
+                }
+
+                DetailLine(
+                    "Fotó",
+                    if (
+                        reading.photoUri !=
+                        null
+                    ) {
+                        "Elérhető a kép ikonnal"
+                    } else {
+                        "Nincs"
+                    }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Bezárás")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DetailLine(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+        horizontalArrangement =
+            Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant
+        )
+        Spacer(
+            Modifier.width(12.dp)
+        )
+        Text(
+            value,
+            fontWeight =
+                FontWeight.SemiBold
+        )
+    }
 }

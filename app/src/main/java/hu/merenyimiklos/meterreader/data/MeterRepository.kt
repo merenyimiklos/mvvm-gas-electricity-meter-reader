@@ -49,6 +49,18 @@ class MeterRepository(
         dao.deleteById(id)
     }
 
+    suspend fun upsertAll(
+        readings: List<MeterReading>
+    ) {
+        if (readings.isNotEmpty()) {
+            dao.upsertAll(
+                readings.map {
+                    it.toEntity()
+                }
+            )
+        }
+    }
+
     suspend fun replaceAll(readings: List<MeterReading>) {
         database.withTransaction {
             dao.deleteAll()

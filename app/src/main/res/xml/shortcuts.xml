@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_reading"
+        android:enabled="true"
+        android:icon="@drawable/ic_stat_meter"
+        android:shortcutShortLabel="@string/shortcut_add"
+        android:shortcutLongLabel="@string/shortcut_add_long">
+        <intent
+            android:action="hu.merenyimiklos.meterreader.OPEN_ADD"
+            android:targetPackage="hu.merenyimiklos.meterreader"
+            android:targetClass="hu.merenyimiklos.meterreader.MainActivity" />
+    </shortcut>
+</shortcuts>
