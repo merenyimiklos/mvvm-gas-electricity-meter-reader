@@ -220,16 +220,16 @@ internal fun SettingsScreen(
                         .onSuccess {
                             snackbarHostState
                                 .showSnackbar(
-                                    "Biztonsági mentés elkészült."
+                                    t("Biztonsági mentés elkészült.")
                                 )
                         }
                         .onFailure {
                             snackbarHostState
                                 .showSnackbar(
-                                    "Mentési hiba: " +
+                                    t("Mentési hiba: ") +
                                         (
                                             it.message
-                                                ?: "ismeretlen hiba"
+                                                ?: t("ismeretlen hiba")
                                             )
                                 )
                         }
@@ -249,16 +249,16 @@ internal fun SettingsScreen(
                             snackbarHostState
                                 .showSnackbar(
                                     count.toString() +
-                                        " mérőállás visszaállítva."
+                                        t(" mérőállás visszaállítva.")
                                 )
                         }
                         .onFailure {
                             snackbarHostState
                                 .showSnackbar(
-                                    "Visszaállítási hiba: " +
+                                    t("Visszaállítási hiba: ") +
                                         (
                                             it.message
-                                                ?: "ismeretlen hiba"
+                                                ?: t("ismeretlen hiba")
                                             )
                                 )
                         }
@@ -352,7 +352,7 @@ internal fun SettingsScreen(
                 scope.launch {
                     snackbarHostState
                         .showSnackbar(
-                            "Automatikus mentési mappa kiválasztva. Mentsd el a beállításokat."
+                            t("Automatikus mentési mappa kiválasztva. Mentsd el a beállításokat.")
                         )
                 }
             }
@@ -371,16 +371,16 @@ internal fun SettingsScreen(
                         .onSuccess {
                             snackbarHostState
                                 .showSnackbar(
-                                    "CSV export elkészült."
+                                    t("CSV export elkészült.")
                                 )
                         }
                         .onFailure {
                             snackbarHostState
                                 .showSnackbar(
-                                    "CSV export hiba: " +
+                                    t("CSV export hiba: ") +
                                         (
                                             it.message
-                                                ?: "ismeretlen hiba"
+                                                ?: t("ismeretlen hiba")
                                             )
                                 )
                         }
@@ -400,16 +400,16 @@ internal fun SettingsScreen(
                             snackbarHostState
                                 .showSnackbar(
                                     count.toString() +
-                                        " CSV mérés importálva."
+                                        t(" CSV mérés importálva.")
                                 )
                         }
                         .onFailure {
                             snackbarHostState
                                 .showSnackbar(
-                                    "CSV import hiba: " +
+                                    t("CSV import hiba: ") +
                                         (
                                             it.message
-                                                ?: "ismeretlen hiba"
+                                                ?: t("ismeretlen hiba")
                                             )
                                 )
                         }
@@ -422,9 +422,9 @@ internal fun SettingsScreen(
             LargeTopAppBar(
                 title = {
                     Column {
-                        Text("Beállítások")
+                        Text(t("Beállítások"))
                         Text(
-                            "Tarifák, célok és emlékeztetők",
+                            t("Tarifák, célok és emlékeztetők"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -463,9 +463,9 @@ internal fun SettingsScreen(
         ) {
             item {
                 TariffCard(
-                    title = "Normál áram",
+                    title = t("Normál áram"),
                     subtitle =
-                        "A nappali / normál mérő díjai",
+                        t("A nappali / normál mérő díjai"),
                     icon = Icons.Default.Bolt,
                     containerColor =
                         MaterialTheme
@@ -480,7 +480,7 @@ internal fun SettingsScreen(
                                 it
                         },
                         label =
-                            "Egységár (Ft/kWh)"
+                            t("Egységár (Ft/kWh)")
                     )
                     MoneyField(
                         value =
@@ -490,16 +490,16 @@ internal fun SettingsScreen(
                                 it
                         },
                         label =
-                            "Havi fix díj (Ft)"
+                            t("Havi fix díj (Ft)")
                     )
                 }
             }
 
             item {
                 TariffCard(
-                    title = "Éjszakai áram",
+                    title = t("Éjszakai áram"),
                     subtitle =
-                        "Külön mérő és külön tarifa",
+                        t("Külön mérő és külön tarifa"),
                     icon = Icons.Default.Bedtime,
                     containerColor =
                         MaterialTheme
@@ -512,7 +512,7 @@ internal fun SettingsScreen(
                             nightUnitPrice = it
                         },
                         label =
-                            "Éjszakai egységár (Ft/kWh)"
+                            t("Éjszakai egységár (Ft/kWh)")
                     )
                     MoneyField(
                         value = nightFixedFee,
@@ -520,16 +520,16 @@ internal fun SettingsScreen(
                             nightFixedFee = it
                         },
                         label =
-                            "Éjszakai havi fix díj (Ft)"
+                            t("Éjszakai havi fix díj (Ft)")
                     )
                 }
             }
 
             item {
                 TariffCard(
-                    title = "Gáz",
+                    title = t("Gáz"),
                     subtitle =
-                        "Átalány vagy fogyasztás alapján",
+                        t("Átalány vagy fogyasztás alapján"),
                     icon =
                         Icons.Default
                             .LocalFireDepartment,
@@ -539,7 +539,7 @@ internal fun SettingsScreen(
                             .tertiaryContainer
                 ) {
                     Text(
-                        "Elszámolás módja",
+                        t("Elszámolás módja"),
                         fontWeight =
                             FontWeight.SemiBold
                     )
@@ -575,7 +575,7 @@ internal fun SettingsScreen(
                             gasFlatPayment = it
                         },
                         label =
-                            "Havi gázátalány (Ft)"
+                            t("Havi gázátalány (Ft)")
                     )
                     MoneyField(
                         value = gasUnitPrice,
@@ -587,9 +587,9 @@ internal fun SettingsScreen(
                                 gasMode ==
                                 GasBillingMode.FLAT_RATE
                             ) {
-                                "Gáz egységár – kimutatáshoz (Ft/m³)"
+                                t("Gáz egységár – kimutatáshoz (Ft/m³)")
                             } else {
-                                "Gáz egységár (Ft/m³)"
+                                t("Gáz egységár (Ft/m³)")
                             }
                     )
                     MoneyField(
@@ -598,7 +598,7 @@ internal fun SettingsScreen(
                             gasFixedFee = it
                         },
                         label =
-                            "Gáz havi fix díj (Ft)"
+                            t("Gáz havi fix díj (Ft)")
                     )
                     MoneyField(
                         value = gasHeatingValue,
@@ -606,10 +606,10 @@ internal fun SettingsScreen(
                             gasHeatingValue = it
                         },
                         label =
-                            "Fűtőérték a rezsikerethez (MJ/m³)"
+                            t("Fűtőérték a rezsikerethez (MJ/m³)")
                     )
                     Text(
-                        "Alapérték: 34,8 MJ/m³. A pontos érték szolgáltatási területenként és időben is eltérhet.",
+                        t("Alapérték: 34,8 MJ/m³. A pontos érték szolgáltatási területenként és időben is eltérhet."),
                         style =
                             MaterialTheme
                                 .typography
@@ -656,7 +656,7 @@ internal fun SettingsScreen(
                             )
                             Column {
                                 Text(
-                                    "Havi célok",
+                                    t("Havi célok"),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -666,7 +666,7 @@ internal fun SettingsScreen(
                                             .SemiBold
                                 )
                                 Text(
-                                    "0 = nincs cél beállítva",
+                                    t("0 = nincs cél beállítva"),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -681,7 +681,7 @@ internal fun SettingsScreen(
                                 normalGoal = it
                             },
                             label =
-                                "Normál áram cél (kWh/hó)"
+                                t("Normál áram cél (kWh/hó)")
                         )
                         MoneyField(
                             value = nightGoal,
@@ -689,7 +689,7 @@ internal fun SettingsScreen(
                                 nightGoal = it
                             },
                             label =
-                                "Éjszakai áram cél (kWh/hó)"
+                                t("Éjszakai áram cél (kWh/hó)")
                         )
                         MoneyField(
                             value = gasGoal,
@@ -697,7 +697,7 @@ internal fun SettingsScreen(
                                 gasGoal = it
                             },
                             label =
-                                "Gáz cél (m³/hó)"
+                                t("Gáz cél (m³/hó)")
                         )
                     }
                 }
@@ -748,7 +748,7 @@ internal fun SettingsScreen(
                                     )
                             ) {
                                 Text(
-                                    "Havi leolvasási emlékeztető",
+                                    t("Havi leolvasási emlékeztető"),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -758,7 +758,7 @@ internal fun SettingsScreen(
                                             .SemiBold
                                 )
                                 Text(
-                                    "A választott naptól minden nap emlékeztet, amíg a havi normál, éjszakai és gázmérés nincs meg.",
+                                    t("A választott naptól minden nap emlékeztet, amíg a havi normál, éjszakai és gázmérés nincs meg."),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -793,7 +793,7 @@ internal fun SettingsScreen(
                                     Modifier.fillMaxWidth(),
                                 label = {
                                     Text(
-                                        "Emlékeztetés kezdőnapja (1–31)"
+                                        t("Emlékeztetés kezdőnapja (1–31)")
                                     )
                                 },
                                 keyboardOptions =
@@ -824,7 +824,7 @@ internal fun SettingsScreen(
                                     )
                                 )
                                 Text(
-                                    "Időpont: " +
+                                    t("Időpont: ") +
                                         formatReminderTime(
                                             reminderHour,
                                             reminderMinute
@@ -833,7 +833,7 @@ internal fun SettingsScreen(
                             }
 
                             Text(
-                                "Beállítva: minden hónap " +
+                                t("Beállítva: minden hónap ") +
                                     (
                                         reminderDayText
                                             .toIntOrNull()
@@ -843,12 +843,12 @@ internal fun SettingsScreen(
                                             )
                                             ?: 23
                                         ) +
-                                    ". napjától naponta kb. " +
+                                    t(". napjától naponta kb. ") +
                                     formatReminderTime(
                                         reminderHour,
                                         reminderMinute
                                     ) +
-                                    ". Ha a hónap rövidebb, a hónap utolsó napján indul.",
+                                    t(". Ha a hónap rövidebb, a hónap utolsó napján indul."),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -879,7 +879,7 @@ internal fun SettingsScreen(
                                 )
                             snackbarHostState
                                 .showSnackbar(
-                                    "Beállítások elmentve."
+                                    t("Beállítások elmentve.")
                                 )
                         }
                     }
@@ -892,7 +892,7 @@ internal fun SettingsScreen(
                         Modifier.width(8.dp)
                     )
                     Text(
-                        "Beállítások mentése"
+                        t("Beállítások mentése")
                     )
                 }
             }
@@ -921,7 +921,7 @@ internal fun SettingsScreen(
                             )
                     ) {
                         Text(
-                            "Adatkezelés",
+                            t("Adatkezelés"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -931,7 +931,7 @@ internal fun SettingsScreen(
                         )
 
                         Text(
-                            "Minden módosítás után automatikus helyi biztonsági mentés készül. Ha választasz saját mappát, az auto-backup.json oda is frissül. A kézi JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva.",
+                            t("Minden módosítás után automatikus helyi biztonsági mentés készül. Ha választasz saját mappát, az auto-backup.json oda is frissül. A kézi JSON mentés tartalmazza a méréseket, tarifákat, célokat és az emlékeztető beállítását. A fotók nincsenek beágyazva."),
                             style =
                                 MaterialTheme
                                     .typography
@@ -962,9 +962,9 @@ internal fun SettingsScreen(
                                     backupFolderUri
                                         .isBlank()
                                 ) {
-                                    "Automatikus mentési mappa kiválasztása"
+                                    t("Automatikus mentési mappa kiválasztása")
                                 } else {
-                                    "Automatikus mentési mappa módosítása"
+                                    t("Automatikus mentési mappa módosítása")
                                 }
                             )
                         }
@@ -973,7 +973,7 @@ internal fun SettingsScreen(
                             backupFolderUri.isNotBlank()
                         ) {
                             Text(
-                                "Külső automatikus mentés: bekapcsolva",
+                                t("Külső automatikus mentés: bekapcsolva"),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -992,7 +992,7 @@ internal fun SettingsScreen(
                                 }
                             ) {
                                 Text(
-                                    "Külső automatikus mentés kikapcsolása"
+                                    t("Külső automatikus mentés kikapcsolása")
                                 )
                             }
                         }
@@ -1021,7 +1021,7 @@ internal fun SettingsScreen(
                                 )
                             )
                             Text(
-                                "Biztonsági mentés"
+                                t("Biztonsági mentés")
                             )
                         }
 
@@ -1049,7 +1049,7 @@ internal fun SettingsScreen(
                                 )
                             )
                             Text(
-                                "CSV export"
+                                t("CSV export")
                             )
                         }
 
@@ -1079,7 +1079,7 @@ internal fun SettingsScreen(
                                 )
                             )
                             Text(
-                                "CSV import"
+                                t("CSV import")
                             )
                         }
 
@@ -1108,7 +1108,7 @@ internal fun SettingsScreen(
                                 )
                             )
                             Text(
-                                "Mentés visszaállítása"
+                                t("Mentés visszaállítása")
                             )
                         }
                     }
@@ -1152,7 +1152,7 @@ internal fun SettingsScreen(
                                     null
                             )
                             Text(
-                                "Alkalmazás",
+                                t("Alkalmazás"),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -1163,7 +1163,7 @@ internal fun SettingsScreen(
                         }
 
                         AppInfoLine(
-                            "Verzió",
+                            t("Verzió"),
                             BuildConfig.VERSION_NAME
                         )
                         AppInfoLine(
@@ -1194,20 +1194,20 @@ internal fun SettingsScreen(
                                     updateState
                             ) {
                                 UpdateState.Idle ->
-                                    "Még nincs ellenőrizve"
+                                    t("Még nincs ellenőrizve")
 
                                 UpdateState.Checking ->
-                                    "Frissítés keresése…"
+                                    t("Frissítés keresése…")
 
                                 UpdateState.UpToDate ->
-                                    "A legfrissebb verzió van telepítve."
+                                    t("A legfrissebb verzió van telepítve.")
 
                                 is UpdateState.Available ->
-                                    "Új verzió: " +
+                                    t("Új verzió: ") +
                                         state.info.version
 
                                 is UpdateState.Error ->
-                                    "Ellenőrzési hiba: " +
+                                    t("Ellenőrzési hiba: ") +
                                         state.message
                             }
 
@@ -1255,7 +1255,7 @@ internal fun SettingsScreen(
                                 )
                             )
                             Text(
-                                "Frissítések keresése"
+                                t("Frissítések keresése")
                             )
                         }
 
@@ -1283,7 +1283,7 @@ internal fun SettingsScreen(
                                 }
                             ) {
                                 Text(
-                                    "Frissítés letöltése"
+                                    t("Frissítés letöltése")
                                 )
                             }
                         }
@@ -1310,14 +1310,14 @@ internal fun SettingsScreen(
                         Modifier.width(8.dp)
                     )
                     Text(
-                        "Minden adat törlése"
+                        t("Minden adat törlése")
                     )
                 }
             }
 
             item {
                 Text(
-                    "A költség- és rezsikeret-számítás becslés. A tényleges számla függhet a szolgáltatói tarifától, fűtőértéktől, korrekciós tényezőtől és az elszámolási időszaktól.",
+                    t("A költség- és rezsikeret-számítás becslés. A tényleges számla függhet a szolgáltatói tarifától, fűtőértéktől, korrekciós tényezőtől és az elszámolási időszaktól."),
                     style =
                         MaterialTheme
                             .typography
@@ -1348,7 +1348,7 @@ internal fun SettingsScreen(
             },
             title = {
                 Text(
-                    "Emlékeztetés időpontja"
+                    t("Emlékeztetés időpontja")
                 )
             },
             text = {
@@ -1368,7 +1368,7 @@ internal fun SettingsScreen(
                             false
                     }
                 ) {
-                    Text("Beállítás")
+                    Text(t("Beállítás"))
                 }
             },
             dismissButton = {
@@ -1378,7 +1378,7 @@ internal fun SettingsScreen(
                             false
                     }
                 ) {
-                    Text("Mégse")
+                    Text(t("Mégse"))
                 }
             }
         )
@@ -1392,12 +1392,12 @@ internal fun SettingsScreen(
             },
             title = {
                 Text(
-                    "Minden adat törlése"
+                    t("Minden adat törlése")
                 )
             },
             text = {
                 Text(
-                    "Ez törli az összes mérőállást és beállítást. Előtte érdemes biztonsági mentést készíteni."
+                    t("Ez törli az összes mérőállást és beállítást. Előtte érdemes biztonsági mentést készíteni.")
                 )
             },
             confirmButton = {
@@ -1411,23 +1411,23 @@ internal fun SettingsScreen(
                                 .onSuccess {
                                     snackbarHostState
                                         .showSnackbar(
-                                            "Minden adat törölve."
+                                            t("Minden adat törölve.")
                                         )
                                 }
                                 .onFailure {
                                     snackbarHostState
                                         .showSnackbar(
-                                            "Törlési hiba: " +
+                                            t("Törlési hiba: ") +
                                                 (
                                                     it.message
-                                                        ?: "ismeretlen hiba"
+                                                        ?: t("ismeretlen hiba")
                                                     )
                                         )
                                 }
                         }
                     }
                 ) {
-                    Text("Törlés")
+                    Text(t("Törlés"))
                 }
             },
             dismissButton = {
@@ -1437,7 +1437,7 @@ internal fun SettingsScreen(
                             false
                     }
                 ) {
-                    Text("Mégse")
+                    Text(t("Mégse"))
                 }
             }
         )
