@@ -2,8 +2,10 @@ package hu.merenyimiklos.meterreader.backup
 
 import android.content.ContentResolver
 import android.net.Uri
+import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import org.json.JSONArray
@@ -81,7 +83,7 @@ class BackupManager(
                 0
             )
 
-        require(version in 1..3) {
+        require(version in 1..4) {
             "Nem támogatott mentési formátum."
         }
 
@@ -159,7 +161,7 @@ class BackupManager(
         JSONObject()
             .put(
                 "version",
-                3
+                4
             )
             .put(
                 "exportedAt",
@@ -298,6 +300,14 @@ class BackupManager(
                 settings
                     .gasFlatMonthlyPayment
             )
+            .put(
+                "appLanguage",
+                settings.appLanguage.name
+            )
+            .put(
+                "themeMode",
+                settings.themeMode.name
+            )
 
     private fun settingsFromJson(
         item: JSONObject
@@ -391,6 +401,28 @@ class BackupManager(
                 item.optDouble(
                     "gasFlatMonthlyPayment",
                     0.0
+                ),
+            appLanguage =
+                runCatching {
+                    AppLanguage.valueOf(
+                        item.optString(
+                            "appLanguage",
+                            AppLanguage.HUNGARIAN.name
+                        )
+                    )
+                }.getOrDefault(
+                    AppLanguage.HUNGARIAN
+                ),
+            themeMode =
+                runCatching {
+                    ThemeMode.valueOf(
+                        item.optString(
+                            "themeMode",
+                            ThemeMode.SYSTEM.name
+                        )
+                    )
+                }.getOrDefault(
+                    ThemeMode.SYSTEM
                 )
         )
 }
