@@ -26,10 +26,13 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SystemUpdateAlt
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -71,6 +74,7 @@ import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
+import hu.merenyimiklos.meterreader.viewmodel.SharedHomeSyncState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -84,6 +88,9 @@ internal fun SettingsScreen(
             .collectAsStateWithLifecycle()
     val updateState by
         viewModel.updateState
+            .collectAsStateWithLifecycle()
+    val sharedHomeSyncState by
+        viewModel.sharedHomeSyncState
             .collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
@@ -212,6 +219,23 @@ internal fun SettingsScreen(
     var themeMode by remember(settings) {
         mutableStateOf(
             settings.themeMode
+        )
+    }
+    var sharedHomeNameText by remember(
+        settings.sharedHomeName
+    ) {
+        mutableStateOf(
+            settings.sharedHomeName
+                .ifBlank {
+                    "Otthon"
+                }
+        )
+    }
+    var sharedDeviceNameText by remember(
+        settings.sharedDeviceName
+    ) {
+        mutableStateOf(
+            settings.sharedDeviceName
         )
     }
 
@@ -346,7 +370,17 @@ internal fun SettingsScreen(
             appLanguage =
                 appLanguage,
             themeMode =
-                themeMode
+                themeMode,
+            sharedHomeFolderUri =
+                settings.sharedHomeFolderUri,
+            sharedHomeId =
+                settings.sharedHomeId,
+            sharedHomeName =
+                settings.sharedHomeName,
+            sharedDeviceId =
+                settings.sharedDeviceId,
+            sharedDeviceName =
+                settings.sharedDeviceName
         )
 
     val backupFolderLauncher =
@@ -370,6 +404,90 @@ internal fun SettingsScreen(
                         .showSnackbar(
                             t("Automatikus mentési mappa kiválasztva. Mentsd el a beállításokat.")
                         )
+                }
+            }
+        }
+
+    val createSharedHomeFolderLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocumentTree()
+        ) { uri ->
+            if (uri != null) {
+                runCatching {
+                    context.contentResolver
+                        .takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                }
+
+                scope.launch {
+                    viewModel
+                        .createSharedHome(
+                            folderUri = uri,
+                            homeName =
+                                sharedHomeNameText,
+                            deviceName =
+                                sharedDeviceNameText
+                        )
+                        .onSuccess {
+                            snackbarHostState
+                                .showSnackbar(
+                                    t("Közös otthon létrehozva.")
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    t("Közös otthon hiba: ") +
+                                        (
+                                            it.message
+                                                ?: t("ismeretlen hiba")
+                                            )
+                                )
+                        }
+                }
+            }
+        }
+
+    val joinSharedHomeFolderLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocumentTree()
+        ) { uri ->
+            if (uri != null) {
+                runCatching {
+                    context.contentResolver
+                        .takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                }
+
+                scope.launch {
+                    viewModel
+                        .joinSharedHome(
+                            folderUri = uri,
+                            deviceName =
+                                sharedDeviceNameText
+                        )
+                        .onSuccess {
+                            snackbarHostState
+                                .showSnackbar(
+                                    t("Csatlakozva a Közös otthonhoz.")
+                                )
+                        }
+                        .onFailure {
+                            snackbarHostState
+                                .showSnackbar(
+                                    t("Csatlakozási hiba: ") +
+                                        (
+                                            it.message
+                                                ?: t("ismeretlen hiba")
+                                            )
+                                )
+                        }
                 }
             }
         }
@@ -594,6 +712,317 @@ internal fun SettingsScreen(
                                         }
                                     )
                                 }
+                        }
+                    }
+                }
+            }
+
+            item {
+                val sharedConnected =
+                    settings.sharedHomeFolderUri
+                        .isNotBlank() &&
+                        settings.sharedHomeId
+                            .isNotBlank()
+
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                10.dp
+                            )
+                    ) {
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically,
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    10.dp
+                                )
+                        ) {
+                            Icon(
+                                Icons.Default.Home,
+                                contentDescription =
+                                    null
+                            )
+                            Column {
+                                Text(
+                                    t("Közös otthon"),
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .titleLarge,
+                                    fontWeight =
+                                        FontWeight.SemiBold
+                                )
+                                Text(
+                                    t("Családi mérőállás-szinkron fiók és saját szerver nélkül."),
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .bodySmall,
+                                    color =
+                                        MaterialTheme
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        if (!sharedConnected) {
+                            OutlinedTextField(
+                                value =
+                                    sharedHomeNameText,
+                                onValueChange = {
+                                    sharedHomeNameText =
+                                        it
+                                },
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                label = {
+                                    Text(
+                                        t("Otthon neve")
+                                    )
+                                },
+                                singleLine = true
+                            )
+
+                            OutlinedTextField(
+                                value =
+                                    sharedDeviceNameText,
+                                onValueChange = {
+                                    sharedDeviceNameText =
+                                        it
+                                },
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                label = {
+                                    Text(
+                                        t("E készülék neve")
+                                    )
+                                },
+                                placeholder = {
+                                    Text(
+                                        t("pl. Miki telefonja")
+                                    )
+                                },
+                                singleLine = true
+                            )
+
+                            Button(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    createSharedHomeFolderLauncher
+                                        .launch(null)
+                                },
+                                enabled =
+                                    sharedHomeNameText
+                                        .isNotBlank() &&
+                                        sharedDeviceNameText
+                                            .isNotBlank()
+                            ) {
+                                Icon(
+                                    Icons.Default.Home,
+                                    contentDescription =
+                                        null
+                                )
+                                Spacer(
+                                    Modifier.width(
+                                        8.dp
+                                    )
+                                )
+                                Text(
+                                    t("Új közös otthon létrehozása")
+                                )
+                            }
+
+                            OutlinedButton(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    joinSharedHomeFolderLauncher
+                                        .launch(null)
+                                },
+                                enabled =
+                                    sharedDeviceNameText
+                                        .isNotBlank()
+                            ) {
+                                Text(
+                                    t("Csatlakozás meglévőhöz")
+                                )
+                            }
+
+                            Text(
+                                t("A másik telefonon ugyanazt a megosztott Google Drive, OneDrive vagy más dokumentumszolgáltatói mappát kell kiválasztani."),
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodySmall,
+                                color =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant
+                            )
+                        } else {
+                            AppInfoLine(
+                                t("Otthon"),
+                                settings
+                                    .sharedHomeName
+                            )
+                            AppInfoLine(
+                                t("Készülék"),
+                                settings
+                                    .sharedDeviceName
+                            )
+
+                            val syncText =
+                                when (
+                                    val state =
+                                        sharedHomeSyncState
+                                ) {
+                                    SharedHomeSyncState.Idle ->
+                                        t("Szinkronizálásra kész")
+
+                                    SharedHomeSyncState.Syncing ->
+                                        t("Szinkronizálás…")
+
+                                    is SharedHomeSyncState.Success ->
+                                        if (
+                                            state.changedCount ==
+                                            0
+                                        ) {
+                                            t("Minden naprakész.")
+                                        } else {
+                                            state.changedCount
+                                                .toString() +
+                                                t(" módosítás szinkronizálva.")
+                                        }
+
+                                    is SharedHomeSyncState.Error ->
+                                        t("Szinkronhiba: ") +
+                                            state.message
+                                }
+
+                            Text(
+                                syncText,
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodySmall,
+                                color =
+                                    if (
+                                        sharedHomeSyncState is
+                                        SharedHomeSyncState.Error
+                                    ) {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .error
+                                    } else {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                    }
+                            )
+
+                            Button(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    scope.launch {
+                                        viewModel
+                                            .syncSharedHomeNow()
+                                            .onSuccess {
+                                                count ->
+                                                snackbarHostState
+                                                    .showSnackbar(
+                                                        if (
+                                                            count ==
+                                                            0
+                                                        ) {
+                                                            t("Minden naprakész.")
+                                                        } else {
+                                                            count
+                                                                .toString() +
+                                                                t(" módosítás szinkronizálva.")
+                                                        }
+                                                    )
+                                            }
+                                            .onFailure {
+                                                snackbarHostState
+                                                    .showSnackbar(
+                                                        t("Szinkronhiba: ") +
+                                                            (
+                                                                it.message
+                                                                    ?: t("ismeretlen hiba")
+                                                                )
+                                                    )
+                                            }
+                                    }
+                                },
+                                enabled =
+                                    sharedHomeSyncState !is
+                                        SharedHomeSyncState.Syncing
+                            ) {
+                                Icon(
+                                    Icons.Default.Sync,
+                                    contentDescription =
+                                        null
+                                )
+                                Spacer(
+                                    Modifier.width(
+                                        8.dp
+                                    )
+                                )
+                                Text(
+                                    t("Szinkronizálás most")
+                                )
+                            }
+
+                            OutlinedButton(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    scope.launch {
+                                        viewModel
+                                            .disconnectSharedHome()
+                                            .onSuccess {
+                                                snackbarHostState
+                                                    .showSnackbar(
+                                                        t("Közös otthon leválasztva.")
+                                                    )
+                                            }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.LinkOff,
+                                    contentDescription =
+                                        null
+                                )
+                                Spacer(
+                                    Modifier.width(
+                                        8.dp
+                                    )
+                                )
+                                Text(
+                                    t("Leválasztás erről az otthonról")
+                                )
+                            }
                         }
                     }
                 }
