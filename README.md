@@ -201,3 +201,59 @@ Ezután a további **beta → beta → stable** frissítések ugyanazzal a signi
 Az app induláskor ellenőrzi a repository legfrissebb **publikus stable GitHub Release** kiadását. Ha újabb verzió érhető el, Material 3 frissítési ablak jelenik meg, amely közvetlenül az APK letöltésére visz.
 
 A zárt, Draft béta release-eket az app nem kérdezi le, mert azok GitHub-hitelesítést igényelnének; hozzáférési tokent nem tárolunk az APK-ban.
+
+
+## Google Play Closed Testing
+
+A `.github/workflows/release.yml` már signed APK-t és signed AAB-t is készít. A `beta` csatorna a Google Play egy zárt teszt trackjére tölthet, a `stable` csatorna később a `production` trackre.
+
+### Egyszeri Play Console bootstrap
+
+1. Play Consoleban hozd létre a **Mérőóra Napló** alkalmazást ezzel a package névvel:
+   `hu.merenyimiklos.meterreader`
+2. Menj ide: **Test and release → Testing → Closed testing**.
+3. Hozz létre egy tracket pontosan ezzel a névvel:
+   `closed-beta`
+4. A **Testers** fülön adj hozzá e-mail listát vagy Google Groupot, majd mentsd el a tesztelői opt-in linket.
+5. Az első Play feltöltést még kézzel kell elvégezni:
+   - GitHub Actions → **Create App Release**
+   - `channel: beta`
+   - `publish_to_play: false`
+   - töltsd le a workflow artifactból a signed `.aab` fájlt
+   - töltsd fel kézzel a `closed-beta` track első release-éhez
+6. Ha a Play Console kéri, fejezd be a Play App Signing / alkalmazásadatok szükséges lépéseit.
+
+### Google Play Developer API
+
+A további automatikus feltöltéshez:
+
+1. Google Cloudban engedélyezd a **Google Play Android Developer API** szolgáltatást.
+2. Hozz létre egy service accountot.
+3. Készíts hozzá JSON kulcsot.
+4. Play Console → **Users and permissions** alatt hívd meg a service account e-mail címét, és adj neki ehhez az alkalmazáshoz release-kezelési jogosultságot.
+5. GitHub repo → **Settings → Secrets and variables → Actions**:
+   - új secret: `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
+   - értéke: a letöltött service-account JSON teljes tartalma
+
+Ezután a **Create App Release** workflowban:
+
+- `channel: beta`
+- `publish_to_play: true`
+- `play_track: closed-beta`
+
+A workflow:
+- lefuttatja a unit teszteket,
+- ugyanazzal az állandó upload/signing key-jel elkészíti az APK-t és AAB-t,
+- az AAB-t feltölti a `closed-beta` Play trackre,
+- a GitHubon külön Draft + Prerelease kiadást is készít.
+
+### Stable kiadás
+
+Ha a tesztelt verzió jó:
+
+- `channel: stable`
+- `publish_to_play: true`
+
+Ekkor a workflow a Play `production` tracket célozza és GitHub Latest Release-t készít.
+
+**Fontos:** minden Google Playre feltöltött új build `versionCode` értékének nagyobbnak kell lennie az összes korábban feltöltött build versionCode-jánál. Például ha a béta `versionCode = 6`, akkor a stable legyen legalább `7`.
