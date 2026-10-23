@@ -60,7 +60,12 @@ data class BillingSettings(
     val gasMonthlyFixedFee: Double = 0.0,
     val gasFlatMonthlyPayment: Double = 0.0,
     val appLanguage: AppLanguage = AppLanguage.HUNGARIAN,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val sharedHomeFolderUri: String = "",
+    val sharedHomeId: String = "",
+    val sharedHomeName: String = "",
+    val sharedDeviceId: String = "",
+    val sharedDeviceName: String = ""
 )
 
 data class MonthlySummary(
