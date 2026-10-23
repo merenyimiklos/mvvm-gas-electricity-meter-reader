@@ -52,8 +52,13 @@ class ReadingReminderWorker(
             }
 
             val today = LocalDate.now()
+            val startDay =
+                settings.reminderDayOfMonth
+                    .coerceAtMost(
+                        today.lengthOfMonth()
+                    )
 
-            if (today.dayOfMonth < 23) {
+            if (today.dayOfMonth < startDay) {
                 cancelNotification(context)
                 return
             }
