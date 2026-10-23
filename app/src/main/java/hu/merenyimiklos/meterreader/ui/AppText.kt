@@ -227,7 +227,29 @@ object AppText {
             "Téma" to "Theme",
             "Rendszer" to "System",
             "Világos" to "Light",
-            "Sötét" to "Dark"
+            "Sötét" to "Dark",
+            "Közös otthon" to "Shared home",
+            "Családi mérőállás-szinkron fiók és saját szerver nélkül." to "Family meter-reading sync without an app account or our own server.",
+            "Otthon neve" to "Home name",
+            "E készülék neve" to "This device name",
+            "pl. Miki telefonja" to "e.g. Miki's phone",
+            "Új közös otthon létrehozása" to "Create shared home",
+            "Csatlakozás meglévőhöz" to "Join existing home",
+            "A másik telefonon ugyanazt a megosztott Google Drive, OneDrive vagy más dokumentumszolgáltatói mappát kell kiválasztani." to "On the other phone, select the same shared Google Drive, OneDrive, or other document-provider folder.",
+            "Otthon" to "Home",
+            "Készülék" to "Device",
+            "Szinkronizálásra kész" to "Ready to sync",
+            "Szinkronizálás…" to "Syncing…",
+            "Minden naprakész." to "Everything is up to date.",
+            " módosítás szinkronizálva." to " change(s) synced.",
+            "Szinkronhiba: " to "Sync error: ",
+            "Szinkronizálás most" to "Sync now",
+            "Leválasztás erről az otthonról" to "Disconnect from this home",
+            "Közös otthon létrehozva." to "Shared home created.",
+            "Közös otthon hiba: " to "Shared home error: ",
+            "Csatlakozva a Közös otthonhoz." to "Connected to shared home.",
+            "Csatlakozási hiba: " to "Connection error: ",
+            "Közös otthon leválasztva." to "Shared home disconnected."
         )
 
     fun text(
