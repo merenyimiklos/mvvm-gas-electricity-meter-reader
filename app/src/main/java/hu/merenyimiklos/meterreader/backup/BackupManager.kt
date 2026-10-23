@@ -267,6 +267,18 @@ class BackupManager(
                 settings.reminderEnabled
             )
             .put(
+                "reminderDayOfMonth",
+                settings.reminderDayOfMonth
+            )
+            .put(
+                "reminderHour",
+                settings.reminderHour
+            )
+            .put(
+                "reminderMinute",
+                settings.reminderMinute
+            )
+            .put(
                 "gasBillingMode",
                 settings
                     .gasBillingMode
@@ -336,6 +348,21 @@ class BackupManager(
                     "reminderEnabled",
                     true
                 ),
+            reminderDayOfMonth =
+                item.optInt(
+                    "reminderDayOfMonth",
+                    23
+                ).coerceIn(1, 31),
+            reminderHour =
+                item.optInt(
+                    "reminderHour",
+                    18
+                ).coerceIn(0, 23),
+            reminderMinute =
+                item.optInt(
+                    "reminderMinute",
+                    0
+                ).coerceIn(0, 59),
             gasBillingMode =
                 runCatching {
                     GasBillingMode.valueOf(
