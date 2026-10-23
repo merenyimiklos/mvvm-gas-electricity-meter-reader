@@ -462,7 +462,7 @@ private fun QuickMonthlyReading(
                     t("Már található ") +
                         pendingDuplicateTypes
                             .joinToString(", ") {
-                                it.displayName
+                                t(it.displayName)
                             } +
                         t(" mérés erre a hónapra. Ha folytatod, új mérésként kerülnek be az értékek.")
                 )
@@ -545,7 +545,7 @@ private fun QuickMeterField(
                 Modifier.fillMaxWidth(),
             label = {
                 Text(
-                    type.displayName +
+                    t(type.displayName) +
                         " (" +
                         type.unit +
                         ")"
@@ -838,9 +838,7 @@ private fun SingleReadingEntry(
                             ocrText = ""
                         },
                         label = {
-                            Text(
-                                type.shortName
-                            )
+                            Text(t(type.shortName))
                         }
                     )
                 }
