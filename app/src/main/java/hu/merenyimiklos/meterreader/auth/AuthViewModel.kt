@@ -15,6 +15,7 @@ data class AuthUiState(
     val loading: Boolean = false,
     val user: AuthUser? = null,
     val guestMode: Boolean = false,
+    val showOnboarding: Boolean = false,
     val error: String? = null,
     val message: String? = null
 ) {
@@ -33,6 +34,14 @@ class AuthViewModel(
         AuthRepository(
             application
         )
+    private val onboardingPreferences =
+        application.getSharedPreferences(
+            "meterreader_onboarding",
+            Application.MODE_PRIVATE
+        )
+
+    private val initialUser =
+        repository.currentUser()
 
     private val _state =
         MutableStateFlow(
@@ -41,8 +50,20 @@ class AuthViewModel(
                     repository
                         .isConfigured,
                 user =
-                    repository
-                        .currentUser()
+                    initialUser,
+                showOnboarding =
+                    initialUser
+                        ?.let {
+                            user ->
+                            !onboardingPreferences
+                                .getBoolean(
+                                    onboardingKey(
+                                        user.uid
+                                    ),
+                                    true
+                                )
+                        }
+                        ?: false
             )
         )
 
@@ -67,12 +88,41 @@ class AuthViewModel(
         email: String,
         password: String
     ) {
-        launchAuth {
-            repository.register(
-                name,
-                email,
-                password
-            )
+        viewModelScope.launch {
+            setLoading()
+
+            runCatching {
+                repository.register(
+                    name,
+                    email,
+                    password
+                )
+            }.onSuccess {
+                user ->
+                onboardingPreferences
+                    .edit()
+                    .putBoolean(
+                        onboardingKey(
+                            user.uid
+                        ),
+                        false
+                    )
+                    .apply()
+
+                _state.value =
+                    _state.value.copy(
+                        configured = true,
+                        loading = false,
+                        user = user,
+                        guestMode = false,
+                        showOnboarding = true,
+                        error = null,
+                        message = null
+                    )
+            }.onFailure {
+                error ->
+                setError(error)
+            }
         }
     }
 
@@ -151,6 +201,37 @@ class AuthViewModel(
         }
     }
 
+    fun completeOnboarding() {
+        val user =
+            _state.value.user
+
+        if (user != null) {
+            onboardingPreferences
+                .edit()
+                .putBoolean(
+                    onboardingKey(
+                        user.uid
+                    ),
+                    true
+                )
+                .apply()
+        }
+
+        _state.value =
+            _state.value.copy(
+                showOnboarding = false
+            )
+    }
+
+    fun replayOnboarding() {
+        if (_state.value.authenticated) {
+            _state.value =
+                _state.value.copy(
+                    showOnboarding = true
+                )
+        }
+    }
+
     fun clearFeedback() {
         _state.value =
             _state.value.copy(
@@ -176,6 +257,14 @@ class AuthViewModel(
                         loading = false,
                         user = user,
                         guestMode = false,
+                        showOnboarding =
+                            !onboardingPreferences
+                                .getBoolean(
+                                    onboardingKey(
+                                        user.uid
+                                    ),
+                                    true
+                                ),
                         error = null,
                         message = null
                     )
@@ -208,6 +297,11 @@ class AuthViewModel(
                 message = null
             )
     }
+
+    private fun onboardingKey(
+        uid: String
+    ): String =
+        "completed_" + uid
 
     private fun friendlyMessage(
         error: Throwable
