@@ -63,6 +63,16 @@ class SettingsRepository(
             stringPreferencesKey("app_language")
         val themeMode =
             stringPreferencesKey("theme_mode")
+        val sharedHomeFolderUri =
+            stringPreferencesKey("shared_home_folder_uri")
+        val sharedHomeId =
+            stringPreferencesKey("shared_home_id")
+        val sharedHomeName =
+            stringPreferencesKey("shared_home_name")
+        val sharedDeviceId =
+            stringPreferencesKey("shared_device_id")
+        val sharedDeviceName =
+            stringPreferencesKey("shared_device_name")
     }
 
     val settings: Flow<BillingSettings> =
@@ -131,7 +141,17 @@ class SettingsRepository(
                                     ThemeMode.valueOf(value)
                                 }.getOrNull()
                             }
-                            ?: ThemeMode.SYSTEM
+                            ?: ThemeMode.SYSTEM,
+                    sharedHomeFolderUri =
+                        preferences[Keys.sharedHomeFolderUri] ?: "",
+                    sharedHomeId =
+                        preferences[Keys.sharedHomeId] ?: "",
+                    sharedHomeName =
+                        preferences[Keys.sharedHomeName] ?: "",
+                    sharedDeviceId =
+                        preferences[Keys.sharedDeviceId] ?: "",
+                    sharedDeviceName =
+                        preferences[Keys.sharedDeviceName] ?: ""
                 )
             }
 
@@ -175,6 +195,16 @@ class SettingsRepository(
                 settings.appLanguage.name
             preferences[Keys.themeMode] =
                 settings.themeMode.name
+            preferences[Keys.sharedHomeFolderUri] =
+                settings.sharedHomeFolderUri
+            preferences[Keys.sharedHomeId] =
+                settings.sharedHomeId
+            preferences[Keys.sharedHomeName] =
+                settings.sharedHomeName
+            preferences[Keys.sharedDeviceId] =
+                settings.sharedDeviceId
+            preferences[Keys.sharedDeviceName] =
+                settings.sharedDeviceName
         }
     }
 
