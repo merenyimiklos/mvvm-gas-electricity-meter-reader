@@ -107,22 +107,21 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Prepare stable signing key
-        if: ${{ inputs.channel == 'stable' }}
+      - name: Prepare Android signing key
         shell: bash
         run: |
           set -euo pipefail
           KEYSTORE_PATH="$RUNNER_TEMP/meter-reader-release.jks"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" \
+            | sed '/^---/d' \
+            | tr -d '\r\n ' \
+            | base64 --decode > "$KEYSTORE_PATH"
+
           chmod 600 "$KEYSTORE_PATH"
           echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
-      - name: Build beta APK
-        if: ${{ inputs.channel == 'beta' }}
-        run: ./gradlew assembleDebug --stacktrace
-
-      - name: Build signed stable APK
-        if: ${{ inputs.channel == 'stable' }}
+      - name: Build signed release APK
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Prepare release files
@@ -133,8 +132,9 @@ jobs:
 
           mkdir -p dist
 
+          SOURCE_APK="app/build/outputs/apk/release/app-release.apk"
+
           if [[ "${{ inputs.channel }}" == "beta" ]]; then
-            SOURCE_APK="app/build/outputs/apk/debug/app-debug.apk"
             FILE_NAME="meter-reader-${APP_VERSION_NAME}-beta-${GITHUB_RUN_NUMBER}.apk"
             TAG="v${APP_VERSION_NAME}-beta.${GITHUB_RUN_NUMBER}"
             TITLE="Mérőóra Napló ${APP_VERSION_NAME} Beta #${GITHUB_RUN_NUMBER}"
