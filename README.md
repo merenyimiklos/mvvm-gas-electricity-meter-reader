@@ -103,3 +103,35 @@ A GitHub Actions minden `main` pushnál és PR-nél lefuttatja a unit teszteket,
 ## Csomagnév
 
 `hu.merenyimiklos.meterreader`
+
+
+## GitHub kiadások
+
+A repository két kiadási módot támogat a **Create App Release** GitHub Actionből.
+
+### Zárt béta
+
+Az **Actions → Create App Release → Run workflow** alatt válaszd:
+
+- `channel: beta`
+- `source_ref`: például `main` vagy egy konkrét commit SHA
+- `version_name`: például `0.5.0`
+- `version_code`: növekvő egész szám
+- opcionális release notes
+
+A workflow lefuttatja a unit teszteket, elkészíti az APK-t és létrehoz egy **Draft + Prerelease** GitHub Release-t. Mivel Draft, a publikus repository ellenére sem jelenik meg nyilvános kiadásként.
+
+A béta jelenleg debug-signingot használ, ezért tesztelésre való.
+
+### Stable
+
+A `stable` csatorna ugyanígy fut, de állandó release signing key szükséges. Ezeket GitHub Actions Secretként kell megadni:
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+A signing key soha ne kerüljön a repositoryba. Stable kiadásnál a workflow signed release APK-t készít, `v<version>` taget és publikus Latest GitHub Release-t hoz létre.
+
+A Gradle build CI-ből felülírható `APP_VERSION_NAME` és `APP_VERSION_CODE` környezeti változókkal, így a repositoryban lévő alapverzió módosítása nélkül is készíthető külön béta vagy stable build.
