@@ -34,12 +34,12 @@ on:
       version_name:
         description: "Alapverzió, pl. 0.6.0"
         required: true
-        default: "0.6.0"
+        default: "0.7.0"
         type: string
       version_code:
         description: "Android versionCode, mindig növekvő egész szám"
         required: true
-        default: "6"
+        default: "8"
         type: string
       release_notes:
         description: "Rövid kiadási megjegyzés"
