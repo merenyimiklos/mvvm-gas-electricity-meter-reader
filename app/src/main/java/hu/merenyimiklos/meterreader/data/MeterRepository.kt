@@ -28,8 +28,8 @@ class MeterRepository(
         dateEpochDay: Long,
         note: String,
         photoUri: String?
-    ) {
-        dao.upsert(
+    ): MeterReading {
+        val reading =
             MeterReading(
                 id = UUID.randomUUID().toString(),
                 type = type,
@@ -37,8 +37,11 @@ class MeterRepository(
                 dateEpochDay = dateEpochDay,
                 note = note.trim(),
                 photoUri = photoUri
-            ).toEntity()
+            )
+        dao.upsert(
+            reading.toEntity()
         )
+        return reading
     }
 
     suspend fun update(reading: MeterReading) {
