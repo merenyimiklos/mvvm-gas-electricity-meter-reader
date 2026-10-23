@@ -1172,6 +1172,10 @@ internal fun SettingsScreen(
                                 .toString()
                         )
                         AppInfoLine(
+                            "Build típus",
+                            BuildConfig.BUILD_TYPE
+                        )
+                        AppInfoLine(
                             "Csomagnév",
                             BuildConfig.APPLICATION_ID
                         )
