@@ -11,3 +11,4 @@ app/build/
 *.jks
 *.keystore
 *.b64
+upload_certificate.pem
