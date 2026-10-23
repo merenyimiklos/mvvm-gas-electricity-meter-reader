@@ -208,9 +208,11 @@ class SharedHomeManager(
                 .asSequence()
                 .filter {
                     it.isFile &&
-                        it.name
-                            ?.endsWith(".json")
-                            == true
+                        (
+                            it.name
+                                ?.endsWith(".json")
+                                == true
+                        )
                 }
                 .mapNotNull { file ->
                     runCatching {
