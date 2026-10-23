@@ -84,23 +84,42 @@ fun AuthGate(
         authViewModel.state
             .collectAsStateWithLifecycle()
 
+    val destination =
+        when {
+            state.showOnboarding ->
+                "onboarding"
+
+            state.authenticated ->
+                "app"
+
+            else ->
+                "auth"
+        }
+
     AnimatedContent(
-        targetState =
-            state.authenticated,
+        targetState = destination,
         transitionSpec = {
             fadeIn() togetherWith
                 fadeOut()
         },
         label = "auth-gate"
-    ) { authenticated ->
-        if (authenticated) {
-            content()
-        } else {
-            AuthScreen(
-                state = state,
-                authViewModel =
-                    authViewModel
-            )
+    ) { screen ->
+        when (screen) {
+            "onboarding" ->
+                OnboardingScreen(
+                    authViewModel =
+                        authViewModel
+                )
+
+            "app" ->
+                content()
+
+            else ->
+                AuthScreen(
+                    state = state,
+                    authViewModel =
+                        authViewModel
+                )
         }
     }
 }
