@@ -12,6 +12,9 @@ jobs:
     name: Test and build debug APK
     runs-on: ubuntu-latest
 
+    env:
+      FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +31,16 @@ jobs:
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+
+      - name: Prepare optional Firebase config
+        shell: bash
+        run: |
+          if [[ -n "${FIREBASE_GOOGLE_SERVICES_JSON:-}" ]]; then
+            printf '%s' "$FIREBASE_GOOGLE_SERVICES_JSON" > app/google-services.json
+            echo "Firebase Android config enabled for this build."
+          else
+            echo "Firebase config secret not set; building the offline auth setup state."
+          fi
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
