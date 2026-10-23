@@ -699,9 +699,7 @@ internal fun SettingsScreen(
                                             mode
                                     },
                                     label = {
-                                        Text(
-                                            mode.displayName
-                                        )
+                                        Text(t(mode.displayName))
                                     }
                                 )
                             }
