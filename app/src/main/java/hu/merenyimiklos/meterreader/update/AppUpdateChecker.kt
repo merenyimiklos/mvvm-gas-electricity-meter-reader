@@ -52,6 +52,10 @@ class AppUpdateChecker {
                 val responseCode =
                     connection.responseCode
 
+                if (responseCode == 404) {
+                    return@runCatching null
+                }
+
                 if (
                     responseCode !in
                     200..299
