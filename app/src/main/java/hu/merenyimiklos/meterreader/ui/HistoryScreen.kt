@@ -74,13 +74,13 @@ private enum class HistoryFilter(
     val label: String,
     val meterType: MeterType?
 ) {
-    ALL("Mind", null),
-    ELECTRICITY("Normál", MeterType.ELECTRICITY),
+    ALL(t("Mind"), null),
+    ELECTRICITY(t("Normál"), MeterType.ELECTRICITY),
     ELECTRICITY_NIGHT(
-        "Éjszakai",
+        t("Éjszakai"),
         MeterType.ELECTRICITY_NIGHT
     ),
-    GAS("Gáz", MeterType.GAS)
+    GAS(t("Gáz"), MeterType.GAS)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,16 +166,16 @@ internal fun HistoryScreen(
                         .onSuccess {
                             snackbarHostState
                                 .showSnackbar(
-                                    "Excel export elkészült."
+                                    t("Excel export elkészült.")
                                 )
                         }
                         .onFailure {
                             snackbarHostState
                                 .showSnackbar(
-                                    "Export hiba: " +
+                                    t("Export hiba: ") +
                                         (
                                             it.message
-                                                ?: "ismeretlen hiba"
+                                                ?: t("ismeretlen hiba")
                                             )
                                 )
                         }
@@ -188,11 +188,11 @@ internal fun HistoryScreen(
             LargeTopAppBar(
                 title = {
                     Column {
-                        Text("Mérési napló")
+                        Text(t("Mérési napló"))
                         Text(
                             readings.size
                                 .toString() +
-                                " rögzített mérés",
+                                t(" rögzített mérés"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -220,7 +220,7 @@ internal fun HistoryScreen(
                             Icons.Default
                                 .Download,
                             contentDescription =
-                                "Excel export"
+                                t("Excel export")
                         )
                     }
                 }
@@ -301,7 +301,7 @@ internal fun HistoryScreen(
                                 )
                     ) {
                         Text(
-                            "Nincs megjeleníthető mérőállás.",
+                            t("Nincs megjeleníthető mérőállás."),
                             modifier =
                                 Modifier.padding(
                                     20.dp
@@ -406,7 +406,7 @@ internal fun HistoryScreen(
                                 Text(
                                     consumption
                                         ?.let {
-                                            "Fogyasztás az előző mérés óta: " +
+                                            t("Fogyasztás az előző mérés óta: ") +
                                                 formatDecimal(
                                                     it
                                                 ) +
@@ -415,7 +415,7 @@ internal fun HistoryScreen(
                                                     .type
                                                     .unit
                                         }
-                                        ?: "Első mérés – még nincs fogyasztási különbség.",
+                                        ?: t("Első mérés – még nincs fogyasztási különbség."),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -463,7 +463,7 @@ internal fun HistoryScreen(
                                         Icon(
                                             Icons.Default.Image,
                                             contentDescription =
-                                                "Mérőfotó"
+                                                t("Mérőfotó")
                                         )
                                     }
                                 }
@@ -478,7 +478,7 @@ internal fun HistoryScreen(
                                         Icons.Default
                                             .Edit,
                                         contentDescription =
-                                            "Szerkesztés"
+                                            t("Szerkesztés")
                                     )
                                 }
 
@@ -492,7 +492,7 @@ internal fun HistoryScreen(
                                         Icons.Default
                                             .Delete,
                                         contentDescription =
-                                            "Törlés"
+                                            t("Törlés")
                                     )
                                 }
                             }
@@ -524,7 +524,7 @@ internal fun HistoryScreen(
                 previewPhotoUri = null
             },
             title = {
-                Text("Eredeti mérőfotó")
+                Text(t("Eredeti mérőfotó"))
             },
             text = {
                 PhotoPreview(uri)
@@ -535,7 +535,7 @@ internal fun HistoryScreen(
                         previewPhotoUri = null
                     }
                 ) {
-                    Text("Bezárás")
+                    Text(t("Bezárás"))
                 }
             }
         )
@@ -572,7 +572,7 @@ internal fun HistoryScreen(
                             null
                         snackbarHostState
                             .showSnackbar(
-                                "Mérőállás módosítva."
+                                t("Mérőállás módosítva.")
                             )
                     } else {
                         snackbarHostState
@@ -594,12 +594,12 @@ internal fun HistoryScreen(
             },
             title = {
                 Text(
-                    "Mérőállás törlése"
+                    t("Mérőállás törlése")
                 )
             },
             text = {
                 Text(
-                    "Biztosan törlöd a " +
+                    t("Biztosan törlöd a ") +
                         reading
                             .type
                             .displayName
@@ -610,7 +610,7 @@ internal fun HistoryScreen(
                                 reading
                                     .dateEpochDay
                             ) +
-                        " napi mérését?"
+                        t(" napi mérését?")
                 )
             },
             confirmButton = {
@@ -624,7 +624,7 @@ internal fun HistoryScreen(
                             null
                     }
                 ) {
-                    Text("Törlés")
+                    Text(t("Törlés"))
                 }
             },
             dismissButton = {
@@ -634,7 +634,7 @@ internal fun HistoryScreen(
                             null
                     }
                 ) {
-                    Text("Mégse")
+                    Text(t("Mégse"))
                 }
             }
         )
@@ -687,7 +687,7 @@ private fun EditReadingDialog(
                 reading
                     .type
                     .displayName +
-                    " szerkesztése"
+                    t(" szerkesztése")
             )
         },
         text = {
@@ -704,7 +704,7 @@ private fun EditReadingDialog(
                     },
                     label = {
                         Text(
-                            "Mérőállás (" +
+                            t("Mérőállás (") +
                                 reading
                                     .type
                                     .unit +
@@ -727,7 +727,7 @@ private fun EditReadingDialog(
                     },
                     label = {
                         Text(
-                            "Dátum (ÉÉÉÉ-HH-NN)"
+                            t("Dátum (ÉÉÉÉ-HH-NN)")
                         )
                     },
                     singleLine = true
@@ -740,7 +740,7 @@ private fun EditReadingDialog(
                     },
                     label = {
                         Text(
-                            "Megjegyzés"
+                            t("Megjegyzés")
                         )
                     },
                     minLines = 2
@@ -757,14 +757,14 @@ private fun EditReadingDialog(
                     )
                 }
             ) {
-                Text("Mentés")
+                Text(t("Mentés"))
             }
         },
         dismissButton = {
             TextButton(
                 onClick = onDismiss
             ) {
-                Text("Mégse")
+                Text(t("Mégse"))
             }
         }
     )
@@ -803,14 +803,14 @@ private fun PhotoPreview(
 
     if (bitmap == null) {
         Text(
-            "A fotó már nem érhető el."
+            t("A fotó már nem érhető el.")
         )
     } else {
         Image(
             bitmap =
                 bitmap!!.asImageBitmap(),
             contentDescription =
-                "Mérőfotó",
+                t("Mérőfotó"),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(
@@ -886,7 +886,7 @@ private fun ReadingDetailDialog(
                     )
             ) {
                 DetailLine(
-                    "Dátum",
+                    t("Dátum"),
                     LocalDate
                         .ofEpochDay(
                             reading.dateEpochDay
@@ -894,7 +894,7 @@ private fun ReadingDetailDialog(
                         .toString()
                 )
                 DetailLine(
-                    "Mérőállás",
+                    t("Mérőállás"),
                     formatDecimal(
                         reading.value
                     ) +
@@ -904,7 +904,7 @@ private fun ReadingDetailDialog(
 
                 previous?.let {
                     DetailLine(
-                        "Előző állás",
+                        t("Előző állás"),
                         formatDecimal(
                             it.value
                         ) +
@@ -915,7 +915,7 @@ private fun ReadingDetailDialog(
 
                 consumption?.let {
                     DetailLine(
-                        "Fogyasztás",
+                        t("Fogyasztás"),
                         formatDecimal(it) +
                             " " +
                             reading.type.unit
@@ -926,25 +926,25 @@ private fun ReadingDetailDialog(
                     it > 0
                 }?.let {
                     DetailLine(
-                        "Eltelt idő",
+                        t("Eltelt idő"),
                         it.toString() +
-                            " nap"
+                            t(" nap")
                     )
                 }
 
                 dailyAverage?.let {
                     DetailLine(
-                        "Napi átlag",
+                        t("Napi átlag"),
                         formatDecimal(it) +
                             " " +
                             reading.type.unit +
-                            "/nap"
+                            t("/nap")
                     )
                 }
 
                 costs.second?.let {
                     DetailLine(
-                        "Becsült fizetendő",
+                        t("Becsült fizetendő"),
                         formatMoney(it)
                     )
                 }
@@ -953,20 +953,20 @@ private fun ReadingDetailDialog(
                     reading.note.isNotBlank()
                 ) {
                     DetailLine(
-                        "Megjegyzés",
+                        t("Megjegyzés"),
                         reading.note
                     )
                 }
 
                 DetailLine(
-                    "Fotó",
+                    t("Fotó"),
                     if (
                         reading.photoUri !=
                         null
                     ) {
-                        "Elérhető a kép ikonnal"
+                        t("Elérhető a kép ikonnal")
                     } else {
-                        "Nincs"
+                        t("Nincs")
                     }
                 )
             }
@@ -975,7 +975,7 @@ private fun ReadingDetailDialog(
             TextButton(
                 onClick = onDismiss
             ) {
-                Text("Bezárás")
+                Text(t("Bezárás"))
             }
         }
     )
