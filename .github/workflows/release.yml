@@ -11,18 +11,28 @@ on:
         options:
           - beta
           - stable
+      publish_to_play:
+        description: "Feltöltés Google Playre"
+        required: true
+        default: true
+        type: boolean
+      play_track:
+        description: "Beta Play track neve; stable esetén automatikusan production"
+        required: true
+        default: closed-beta
+        type: string
       source_run_id:
-        description: "Opcionális: sikeres GitHub Action run ID. Ha megadod, ezt használja a source_ref helyett."
+        description: "Opcionális: sikeres GitHub Action run ID"
         required: false
         default: ""
         type: string
       source_ref:
-        description: "Branch, tag vagy commit SHA, ha nem adsz meg run ID-t"
+        description: "Branch, tag vagy commit SHA, ha nincs run ID"
         required: true
         default: main
         type: string
       version_name:
-        description: "Verziónév, pl. 0.5.0"
+        description: "Alapverzió, pl. 0.6.0"
         required: true
         default: "0.6.0"
         type: string
@@ -56,9 +66,11 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
       RELEASE_NOTES_INPUT: ${{ inputs.release_notes }}
       SOURCE_RUN_ID: ${{ inputs.source_run_id }}
       SOURCE_REF_INPUT: ${{ inputs.source_ref }}
+      BETA_PLAY_TRACK: ${{ inputs.play_track }}
 
     steps:
       - name: Resolve source Action or ref
@@ -114,33 +126,47 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Validate release inputs
+      - name: Validate release inputs and secrets
         shell: bash
         run: |
           set -euo pipefail
 
           if ! [[ "$APP_VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
-            echo "version_code must be a positive integer."
+            echo "::error::version_code must be a positive integer."
             exit 1
           fi
 
           if ! [[ "$APP_VERSION_BASE" =~ ^[0-9]+([.][0-9]+){1,3}$ ]]; then
-            echo "version_name must be a base version like 0.5.0."
+            echo "::error::version_name must look like 0.6.0."
             exit 1
           fi
 
-          if [[ "${{ inputs.channel }}" == "stable" ]]; then
-            missing=0
-            for name in               ANDROID_KEYSTORE_BASE64               ANDROID_KEYSTORE_PASSWORD               ANDROID_KEY_ALIAS               ANDROID_KEY_PASSWORD
-            do
-              if [[ -z "${!name:-}" ]]; then
-                echo "::error::Missing GitHub Actions secret: $name"
-                missing=1
-              fi
-            done
+          missing=0
+          for name in \
+            ANDROID_KEYSTORE_BASE64 \
+            ANDROID_KEYSTORE_PASSWORD \
+            ANDROID_KEY_ALIAS \
+            ANDROID_KEY_PASSWORD
+          do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
 
-            if [[ "$missing" -ne 0 ]]; then
-              echo "::error::Stable release requires the permanent Android signing key."
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::Beta and stable releases require the permanent Android signing key."
+            exit 1
+          fi
+
+          if [[ "${{ inputs.publish_to_play }}" == "true" ]]; then
+            if [[ -z "${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:-}" ]]; then
+              echo "::error::Missing GitHub Actions secret: GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"
+              exit 1
+            fi
+
+            if [[ "${{ inputs.channel }}" == "beta" && -z "$BETA_PLAY_TRACK" ]]; then
+              echo "::error::play_track cannot be empty for beta releases."
               exit 1
             fi
           fi
@@ -175,49 +201,57 @@ jobs:
           chmod 600 "$KEYSTORE_PATH"
           echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
-      - name: Build signed release APK
-        run: ./gradlew assembleRelease --stacktrace
+      - name: Build signed APK and AAB
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
 
-      - name: Prepare release files
+      - name: Prepare release files and Play notes
         id: prepare
         shell: bash
         run: |
           set -euo pipefail
 
-          mkdir -p dist
-
           SOURCE_APK="app/build/outputs/apk/release/app-release.apk"
-
-          if [[ "${{ inputs.channel }}" == "beta" ]]; then
-            FILE_NAME="meter-reader-${APP_VERSION_NAME}-beta-${GITHUB_RUN_NUMBER}.apk"
-            TAG="v${APP_VERSION_NAME}-beta.${GITHUB_RUN_NUMBER}"
-            TITLE="Mérőóra Napló ${APP_VERSION_NAME} Beta #${GITHUB_RUN_NUMBER}"
-          else
-            SOURCE_APK="app/build/outputs/apk/release/app-release.apk"
-            FILE_NAME="meter-reader-${APP_VERSION_NAME}.apk"
-            TAG="v${APP_VERSION_NAME}"
-            TITLE="Mérőóra Napló ${APP_VERSION_NAME}"
-          fi
+          SOURCE_AAB="app/build/outputs/bundle/release/app-release.aab"
 
           test -f "$SOURCE_APK"
-          cp "$SOURCE_APK" "dist/$FILE_NAME"
-          sha256sum "dist/$FILE_NAME" > "dist/$FILE_NAME.sha256"
+          test -f "$SOURCE_AAB"
+
+          mkdir -p dist
+          mkdir -p distribution/whatsnew
+
+          APK_NAME="meter-reader-${APP_VERSION_NAME}.apk"
+          AAB_NAME="meter-reader-${APP_VERSION_NAME}.aab"
+          TAG="v${APP_VERSION_NAME}"
+          TITLE="Mérőóra Napló ${APP_VERSION_NAME}"
+
+          cp "$SOURCE_APK" "dist/$APK_NAME"
+          cp "$SOURCE_AAB" "dist/$AAB_NAME"
+
+          sha256sum "dist/$APK_NAME" > "dist/$APK_NAME.sha256"
+          sha256sum "dist/$AAB_NAME" > "dist/$AAB_NAME.sha256"
+
+          if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
+            printf '%s\n' "$RELEASE_NOTES_INPUT" > distribution/whatsnew/whatsnew-hu-HU
+          else
+            printf 'Mérőóra Napló %s\n' "$APP_VERSION_NAME" > distribution/whatsnew/whatsnew-hu-HU
+          fi
+
+          if [[ "${{ inputs.channel }}" == "beta" ]]; then
+            PLAY_TRACK="$BETA_PLAY_TRACK"
+          else
+            PLAY_TRACK="production"
+          fi
 
           {
             echo "## Mérőóra Napló ${APP_VERSION_NAME}"
             echo
-            if [[ "${{ inputs.channel }}" == "beta" ]]; then
-              echo "**Csatorna:** zárt béta / Draft + Prerelease"
-            else
-              echo "**Csatorna:** stable"
-            fi
-            echo
+            echo "- Csatorna: ${{ inputs.channel }}"
             echo "- Version code: ${APP_VERSION_CODE}"
             echo "- Forrás: ${{ steps.source.outputs.description }}"
             if [[ -n "${{ steps.source.outputs.run_url }}" ]]; then
               echo "- Forrás Action: ${{ steps.source.outputs.run_url }}"
             fi
-            echo "- Release workflow run: ${GITHUB_RUN_NUMBER}"
+            echo "- Google Play track: $PLAY_TRACK"
             echo
             if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
               echo "### Megjegyzések"
@@ -227,36 +261,72 @@ jobs:
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
-          echo "apk=dist/$FILE_NAME" >> "$GITHUB_OUTPUT"
-          echo "checksum=dist/$FILE_NAME.sha256" >> "$GITHUB_OUTPUT"
+          echo "apk=dist/$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "aab=dist/$AAB_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_checksum=dist/$APK_NAME.sha256" >> "$GITHUB_OUTPUT"
+          echo "aab_checksum=dist/$AAB_NAME.sha256" >> "$GITHUB_OUTPUT"
+          echo "play_track=$PLAY_TRACK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload release candidate artifact
+      - name: Upload signed release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: meter-reader-${{ inputs.channel }}-${{ inputs.version_name }}-${{ github.run_number }}
           path: |
             ${{ steps.prepare.outputs.apk }}
-            ${{ steps.prepare.outputs.checksum }}
+            ${{ steps.prepare.outputs.aab }}
+            ${{ steps.prepare.outputs.apk_checksum }}
+            ${{ steps.prepare.outputs.aab_checksum }}
           if-no-files-found: error
           retention-days: 30
 
-      - name: Create closed beta draft release
+      - name: Upload AAB to Google Play
+        if: ${{ inputs.publish_to_play }}
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: hu.merenyimiklos.meterreader
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          tracks: ${{ steps.prepare.outputs.play_track }}
+          status: completed
+          releaseName: ${{ steps.prepare.outputs.title }}
+          whatsNewDirectory: distribution/whatsnew
+
+      - name: Create closed beta GitHub draft release
         if: ${{ inputs.channel == 'beta' }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "${{ steps.prepare.outputs.tag }}"             "${{ steps.prepare.outputs.apk }}"             "${{ steps.prepare.outputs.checksum }}"             --target "$GITHUB_SHA"             --title "${{ steps.prepare.outputs.title }}"             --notes-file "$RUNNER_TEMP/release-notes.md"             --draft             --prerelease
 
-      - name: Create stable release
+          gh release create "${{ steps.prepare.outputs.tag }}" \
+            "${{ steps.prepare.outputs.apk }}" \
+            "${{ steps.prepare.outputs.aab }}" \
+            "${{ steps.prepare.outputs.apk_checksum }}" \
+            "${{ steps.prepare.outputs.aab_checksum }}" \
+            --target "${{ steps.source.outputs.ref }}" \
+            --title "${{ steps.prepare.outputs.title }}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --draft \
+            --prerelease
+
+      - name: Create stable GitHub release
         if: ${{ inputs.channel == 'stable' }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "${{ steps.prepare.outputs.tag }}"             "${{ steps.prepare.outputs.apk }}"             "${{ steps.prepare.outputs.checksum }}"             --target "$GITHUB_SHA"             --title "${{ steps.prepare.outputs.title }}"             --notes-file "$RUNNER_TEMP/release-notes.md"             --latest
+
+          gh release create "${{ steps.prepare.outputs.tag }}" \
+            "${{ steps.prepare.outputs.apk }}" \
+            "${{ steps.prepare.outputs.aab }}" \
+            "${{ steps.prepare.outputs.apk_checksum }}" \
+            "${{ steps.prepare.outputs.aab_checksum }}" \
+            --target "${{ steps.source.outputs.ref }}" \
+            --title "${{ steps.prepare.outputs.title }}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --latest
 
       - name: Release summary
         shell: bash
@@ -267,9 +337,14 @@ jobs:
             echo "- Csatorna: ${{ inputs.channel }}"
             echo "- Verzió: ${APP_VERSION_NAME} (${APP_VERSION_CODE})"
             echo "- Tag: ${{ steps.prepare.outputs.tag }}"
+            echo "- Play track: ${{ steps.prepare.outputs.play_track }}"
+            echo "- Play feltöltés: ${{ inputs.publish_to_play }}"
+            echo
             if [[ "${{ inputs.channel }}" == "beta" ]]; then
-              echo "- A GitHub Release Draft, ezért nem publikus."
+              echo "A GitHub Release Draft + Prerelease."
+              echo "A Google Play kiadás csak a Closed testing track tesztelőinek látható."
             else
-              echo "- A GitHub Release publikus és latest."
+              echo "A GitHub Release Latest."
+              echo "A Google Play kiadás a production trackre kerül."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
