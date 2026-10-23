@@ -11,8 +11,13 @@ on:
         options:
           - beta
           - stable
+      source_run_id:
+        description: "Opcionális: sikeres GitHub Action run ID. Ha megadod, ezt használja a source_ref helyett."
+        required: false
+        default: ""
+        type: string
       source_ref:
-        description: "Branch, tag vagy commit SHA, amiből épüljön"
+        description: "Branch, tag vagy commit SHA, ha nem adsz meg run ID-t"
         required: true
         default: main
         type: string
@@ -52,12 +57,48 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       RELEASE_NOTES_INPUT: ${{ inputs.release_notes }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+      SOURCE_REF_INPUT: ${{ inputs.source_ref }}
 
     steps:
+      - name: Resolve source Action or ref
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -n "$SOURCE_RUN_ID" ]]; then
+            if ! [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
+              echo "::error::source_run_id must be a numeric GitHub Actions run ID."
+              exit 1
+            fi
+
+            RUN_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")"
+            STATUS="$(printf '%s' "$RUN_JSON" | jq -r '.status')"
+            CONCLUSION="$(printf '%s' "$RUN_JSON" | jq -r '.conclusion')"
+            SHA="$(printf '%s' "$RUN_JSON" | jq -r '.head_sha')"
+            RUN_URL="$(printf '%s' "$RUN_JSON" | jq -r '.html_url')"
+
+            if [[ "$STATUS" != "completed" || "$CONCLUSION" != "success" ]]; then
+              echo "::error::The selected Action run must be completed successfully."
+              exit 1
+            fi
+
+            echo "ref=$SHA" >> "$GITHUB_OUTPUT"
+            echo "description=Action run #$SOURCE_RUN_ID ($SHA)" >> "$GITHUB_OUTPUT"
+            echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$SOURCE_REF_INPUT" >> "$GITHUB_OUTPUT"
+            echo "description=ref $SOURCE_REF_INPUT" >> "$GITHUB_OUTPUT"
+            echo "run_url=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout selected source
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ steps.source.outputs.ref }}
           fetch-depth: 0
 
       - name: Set up JDK 17
@@ -159,8 +200,11 @@ jobs:
             fi
             echo
             echo "- Version code: ${APP_VERSION_CODE}"
-            echo "- Forrás: ${GITHUB_SHA}"
-            echo "- Workflow run: ${GITHUB_RUN_NUMBER}"
+            echo "- Forrás: ${{ steps.source.outputs.description }}"
+            if [[ -n "${{ steps.source.outputs.run_url }}" ]]; then
+              echo "- Forrás Action: ${{ steps.source.outputs.run_url }}"
+            fi
+            echo "- Release workflow run: ${GITHUB_RUN_NUMBER}"
             echo
             if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
               echo "### Megjegyzések"
