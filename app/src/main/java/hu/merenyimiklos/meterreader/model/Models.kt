@@ -20,6 +20,17 @@ enum class GasBillingMode(val displayName: String) {
     METERED("Mérőállás alapján")
 }
 
+enum class AppLanguage {
+    HUNGARIAN,
+    ENGLISH
+}
+
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK
+}
+
 data class MeterReading(
     val id: String,
     val type: MeterType,
@@ -47,7 +58,9 @@ data class BillingSettings(
     val gasBillingMode: GasBillingMode = GasBillingMode.FLAT_RATE,
     val gasUnitPrice: Double = 0.0,
     val gasMonthlyFixedFee: Double = 0.0,
-    val gasFlatMonthlyPayment: Double = 0.0
+    val gasFlatMonthlyPayment: Double = 0.0,
+    val appLanguage: AppLanguage = AppLanguage.HUNGARIAN,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM
 )
 
 data class MonthlySummary(
