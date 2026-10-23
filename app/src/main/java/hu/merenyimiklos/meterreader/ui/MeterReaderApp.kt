@@ -223,9 +223,18 @@ fun MeterReaderApp(
                             )
                         }
 
-                        append(
-                            "\n\nA letöltés után az Android megerősítést kér az APK frissítéséhez."
-                        )
+                        if (
+                            BuildConfig.BUILD_TYPE ==
+                            "debug"
+                        ) {
+                            append(
+                                "\n\n⚠ Első signed átállás: ez még debug build. Készíts JSON mentést, töröld a debug appot, telepítsd a signed verziót, majd állítsd vissza a mentést."
+                            )
+                        } else {
+                            append(
+                                "\n\nA letöltés után az Android megerősítést kér az APK frissítéséhez. Az alkalmazás adatai megmaradnak."
+                            )
+                        }
                     }
                 )
             },
