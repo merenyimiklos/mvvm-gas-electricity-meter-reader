@@ -368,6 +368,16 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 meterRepository.clear()
                 settingsRepository.reset()
                 autoBackupFile.delete()
+
+                val resetSettings =
+                    settingsRepository
+                        .settings
+                        .first()
+
+                ReadingReminderScheduler.configure(
+                    getApplication(),
+                    resetSettings
+                )
                 ReadingReminderWorker.evaluateAndNotify(
                     getApplication()
                 )
