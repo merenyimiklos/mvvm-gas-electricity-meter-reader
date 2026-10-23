@@ -9,7 +9,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hu.merenyimiklos.meterreader.ui.AppText
 import hu.merenyimiklos.meterreader.ui.MeterReaderApp
 import hu.merenyimiklos.meterreader.ui.theme.MeterReaderTheme
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -34,7 +38,17 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MeterReaderTheme {
+            val settings by
+                viewModel.settings.collectAsStateWithLifecycle()
+
+            LaunchedEffect(settings.appLanguage) {
+                AppText.language =
+                    settings.appLanguage
+            }
+
+            MeterReaderTheme(
+                themeMode = settings.themeMode
+            ) {
                 MeterReaderApp(
                     viewModel = viewModel,
                     startOnAdd = startOnAdd
