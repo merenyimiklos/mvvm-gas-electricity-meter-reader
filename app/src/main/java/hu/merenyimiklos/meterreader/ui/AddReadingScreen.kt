@@ -72,8 +72,8 @@ import java.time.ZoneOffset
 private enum class ReadingEntryMode(
     val label: String
 ) {
-    QUICK("Gyors havi"),
-    SINGLE("Egyedi / fotós")
+    QUICK(t("Gyors havi")),
+    SINGLE(t("Egyedi / fotós"))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,9 +107,9 @@ internal fun AddReadingScreen(
             LargeTopAppBar(
                 title = {
                     Column {
-                        Text("Mérőállás rögzítése")
+                        Text(t("Mérőállás rögzítése"))
                         Text(
-                            "Gyors havi leolvasás vagy egyedi mérés",
+                            t("Gyors havi leolvasás vagy egyedi mérés"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -214,7 +214,7 @@ internal fun AddReadingScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("Kiválasztás")
+                    Text(t("Kiválasztás"))
                 }
             },
             dismissButton = {
@@ -223,7 +223,7 @@ internal fun AddReadingScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("Mégse")
+                    Text(t("Mégse"))
                 }
             }
         ) {
@@ -248,7 +248,7 @@ private fun DateSelector(
             contentDescription = null
         )
         Spacer(Modifier.width(8.dp))
-        Text("Mérés dátuma: " + date)
+        Text(t("Mérés dátuma: ") + date)
     }
 }
 
@@ -312,7 +312,7 @@ private fun QuickMonthlyReading(
                         emptyList()
                     snackbarHostState
                         .showSnackbar(
-                            "✓ Mindhárom mérőállás sikeresen rögzítve"
+                            t("✓ Mindhárom mérőállás sikeresen rögzítve")
                         )
                 }
 
@@ -326,7 +326,7 @@ private fun QuickMonthlyReading(
                     snackbarHostState
                         .showSnackbar(
                             result.error
-                                ?: "A mentés nem sikerült."
+                                ?: t("A mentés nem sikerült.")
                         )
                 }
             }
@@ -353,7 +353,7 @@ private fun QuickMonthlyReading(
                     Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    "Gyors havi leolvasás",
+                    t("Gyors havi leolvasás"),
                     style =
                         MaterialTheme
                             .typography
@@ -362,7 +362,7 @@ private fun QuickMonthlyReading(
                         FontWeight.SemiBold
                 )
                 Text(
-                    "Írd be egymás után a három óra állását, és egyben elmentjük.",
+                    t("Írd be egymás után a három óra állását, és egyben elmentjük."),
                     style =
                         MaterialTheme
                             .typography
@@ -417,7 +417,7 @@ private fun QuickMonthlyReading(
                     Modifier.fillMaxWidth(),
                 label = {
                     Text(
-                        "Közös megjegyzés – opcionális"
+                        t("Közös megjegyzés – opcionális")
                     )
                 },
                 minLines = 2
@@ -440,7 +440,7 @@ private fun QuickMonthlyReading(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Mindhárom mentése"
+                    t("Mindhárom mentése")
                 )
             }
         }
@@ -454,17 +454,17 @@ private fun QuickMonthlyReading(
             },
             title = {
                 Text(
-                    "Ebben a hónapban már van mérés"
+                    t("Ebben a hónapban már van mérés")
                 )
             },
             text = {
                 Text(
-                    "Már található " +
+                    t("Már található ") +
                         pendingDuplicateTypes
                             .joinToString(", ") {
                                 it.displayName
                             } +
-                        " mérés erre a hónapra. Ha folytatod, új mérésként kerülnek be az értékek."
+                        t(" mérés erre a hónapra. Ha folytatod, új mérésként kerülnek be az értékek.")
                 )
             },
             confirmButton = {
@@ -473,7 +473,7 @@ private fun QuickMonthlyReading(
                         save(true)
                     }
                 ) {
-                    Text("Mentés így is")
+                    Text(t("Mentés így is"))
                 }
             },
             dismissButton = {
@@ -483,7 +483,7 @@ private fun QuickMonthlyReading(
                             emptyList()
                     }
                 ) {
-                    Text("Mégse")
+                    Text(t("Mégse"))
                 }
             }
         )
@@ -561,7 +561,7 @@ private fun QuickMeterField(
 
         Text(
             previous?.let {
-                "Előző: " +
+                t("Előző: ") +
                     formatDecimal(it.value) +
                     " " +
                     type.unit +
@@ -569,7 +569,7 @@ private fun QuickMeterField(
                     LocalDate.ofEpochDay(
                         it.dateEpochDay
                     )
-            } ?: "Még nincs korábbi mérés.",
+            } ?: t("Még nincs korábbi mérés."),
             style =
                 MaterialTheme
                     .typography
@@ -583,7 +583,7 @@ private fun QuickMeterField(
         consumption?.let {
             val costText =
                 estimated?.let { cost ->
-                    " · kb. " +
+                    t(" · kb. ") +
                         formatMoney(cost)
                 }.orEmpty()
 
@@ -612,7 +612,7 @@ private fun QuickMeterField(
             current < previous.value
         ) {
             Text(
-                "Az érték kisebb a korábbi mérőállásnál.",
+                t("Az érték kisebb a korábbi mérőállásnál."),
                 style =
                     MaterialTheme
                         .typography
@@ -633,7 +633,7 @@ private fun QuickMeterField(
             )
         ) {
             Text(
-                "⚠ Szokatlanul nagy ugrás a saját korábbi fogyasztásodhoz képest. Ellenőrizd a beírt mérőállást.",
+                t("⚠ Szokatlanul nagy ugrás a saját korábbi fogyasztásodhoz képest. Ellenőrizd a beírt mérőállást."),
                 style =
                     MaterialTheme
                         .typography
@@ -751,17 +751,17 @@ private fun SingleReadingEntry(
                     ) {
                         snackbarHostState
                             .showSnackbar(
-                                "Nem találtam biztosan mérőállást. Írd be kézzel."
+                                t("Nem találtam biztosan mérőállást. Írd be kézzel.")
                             )
                     }
                 }
                 .onFailure {
                     snackbarHostState
                         .showSnackbar(
-                            "A képfelismerés nem sikerült: " +
+                            t("A képfelismerés nem sikerült: ") +
                                 (
                                     it.message
-                                        ?: "ismeretlen hiba"
+                                        ?: t("ismeretlen hiba")
                                     )
                         )
                 }
@@ -810,7 +810,7 @@ private fun SingleReadingEntry(
                 Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                "Egyedi mérés",
+                t("Egyedi mérés"),
                 style =
                     MaterialTheme
                         .typography
@@ -855,7 +855,7 @@ private fun SingleReadingEntry(
                     Modifier.fillMaxWidth(),
                 label = {
                     Text(
-                        "Mérőállás (" +
+                        t("Mérőállás (") +
                             meterType.unit +
                             ")"
                     )
@@ -870,7 +870,7 @@ private fun SingleReadingEntry(
 
             previous?.let {
                 Text(
-                    "Előző: " +
+                    t("Előző: ") +
                         formatDecimal(
                             it.value
                         ) +
@@ -890,7 +890,7 @@ private fun SingleReadingEntry(
 
             consumption?.let {
                 Text(
-                    "Fogyasztás: +" +
+                    t("Fogyasztás: +") +
                         formatDecimal(it) +
                         " " +
                         meterType.unit +
@@ -899,7 +899,7 @@ private fun SingleReadingEntry(
                             it,
                             settings
                         )?.let { cost ->
-                            " · kb. " +
+                            t(" · kb. ") +
                                 formatMoney(
                                     cost
                                 )
@@ -922,7 +922,7 @@ private fun SingleReadingEntry(
                 )
             ) {
                 Text(
-                    "⚠ Ez a fogyasztás jóval magasabb a saját közelmúltbeli átlagodnál. Érdemes ellenőrizni az értéket.",
+                    t("⚠ Ez a fogyasztás jóval magasabb a saját közelmúltbeli átlagodnál. Érdemes ellenőrizni az értéket."),
                     style =
                         MaterialTheme
                             .typography
@@ -945,14 +945,14 @@ private fun SingleReadingEntry(
                     Modifier.fillMaxWidth(),
                 label = {
                     Text(
-                        "Megjegyzés"
+                        t("Megjegyzés")
                     )
                 },
                 minLines = 2
             )
 
             Text(
-                "Fotós leolvasás",
+                t("Fotós leolvasás"),
                 fontWeight =
                     FontWeight.SemiBold
             )
@@ -981,7 +981,7 @@ private fun SingleReadingEntry(
                             scope.launch {
                                 snackbarHostState
                                     .showSnackbar(
-                                        "Nem sikerült képfájlt létrehozni."
+                                        t("Nem sikerült képfájlt létrehozni.")
                                     )
                             }
                         }
@@ -998,7 +998,7 @@ private fun SingleReadingEntry(
                             6.dp
                         )
                     )
-                    Text("Fotózás")
+                    Text(t("Fotózás"))
                 }
 
                 OutlinedButton(
@@ -1022,7 +1022,7 @@ private fun SingleReadingEntry(
                             6.dp
                         )
                     )
-                    Text("Galéria")
+                    Text(t("Galéria"))
                 }
             }
 
@@ -1043,14 +1043,14 @@ private fun SingleReadingEntry(
                         )
                     )
                     Text(
-                        "Mérőállás felismerése…"
+                        t("Mérőállás felismerése…")
                     )
                 }
             }
 
             if (ocrText.isNotBlank()) {
                 Text(
-                    "Felismert szöveg",
+                    t("Felismert szöveg"),
                     fontWeight =
                         FontWeight.SemiBold
                 )
@@ -1093,7 +1093,7 @@ private fun SingleReadingEntry(
                             clearForm()
                             snackbarHostState
                                 .showSnackbar(
-                                    "✓ Sikeres rögzítés"
+                                    t("✓ Sikeres rögzítés")
                                 )
                         } else {
                             snackbarHostState
@@ -1116,7 +1116,7 @@ private fun SingleReadingEntry(
                     )
                 )
                 Text(
-                    "Mérőállás mentése"
+                    t("Mérőállás mentése")
                 )
             }
         }
