@@ -119,13 +119,19 @@ Az **Actions → Create App Release → Run workflow** alatt válaszd:
 - `version_code`: növekvő egész szám
 - opcionális release notes
 
-A workflow lefuttatja a unit teszteket, elkészíti az APK-t és létrehoz egy **Draft + Prerelease** GitHub Release-t. Mivel Draft, a publikus repository ellenére sem jelenik meg nyilvános kiadásként.
+A workflow lefuttatja a unit teszteket, elkészíti a **release-signed APK-t** és létrehoz egy **Draft + Prerelease** GitHub Release-t. Mivel Draft, a publikus repository ellenére sem jelenik meg nyilvános kiadásként.
 
-A béta jelenleg debug-signingot használ, ezért tesztelésre való.
+A béta és a stable **ugyanazt az állandó signing key-t** használja, ezért a béta verziók és a későbbi stable kiadás egymásra frissíthetők.
 
-### Stable
+### Signing key egyszeri beállítása
 
-A `stable` csatorna ugyanígy fut, de állandó release signing key szükséges. Ezeket GitHub Actions Secretként kell megadni:
+Windows alatt futtasd CMD-ből:
+
+`scripts\\create-release-keystore.cmd`
+
+Ez létrehozza a `meter-reader-release.jks` és `meter-reader-release.b64` fájlt. A JKS fájlt mentsd el biztonságos helyre; a fájlokat a `.gitignore` kizárja.
+
+A repository **Settings → Secrets and variables → Actions** részében hozd létre:
 
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASSWORD`
