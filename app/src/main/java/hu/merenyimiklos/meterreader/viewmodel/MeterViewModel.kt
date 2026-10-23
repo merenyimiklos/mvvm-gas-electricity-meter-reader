@@ -422,6 +422,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 syncSharedHomeInternal(
                     updateState = true
                 )
+                Unit
             }
         }
 
