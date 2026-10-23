@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import hu.merenyimiklos.meterreader.BuildConfig
 import hu.merenyimiklos.meterreader.backup.BackupManager
 import hu.merenyimiklos.meterreader.data.LegacyDataMigrator
 import hu.merenyimiklos.meterreader.data.MeterRepository
@@ -18,10 +19,16 @@ import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.model.OcrResult
+import hu.merenyimiklos.meterreader.reminder.ReadingReminderScheduler
 import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
+import hu.merenyimiklos.meterreader.update.AppUpdateChecker
+import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.widget.MeterWidgetProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -44,6 +51,14 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     private val exporter = XlsxExporter(application.contentResolver)
     private val csvManager = CsvManager(application.contentResolver)
     private val backupManager = BackupManager(application.contentResolver)
+    private val updateChecker = AppUpdateChecker()
+    private val _updateState =
+        MutableStateFlow<UpdateState>(
+            UpdateState.Idle
+        )
+    val updateState: StateFlow<UpdateState> =
+        _updateState.asStateFlow()
+
     private val autoBackupFile = File(
         application.filesDir,
         "backups/auto-backup.json"
@@ -75,6 +90,49 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 legacyDataMigrator.migrateIfNeeded()
                 syncAfterChange()
             }
+        }
+        checkForUpdates()
+    }
+
+    fun checkForUpdates() {
+        if (
+            _updateState.value ==
+            UpdateState.Checking
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            _updateState.value =
+                UpdateState.Checking
+
+            val result =
+                withContext(
+                    Dispatchers.IO
+                ) {
+                    updateChecker.check(
+                        BuildConfig.VERSION_NAME
+                    )
+                }
+
+            _updateState.value =
+                result.fold(
+                    onSuccess = { info ->
+                        if (info == null) {
+                            UpdateState.UpToDate
+                        } else {
+                            UpdateState.Available(
+                                info
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        UpdateState.Error(
+                            error.message
+                                ?: "Nem sikerült ellenőrizni a frissítést."
+                        )
+                    }
+                )
         }
     }
 
@@ -381,6 +439,11 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             }
+
+            ReadingReminderScheduler.configure(
+                getApplication(),
+                currentSettings
+            )
 
             runCatching {
                 ReadingReminderWorker
