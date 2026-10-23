@@ -21,7 +21,9 @@ Jetpack Compose alapú Android alkalmazás havi áram- és gázmérőállások r
   - gáz 63 645 MJ/év keret és szezonális havi MVM-görbe
   - állítható gáz-fűtőérték a m³-becsléshez
 - becsült havi költségdiagram
-- minden hónap **23-ától napi leolvasási értesítés**, amíg mindhárom e havi mérés nincs meg
+- szabadon beállítható havi leolvasási emlékeztető **nap + időpont** alapján
+- a kiválasztott naptól napi értesítés, amíg mindhárom e havi mérés nincs meg
+- app-on-belüli stable verzióellenőrzés és frissítési figyelmeztetés
 - az értesítésből közvetlenül megnyitható a Rögzítés képernyő
 - kezdőképernyős Android widget a három legutóbbi mérőállással
 - appikon hosszú nyomására gyors **Új mérőállás** parancs
@@ -175,3 +177,27 @@ Ha a béta rendben van, indítsd újra a **Create App Release** workflow-t:
 A stable workflow signed release APK-t készít, `v<version>` taget hoz létre és publikus **Latest GitHub Release**-ként teszi közzé.
 
 A Gradle build CI-ből felülírható az `APP_VERSION_NAME` és `APP_VERSION_CODE` környezeti változókkal, ezért a béta/stable kiadáshoz nem kell kézzel átírni a repository verziószámát.
+
+
+## Frissítés és adatmegőrzés
+
+Azonos `applicationId` és azonos release signing key esetén az APK frissítése megőrzi a Room adatbázist, a DataStore beállításokat és az app belső adatait.
+
+### Első átállás debug APK-ról signed bétára
+
+A GitHub Actions debug APK és a saját release key-jel aláírt béta eltérő aláírást használ. Emiatt az első signed béta nem telepíthető közvetlenül a korábbi debug APK fölé.
+
+Az első átállás menete:
+
+1. a régi appban készíts JSON biztonsági mentést;
+2. töröld a debug verziót;
+3. telepítsd a release-signed bétát;
+4. állítsd vissza a JSON mentést.
+
+Ezután a további **beta → beta → stable** frissítések ugyanazzal a signing key-jel készülnek, ezért rátelepíthetők és az adatok megmaradnak.
+
+## Beépített frissítésellenőrzés
+
+Az app induláskor ellenőrzi a repository legfrissebb **publikus stable GitHub Release** kiadását. Ha újabb verzió érhető el, Material 3 frissítési ablak jelenik meg, amely közvetlenül az APK letöltésére visz.
+
+A zárt, Draft béta release-eket az app nem kérdezi le, mert azok GitHub-hitelesítést igényelnének; hozzáférési tokent nem tárolunk az APK-ban.
