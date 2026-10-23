@@ -1,3 +1,10 @@
+val ciVersionCode = System.getenv("APP_VERSION_CODE")?.toIntOrNull()
+val ciVersionName = System.getenv("APP_VERSION_NAME")
+val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+val releaseKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -13,13 +20,30 @@ android {
         applicationId = "hu.merenyimiklos.meterreader"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = ciVersionCode ?: 5
+        versionName = ciVersionName ?: "0.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (
+            !releaseKeystorePath.isNullOrBlank() &&
+            !releaseKeystorePassword.isNullOrBlank() &&
+            !releaseKeyAlias.isNullOrBlank() &&
+            !releaseKeyPassword.isNullOrBlank()
+        ) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
