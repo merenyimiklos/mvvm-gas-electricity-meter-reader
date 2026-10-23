@@ -21,6 +21,8 @@ import hu.merenyimiklos.meterreader.model.MeterType
 import hu.merenyimiklos.meterreader.model.OcrResult
 import hu.merenyimiklos.meterreader.reminder.ReadingReminderScheduler
 import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
+import hu.merenyimiklos.meterreader.shared.SharedHomeAction
+import hu.merenyimiklos.meterreader.shared.SharedHomeManager
 import hu.merenyimiklos.meterreader.update.AppUpdateChecker
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.widget.MeterWidgetProvider
@@ -37,6 +39,21 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.UUID
+
+sealed interface SharedHomeSyncState {
+    data object Idle : SharedHomeSyncState
+    data object Syncing : SharedHomeSyncState
+
+    data class Success(
+        val changedCount: Int,
+        val syncedAtMillis: Long
+    ) : SharedHomeSyncState
+
+    data class Error(
+        val message: String
+    ) : SharedHomeSyncState
+}
 
 class MeterViewModel(application: Application) : AndroidViewModel(application) {
     private val database = MeterDatabase.getInstance(application)
@@ -51,6 +68,8 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     private val exporter = XlsxExporter(application.contentResolver)
     private val csvManager = CsvManager(application.contentResolver)
     private val backupManager = BackupManager(application.contentResolver)
+    private val sharedHomeManager =
+        SharedHomeManager(application)
     private val updateChecker = AppUpdateChecker()
     private val _updateState =
         MutableStateFlow<UpdateState>(
@@ -58,6 +77,14 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         )
     val updateState: StateFlow<UpdateState> =
         _updateState.asStateFlow()
+
+    private val _sharedHomeSyncState =
+        MutableStateFlow<SharedHomeSyncState>(
+            SharedHomeSyncState.Idle
+        )
+    val sharedHomeSyncState:
+        StateFlow<SharedHomeSyncState> =
+        _sharedHomeSyncState.asStateFlow()
 
     private val autoBackupFile = File(
         application.filesDir,
@@ -89,6 +116,9 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             runCatching {
                 legacyDataMigrator.migrateIfNeeded()
                 syncAfterChange()
+                syncSharedHomeInternal(
+                    updateState = false
+                )
             }
         }
         checkForUpdates()
@@ -154,12 +184,16 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             return "Erre a napra már van ilyen mérőállás."
         }
 
-        meterRepository.add(
-            type = type,
-            value = parsed.value,
-            dateEpochDay = parsed.date.toEpochDay(),
-            note = note,
-            photoUri = photoUri
+        val reading =
+            meterRepository.add(
+                type = type,
+                value = parsed.value,
+                dateEpochDay = parsed.date.toEpochDay(),
+                note = note,
+                photoUri = photoUri
+            )
+        publishSharedUpsert(
+            reading
         )
         syncAfterChange()
         return null
@@ -187,12 +221,17 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             return "Erre a napra már van ilyen mérőállás."
         }
 
-        meterRepository.update(
+        val updated =
             original.copy(
                 value = parsed.value,
                 dateEpochDay = parsed.date.toEpochDay(),
                 note = note
             )
+        meterRepository.update(
+            updated
+        )
+        publishSharedUpsert(
+            updated
         )
         syncAfterChange()
         return null
@@ -201,6 +240,9 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteReading(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             meterRepository.delete(id)
+            publishSharedDelete(
+                id
+            )
             syncAfterChange()
         }
     }
@@ -266,18 +308,26 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
             parsedValues[type] = parsed
         }
 
+        val savedReadings =
+            mutableListOf<MeterReading>()
+
         for (type in MeterType.entries) {
             val parsed =
                 requireNotNull(parsedValues[type])
 
-            meterRepository.add(
-                type = type,
-                value = parsed.value,
-                dateEpochDay =
-                    parsed.date.toEpochDay(),
-                note = note,
-                photoUri = null
-            )
+            savedReadings +=
+                meterRepository.add(
+                    type = type,
+                    value = parsed.value,
+                    dateEpochDay =
+                        parsed.date.toEpochDay(),
+                    note = note,
+                    photoUri = null
+                )
+        }
+
+        savedReadings.forEach {
+            publishSharedUpsert(it)
         }
 
         syncAfterChange()
@@ -291,6 +341,208 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.update(settings)
         syncAfterChange(settings)
     }
+
+    suspend fun createSharedHome(
+        folderUri: Uri,
+        homeName: String,
+        deviceName: String
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                require(
+                    homeName.isNotBlank()
+                ) {
+                    "Adj nevet a közös otthonnak."
+                }
+                require(
+                    deviceName.isNotBlank()
+                ) {
+                    "Adj nevet ennek a telefonnak."
+                }
+
+                val info =
+                    sharedHomeManager
+                        .createHome(
+                            folderUri,
+                            homeName
+                        )
+
+                val current =
+                    settingsRepository
+                        .settings
+                        .first()
+                val connected =
+                    current.copy(
+                        sharedHomeFolderUri =
+                            folderUri.toString(),
+                        sharedHomeId =
+                            info.homeId,
+                        sharedHomeName =
+                            info.name,
+                        sharedDeviceId =
+                            current
+                                .sharedDeviceId
+                                .ifBlank {
+                                    UUID.randomUUID()
+                                        .toString()
+                                },
+                        sharedDeviceName =
+                            deviceName.trim()
+                    )
+
+                settingsRepository.update(
+                    connected
+                )
+
+                meterRepository
+                    .getAll()
+                    .forEach {
+                        reading ->
+                        sharedHomeManager
+                            .publishUpsert(
+                                folderUri =
+                                    folderUri,
+                                homeId =
+                                    connected
+                                        .sharedHomeId,
+                                deviceId =
+                                    connected
+                                        .sharedDeviceId,
+                                deviceName =
+                                    connected
+                                        .sharedDeviceName,
+                                reading =
+                                    reading
+                            )
+                    }
+
+                syncAfterChange(
+                    connected
+                )
+                syncSharedHomeInternal(
+                    updateState = true
+                )
+            }
+        }
+
+    suspend fun joinSharedHome(
+        folderUri: Uri,
+        deviceName: String
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                require(
+                    deviceName.isNotBlank()
+                ) {
+                    "Adj nevet ennek a telefonnak."
+                }
+
+                val info =
+                    sharedHomeManager
+                        .readHome(
+                            folderUri
+                        )
+                val localBefore =
+                    meterRepository
+                        .getAll()
+                val current =
+                    settingsRepository
+                        .settings
+                        .first()
+                val connected =
+                    current.copy(
+                        sharedHomeFolderUri =
+                            folderUri.toString(),
+                        sharedHomeId =
+                            info.homeId,
+                        sharedHomeName =
+                            info.name,
+                        sharedDeviceId =
+                            current
+                                .sharedDeviceId
+                                .ifBlank {
+                                    UUID.randomUUID()
+                                        .toString()
+                                },
+                        sharedDeviceName =
+                            deviceName.trim()
+                    )
+
+                settingsRepository.update(
+                    connected
+                )
+
+                localBefore.forEach {
+                    reading ->
+                    sharedHomeManager
+                        .publishUpsert(
+                            folderUri =
+                                folderUri,
+                            homeId =
+                                connected
+                                    .sharedHomeId,
+                            deviceId =
+                                connected
+                                    .sharedDeviceId,
+                            deviceName =
+                                connected
+                                    .sharedDeviceName,
+                            reading =
+                                reading
+                        )
+                }
+
+                syncSharedHomeInternal(
+                    updateState = true
+                )
+                syncAfterChange(
+                    connected
+                )
+            }
+        }
+
+    suspend fun disconnectSharedHome(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val current =
+                    settingsRepository
+                        .settings
+                        .first()
+                val disconnected =
+                    current.copy(
+                        sharedHomeFolderUri = "",
+                        sharedHomeId = "",
+                        sharedHomeName = ""
+                    )
+                settingsRepository.update(
+                    disconnected
+                )
+                _sharedHomeSyncState.value =
+                    SharedHomeSyncState.Idle
+                syncAfterChange(
+                    disconnected
+                )
+            }
+        }
+
+    fun syncSharedHome() {
+        viewModelScope.launch(
+            Dispatchers.IO
+        ) {
+            syncSharedHomeInternal(
+                updateState = true
+            )
+        }
+    }
+
+    suspend fun syncSharedHomeNow(): Result<Int> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                syncSharedHomeInternal(
+                    updateState = true
+                )
+            }
+        }
 
     suspend fun detectReading(uri: Uri, type: MeterType): Result<OcrResult> =
         withContext(Dispatchers.IO) {
@@ -347,7 +599,17 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 val restoredSettings =
                     payload.settings.copy(
                         backupFolderUri =
-                            current.backupFolderUri
+                            current.backupFolderUri,
+                        sharedHomeFolderUri =
+                            current.sharedHomeFolderUri,
+                        sharedHomeId =
+                            current.sharedHomeId,
+                        sharedHomeName =
+                            current.sharedHomeName,
+                        sharedDeviceId =
+                            current.sharedDeviceId,
+                        sharedDeviceName =
+                            current.sharedDeviceName
                     )
                 meterRepository.replaceAll(
                     payload.readings
@@ -386,6 +648,235 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         }
+
+    private suspend fun publishSharedUpsert(
+        reading: MeterReading
+    ) {
+        val current =
+            settingsRepository
+                .settings
+                .first()
+
+        if (!isSharedHomeConnected(current)) {
+            return
+        }
+
+        runCatching {
+            sharedHomeManager
+                .publishUpsert(
+                    folderUri =
+                        Uri.parse(
+                            current
+                                .sharedHomeFolderUri
+                        ),
+                    homeId =
+                        current.sharedHomeId,
+                    deviceId =
+                        current.sharedDeviceId,
+                    deviceName =
+                        current.sharedDeviceName,
+                    reading = reading
+                )
+        }.onFailure {
+            error ->
+            _sharedHomeSyncState.value =
+                SharedHomeSyncState.Error(
+                    error.message
+                        ?: "A közös szinkron nem sikerült."
+                )
+        }
+    }
+
+    private suspend fun publishSharedDelete(
+        readingId: String
+    ) {
+        val current =
+            settingsRepository
+                .settings
+                .first()
+
+        if (!isSharedHomeConnected(current)) {
+            return
+        }
+
+        runCatching {
+            sharedHomeManager
+                .publishDelete(
+                    folderUri =
+                        Uri.parse(
+                            current
+                                .sharedHomeFolderUri
+                        ),
+                    homeId =
+                        current.sharedHomeId,
+                    deviceId =
+                        current.sharedDeviceId,
+                    deviceName =
+                        current.sharedDeviceName,
+                    readingId = readingId
+                )
+        }.onFailure {
+            error ->
+            _sharedHomeSyncState.value =
+                SharedHomeSyncState.Error(
+                    error.message
+                        ?: "A közös szinkron nem sikerült."
+                )
+        }
+    }
+
+    private suspend fun syncSharedHomeInternal(
+        updateState: Boolean
+    ): Int {
+        val currentSettings =
+            settingsRepository
+                .settings
+                .first()
+
+        if (
+            !isSharedHomeConnected(
+                currentSettings
+            )
+        ) {
+            if (updateState) {
+                _sharedHomeSyncState.value =
+                    SharedHomeSyncState.Idle
+            }
+            return 0
+        }
+
+        if (updateState) {
+            _sharedHomeSyncState.value =
+                SharedHomeSyncState.Syncing
+        }
+
+        return try {
+            val changes =
+                sharedHomeManager
+                    .resolvedChanges(
+                        folderUri =
+                            Uri.parse(
+                                currentSettings
+                                    .sharedHomeFolderUri
+                            ),
+                        expectedHomeId =
+                            currentSettings
+                                .sharedHomeId
+                    )
+
+            val local =
+                meterRepository
+                    .getAll()
+                    .associateBy {
+                        it.id
+                    }
+            val upserts =
+                mutableListOf<MeterReading>()
+            val deletes =
+                mutableListOf<String>()
+            var changedCount = 0
+
+            changes.forEach {
+                change ->
+                when (
+                    change.action
+                ) {
+                    SharedHomeAction.DELETE -> {
+                        if (
+                            local[
+                                change.readingId
+                            ] != null
+                        ) {
+                            deletes +=
+                                change.readingId
+                            changedCount += 1
+                        }
+                    }
+
+                    SharedHomeAction.UPSERT -> {
+                        val remote =
+                            change.reading
+                                ?: return@forEach
+                        val existing =
+                            local[
+                                remote.id
+                            ]
+                        val merged =
+                            remote.copy(
+                                photoUri =
+                                    existing
+                                        ?.photoUri
+                            )
+
+                        val same =
+                            existing
+                                ?.copy(
+                                    photoUri = null
+                                ) ==
+                                merged.copy(
+                                    photoUri = null
+                                )
+
+                        if (!same) {
+                            upserts +=
+                                merged
+                            changedCount += 1
+                        }
+                    }
+                }
+            }
+
+            deletes.forEach {
+                meterRepository
+                    .delete(it)
+            }
+            meterRepository
+                .upsertAll(
+                    upserts
+                )
+
+            if (changedCount > 0) {
+                syncAfterChange(
+                    currentSettings
+                )
+            }
+
+            if (updateState) {
+                _sharedHomeSyncState.value =
+                    SharedHomeSyncState.Success(
+                        changedCount =
+                            changedCount,
+                        syncedAtMillis =
+                            System
+                                .currentTimeMillis()
+                    )
+            }
+
+            changedCount
+        } catch (error: Throwable) {
+            if (updateState) {
+                _sharedHomeSyncState.value =
+                    SharedHomeSyncState.Error(
+                        error.message
+                            ?: "A közös szinkron nem sikerült."
+                    )
+            }
+            if (updateState) {
+                throw error
+            }
+            0
+        }
+    }
+
+    private fun isSharedHomeConnected(
+        settings: BillingSettings
+    ): Boolean =
+        settings.sharedHomeFolderUri
+            .isNotBlank() &&
+            settings.sharedHomeId
+                .isNotBlank() &&
+            settings.sharedDeviceId
+                .isNotBlank()
 
     private suspend fun syncAfterChange(
         settingsOverride: BillingSettings? = null
