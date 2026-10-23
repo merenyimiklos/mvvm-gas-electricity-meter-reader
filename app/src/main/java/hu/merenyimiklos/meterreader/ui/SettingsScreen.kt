@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Restore
@@ -67,6 +69,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.BuildConfig
+import hu.merenyimiklos.meterreader.auth.AuthViewModel
 import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
@@ -81,7 +84,8 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
-    viewModel: MeterViewModel
+    viewModel: MeterViewModel,
+    authViewModel: AuthViewModel
 ) {
     val settings by
         viewModel.settings
@@ -91,6 +95,9 @@ internal fun SettingsScreen(
             .collectAsStateWithLifecycle()
     val sharedHomeSyncState by
         viewModel.sharedHomeSyncState
+            .collectAsStateWithLifecycle()
+    val authState by
+        authViewModel.state
             .collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
@@ -1674,6 +1681,115 @@ internal fun SettingsScreen(
                             )
                             Text(
                                 t("Mentés visszaállítása")
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                10.dp
+                            )
+                    ) {
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically,
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    10.dp
+                                )
+                        ) {
+                            Icon(
+                                Icons.Default.AccountCircle,
+                                contentDescription =
+                                    null
+                            )
+                            Text(
+                                t("Fiók"),
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .titleLarge,
+                                fontWeight =
+                                    FontWeight.SemiBold
+                            )
+                        }
+
+                        val authUser =
+                            authState.user
+
+                        if (authUser != null) {
+                            AppInfoLine(
+                                t("Név"),
+                                authUser
+                                    .displayName
+                                    .ifBlank {
+                                        "–"
+                                    }
+                            )
+                            AppInfoLine(
+                                t("E-mail"),
+                                authUser
+                                    .email
+                                    .ifBlank {
+                                        "–"
+                                    }
+                            )
+                        } else if (
+                            authState.guestMode
+                        ) {
+                            Text(
+                                t("Offline fejlesztői mód"),
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodyMedium,
+                                color =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant
+                            )
+                        }
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            onClick = {
+                                authViewModel
+                                    .signOut()
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Logout,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                t("Kijelentkezés")
                             )
                         }
                     }
