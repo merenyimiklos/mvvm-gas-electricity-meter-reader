@@ -33,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.BuildConfig
+import hu.merenyimiklos.meterreader.auth.AuthViewModel
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 
@@ -45,6 +46,7 @@ private const val ROUTE_SETTINGS = "settings"
 @Composable
 fun MeterReaderApp(
     viewModel: MeterViewModel,
+    authViewModel: AuthViewModel,
     startOnAdd: Boolean = false
 ) {
     val navController = rememberNavController()
@@ -169,7 +171,11 @@ fun MeterReaderApp(
             }
 
             composable(ROUTE_SETTINGS) {
-                SettingsScreen(viewModel)
+                SettingsScreen(
+                    viewModel = viewModel,
+                    authViewModel =
+                        authViewModel
+                )
             }
         }
     }
