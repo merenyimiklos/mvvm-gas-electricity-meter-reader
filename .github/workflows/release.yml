@@ -24,12 +24,12 @@ on:
       version_name:
         description: "Verziónév, pl. 0.5.0"
         required: true
-        default: "0.5.0"
+        default: "0.6.0"
         type: string
       version_code:
         description: "Android versionCode, mindig növekvő egész szám"
         required: true
-        default: "5"
+        default: "6"
         type: string
       release_notes:
         description: "Rövid kiadási megjegyzés"
