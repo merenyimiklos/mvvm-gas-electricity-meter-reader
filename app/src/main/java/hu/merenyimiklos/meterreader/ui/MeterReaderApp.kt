@@ -67,27 +67,27 @@ fun MeterReaderApp(
     val destinations = listOf(
         Destination(
             ROUTE_HOME,
-            "Áttekintés",
+            t("Áttekintés"),
             Icons.Default.Home
         ),
         Destination(
             ROUTE_ADD,
-            "Rögzítés",
+            t("Rögzítés"),
             Icons.Default.AddCircle
         ),
         Destination(
             ROUTE_HISTORY,
-            "Napló",
+            t("Napló"),
             Icons.Default.ReceiptLong
         ),
         Destination(
             ROUTE_STATISTICS,
-            "Statisztika",
+            t("Statisztika"),
             Icons.Default.BarChart
         ),
         Destination(
             ROUTE_SETTINGS,
-            "Beállítások",
+            t("Beállítások"),
             Icons.Default.Settings
         )
     )
@@ -191,14 +191,14 @@ fun MeterReaderApp(
             },
             title = {
                 Text(
-                    "Új verzió érhető el"
+                    t("Új verzió érhető el")
                 )
             },
             text = {
                 Text(
                     buildString {
                         append(
-                            "Telepített: "
+                            t("Telepített: ")
                         )
                         append(
                             BuildConfig.VERSION_NAME
@@ -255,7 +255,7 @@ fun MeterReaderApp(
                     }
                 ) {
                     Text(
-                        "Frissítés letöltése"
+                        t("Frissítés letöltése")
                     )
                 }
             },
@@ -266,7 +266,7 @@ fun MeterReaderApp(
                             availableUpdate.version
                     }
                 ) {
-                    Text("Később")
+                    Text(t("Később"))
                 }
             }
         )
