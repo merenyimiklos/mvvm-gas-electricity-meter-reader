@@ -3,6 +3,7 @@ package hu.merenyimiklos.meterreader.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -40,6 +41,12 @@ class SettingsRepository(
             doublePreferencesKey("gas_heating_value_mj_per_m3")
         val reminderEnabled =
             booleanPreferencesKey("reminder_enabled")
+        val reminderDayOfMonth =
+            intPreferencesKey("reminder_day_of_month")
+        val reminderHour =
+            intPreferencesKey("reminder_hour")
+        val reminderMinute =
+            intPreferencesKey("reminder_minute")
         val backupFolderUri =
             stringPreferencesKey("backup_folder_uri")
         val gasBillingMode =
@@ -81,6 +88,12 @@ class SettingsRepository(
                         preferences[Keys.gasHeatingValueMjPerM3] ?: 34.8,
                     reminderEnabled =
                         preferences[Keys.reminderEnabled] ?: true,
+                    reminderDayOfMonth =
+                        preferences[Keys.reminderDayOfMonth] ?: 23,
+                    reminderHour =
+                        preferences[Keys.reminderHour] ?: 18,
+                    reminderMinute =
+                        preferences[Keys.reminderMinute] ?: 0,
                     backupFolderUri =
                         preferences[Keys.backupFolderUri] ?: "",
                     gasBillingMode =
@@ -120,6 +133,12 @@ class SettingsRepository(
                 settings.gasHeatingValueMjPerM3
             preferences[Keys.reminderEnabled] =
                 settings.reminderEnabled
+            preferences[Keys.reminderDayOfMonth] =
+                settings.reminderDayOfMonth.coerceIn(1, 31)
+            preferences[Keys.reminderHour] =
+                settings.reminderHour.coerceIn(0, 23)
+            preferences[Keys.reminderMinute] =
+                settings.reminderMinute.coerceIn(0, 59)
             preferences[Keys.backupFolderUri] =
                 settings.backupFolderUri
             preferences[Keys.gasBillingMode] =
