@@ -370,13 +370,12 @@ fun ModernDrawerContent(
                             Alignment.Center
                     ) {
                         Text(
-                            (
-                                authState.user
-                                    ?.displayName
-                                    ?.firstOrNull()
-                                    ?: "M"
-                                )
-                                .uppercase(),
+                            authState.user
+                                ?.displayName
+                                ?.firstOrNull()
+                                ?.uppercaseChar()
+                                ?.toString()
+                                ?: "M",
                             color =
                                 MaterialTheme
                                     .colorScheme
