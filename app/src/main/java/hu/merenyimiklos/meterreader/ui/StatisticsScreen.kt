@@ -65,10 +65,10 @@ private enum class StatisticsMetric(
     val label: String,
     val unit: String
 ) {
-    NORMAL("Normál", "kWh"),
-    NIGHT("Éjszakai", "kWh"),
-    TOTAL_ELECTRICITY("Összes áram", "kWh"),
-    GAS("Gáz", "m³")
+    NORMAL(t("Normál"), "kWh"),
+    NIGHT(t("Éjszakai"), "kWh"),
+    TOTAL_ELECTRICITY(t("Összes áram"), "kWh"),
+    GAS(t("Gáz"), "m³")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,9 +155,9 @@ internal fun StatisticsScreen(
             LargeTopAppBar(
                 title = {
                     Column {
-                        Text("Statisztika")
+                        Text(t("Statisztika"))
                         Text(
-                            "Trendek, keretek és előrejelzés",
+                            t("Trendek, keretek és előrejelzés"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -194,7 +194,7 @@ internal fun StatisticsScreen(
 
             item {
                 Text(
-                    "Saját fogyasztás",
+                    t("Saját fogyasztás"),
                     modifier =
                         Modifier.padding(
                             horizontal = 16.dp
@@ -260,9 +260,9 @@ internal fun StatisticsScreen(
                 ConsumptionChartCard(
                     title =
                         metric.label +
-                            " fogyasztás",
+                            t(" fogyasztás"),
                     subtitle =
-                        "Az utolsó 12 mérési hónap",
+                        t("Az utolsó 12 mérési hónap"),
                     insights = insights,
                     unit = metric.unit
                 )
@@ -307,9 +307,9 @@ internal fun StatisticsScreen(
             item {
                 ConsumptionChartCard(
                     title =
-                        "Becsült havi költség",
+                        t("Becsült havi költség"),
                     subtitle =
-                        "Normál + éjszakai áram + gáz",
+                        t("Normál + éjszakai áram + gáz"),
                     insights =
                         costInsights,
                     unit = "Ft",
@@ -319,7 +319,7 @@ internal fun StatisticsScreen(
 
             item {
                 Text(
-                    "A kiugrás legalább 25%-os eltérést jelent az előző legfeljebb három mérési hónap átlagához képest. A rezsikeret kijelzése tájékoztató becslés; a tényleges számlázást az MVM elszámolási szabályai, a számlázási időszak, gáz esetén pedig a fűtőérték és korrekciós tényező is befolyásolhatja.",
+                    t("A kiugrás legalább 25%-os eltérést jelent az előző legfeljebb három mérési hónap átlagához képest. A rezsikeret kijelzése tájékoztató becslés; a tényleges számlázást az MVM elszámolási szabályai, a számlázási időszak, gáz esetén pedig a fűtőérték és korrekciós tényező is befolyásolhatja."),
                     modifier =
                         Modifier.padding(
                             horizontal = 16.dp
@@ -402,7 +402,7 @@ private fun HungarianLimitOverview(
                     )
             ) {
                 Text(
-                    "Magyar lakossági rezsikeret",
+                    t("Magyar lakossági rezsikeret"),
                     style =
                         MaterialTheme
                             .typography
@@ -427,26 +427,26 @@ private fun HungarianLimitOverview(
 
             LimitRow(
                 title =
-                    "Normál áram",
+                    t("Normál áram"),
                 status = normal,
                 unit = "kWh"
             )
 
             LimitRow(
                 title =
-                    "Éjszakai / vezérelt",
+                    t("Éjszakai / vezérelt"),
                 status = night,
                 unit = "kWh"
             )
 
             LimitRow(
-                title = "Gáz",
+                title = t("Gáz"),
                 status = gas,
                 unit = "m³"
             )
 
             Text(
-                "Áram: 2523 kWh/év mérési pontonként külön. Gáz: 63 645 MJ/év, ami legalább 1729 m³; a havi keret télen magasabb, nyáron alacsonyabb.",
+                t("Áram: 2523 kWh/év mérési pontonként külön. Gáz: 63 645 MJ/év, ami legalább 1729 m³; a havi keret télen magasabb, nyáron alacsonyabb."),
                 style =
                     MaterialTheme
                         .typography
@@ -515,23 +515,23 @@ private fun LimitRow(
                 status.remainingToDate >=
                 0.0
             ) {
-                "Az eddig járó keretből még kb. " +
+                t("Az eddig járó keretből még kb. ") +
                     formatDecimal(
                         status
                             .remainingToDate
                     ) +
                     " " +
                     unit +
-                    " marad."
+                    t(" marad.")
             } else {
-                "Az időarányos keretet kb. " +
+                t("Az időarányos keretet kb. ") +
                     formatDecimal(
                         -status
                             .remainingToDate
                     ) +
                     " " +
                     unit +
-                    "-val meghaladja."
+                    t("-val meghaladja.")
             }
 
         Text(
@@ -556,7 +556,7 @@ private fun LimitRow(
         )
 
         Text(
-            "Éves keretből hátra: " +
+            t("Éves keretből hátra: ") +
                 formatDecimal(
                     status
                         .remainingYearly
@@ -565,11 +565,11 @@ private fun LimitRow(
                 unit +
                 status.projectedYearly
                     ?.let {
-                        " · jelenlegi tempóval ~" +
+                        t(" · jelenlegi tempóval ~") +
                             formatDecimal(it) +
                             " " +
                             unit +
-                            "/év"
+                            t("/év")
                     }
                     .orEmpty(),
             style =
@@ -634,7 +634,7 @@ private fun MetricOverview(
                     )
             ) {
                 Text(
-                    "Legutóbbi fogyasztás",
+                    t("Legutóbbi fogyasztás"),
                     style =
                         MaterialTheme
                             .typography
@@ -650,7 +650,7 @@ private fun MetricOverview(
                                 " " +
                                 metric.unit
                         }
-                        ?: "Még nincs elég adat",
+                        ?: t("Még nincs elég adat"),
                     style =
                         MaterialTheme
                             .typography
@@ -673,7 +673,7 @@ private fun MetricOverview(
                             }
 
                         Text(
-                            "Előző év azonos hónapjához képest: " +
+                            t("Előző év azonos hónapjához képest: ") +
                                 sign +
                                 formatDecimal(
                                     change
@@ -728,7 +728,7 @@ private fun MetricOverview(
                                 .SpaceBetween
                     ) {
                         Text(
-                            "Havi cél",
+                            t("Havi cél"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -764,7 +764,7 @@ private fun MetricOverview(
 
                 forecast?.let {
                     Text(
-                        "Napi átlag alapján egy teljes hónapra vetítve: ~" +
+                        t("Napi átlag alapján egy teljes hónapra vetítve: ~") +
                             formatDecimal(it) +
                             " " +
                             metric.unit +
@@ -787,13 +787,13 @@ private fun MetricOverview(
                         it > goal
                     ) {
                         Text(
-                            "A jelenlegi tempó a havi célt várhatóan " +
+                            t("A jelenlegi tempó a havi célt várhatóan ") +
                                 formatDecimal(
                                     it - goal
                                 ) +
                                 " " +
                                 metric.unit +
-                                "-val meghaladná.",
+                                t("-val meghaladná."),
                             style =
                                 MaterialTheme
                                     .typography
@@ -823,7 +823,7 @@ private fun MetricOverview(
                 modifier =
                     Modifier.weight(1f),
                 title =
-                    "3 havi átlag",
+                    t("3 havi átlag"),
                 value =
                     insights
                         .threeMonthAverage
@@ -840,7 +840,7 @@ private fun MetricOverview(
             SmallMetricCard(
                 modifier =
                     Modifier.weight(1f),
-                title = "Napi átlag",
+                title = t("Napi átlag"),
                 value =
                     insights
                         .latestDailyAverage
@@ -850,7 +850,7 @@ private fun MetricOverview(
                             ) +
                                 " " +
                                 metric.unit +
-                                "/nap"
+                                t("/nap")
                         }
                         ?: "–"
             )
@@ -881,8 +881,8 @@ private fun ChangeLabel(
 
             sign +
                 formatDecimal(it) +
-                "% az előző hónaphoz képest"
-        } ?: "Az összehasonlításhoz még kell egy korábbi hónap."
+                t("% az előző hónaphoz képest")
+        } ?: t("Az összehasonlításhoz még kell egy korábbi hónap.")
 
     val color = when {
         changePercent == null ->
@@ -1066,7 +1066,7 @@ private fun ConsumptionChartCard(
 
             if (points.isEmpty()) {
                 Text(
-                    "Még nincs elég mérési adat a diagramhoz.",
+                    t("Még nincs elég mérési adat a diagramhoz."),
                     modifier =
                         Modifier.padding(
                             horizontal = 18.dp
@@ -1131,7 +1131,7 @@ private fun ConsumptionChartCard(
 
                     if (it.isOutlier) {
                         Text(
-                            "KIUGRÁS",
+                            t("KIUGRÁS"),
                             color =
                                 MaterialTheme
                                     .colorScheme
@@ -1370,7 +1370,7 @@ private fun MonthlyBars(
 
     if (!money) {
         Text(
-            "Egység: " + unit,
+            t("Egység: ") + unit,
             modifier =
                 Modifier.padding(
                     start = 18.dp,
@@ -1428,7 +1428,7 @@ private fun OutlierCard(
             )
             Column {
                 Text(
-                    "Szokatlanul magas fogyasztás",
+                    t("Szokatlanul magas fogyasztás"),
                     style =
                         MaterialTheme
                             .typography
@@ -1446,7 +1446,7 @@ private fun OutlierCard(
                         ) +
                         " " +
                         unit +
-                        ". Legalább 25%-kal magasabb volt a megelőző időszak átlagánál.",
+                        t(". Legalább 25%-kal magasabb volt a megelőző időszak átlagánál."),
                     style =
                         MaterialTheme
                             .typography
@@ -1478,7 +1478,7 @@ private fun ExtremesCard(
                 )
         ) {
             Text(
-                "Minimum és maximum",
+                t("Minimum és maximum"),
                 style =
                     MaterialTheme
                         .typography
@@ -1499,7 +1499,7 @@ private fun ExtremesCard(
                     modifier =
                         Modifier.weight(1f),
                     label =
-                        "Legalacsonyabb",
+                        t("Legalacsonyabb"),
                     point =
                         insights.minimum,
                     unit = unit
@@ -1508,7 +1508,7 @@ private fun ExtremesCard(
                     modifier =
                         Modifier.weight(1f),
                     label =
-                        "Legmagasabb",
+                        t("Legmagasabb"),
                     point =
                         insights.maximum,
                     unit = unit
@@ -1646,7 +1646,7 @@ private fun GasReferenceCurveCard(
                 )
         ) {
             Text(
-                "MVM gáz-keretgörbe",
+                t("MVM gáz-keretgörbe"),
                 style =
                     MaterialTheme
                         .typography
@@ -1656,7 +1656,7 @@ private fun GasReferenceCurveCard(
             )
 
             Text(
-                "A 63 645 MJ kedvezményes éves keret rögzített szezonális havi megosztása. A m³ érték a beállított fűtőértékkel számított becslés.",
+                t("A 63 645 MJ kedvezményes éves keret rögzített szezonális havi megosztása. A m³ érték a beállított fűtőértékkel számított becslés."),
                 style =
                     MaterialTheme
                         .typography
@@ -1706,13 +1706,13 @@ private fun GasReferenceCurveCard(
                         )
 
                         Text(
-                            "Keret ~" +
+                            t("Keret ~") +
                                 formatDecimal(
                                     limit
                                 ) +
                                 " m³" +
                                 actual?.let {
-                                    " · tény " +
+                                    t(" · tény ") +
                                         formatDecimal(
                                             it
                                         ) +
