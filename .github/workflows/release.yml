@@ -67,6 +67,7 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      ANDROID_EXPECTED_UPLOAD_SHA1: ${{ secrets.ANDROID_EXPECTED_UPLOAD_SHA1 }}
       RELEASE_NOTES_INPUT: ${{ inputs.release_notes }}
       SOURCE_RUN_ID: ${{ inputs.source_run_id }}
       SOURCE_REF_INPUT: ${{ inputs.source_ref }}
@@ -201,6 +202,38 @@ jobs:
           chmod 600 "$KEYSTORE_PATH"
           echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
+      - name: Verify upload signing certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CERT_OUTPUT="$(
+            keytool -list -v               -keystore "$ANDROID_KEYSTORE_PATH"               -alias "$ANDROID_KEY_ALIAS"               -storepass "$ANDROID_KEYSTORE_PASSWORD"
+          )"
+
+          ACTUAL_SHA1="$(
+            printf '%s\n' "$CERT_OUTPUT"               | sed -n 's/.*SHA1: //p'               | head -n 1               | tr '[:lower:]' '[:upper:]'
+          )"
+
+          if [[ -z "$ACTUAL_SHA1" ]]; then
+            echo "::error::Could not determine upload certificate SHA-1."
+            exit 1
+          fi
+
+          echo "Upload certificate SHA-1: $ACTUAL_SHA1"
+          echo "UPLOAD_CERT_SHA1=$ACTUAL_SHA1" >> "$GITHUB_ENV"
+
+          if [[ -n "${ANDROID_EXPECTED_UPLOAD_SHA1:-}" ]]; then
+            EXPECTED_SHA1="$(
+              printf '%s' "$ANDROID_EXPECTED_UPLOAD_SHA1"                 | tr '[:lower:]' '[:upper:]'
+            )"
+
+            if [[ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]]; then
+              echo "::error::Wrong Android upload key. Expected $EXPECTED_SHA1 but keystore uses $ACTUAL_SHA1."
+              exit 1
+            fi
+          fi
+
       - name: Build signed APK and AAB
         run: ./gradlew assembleRelease bundleRelease --stacktrace
 
@@ -252,6 +285,7 @@ jobs:
               echo "- Forrás Action: ${{ steps.source.outputs.run_url }}"
             fi
             echo "- Google Play track: $PLAY_TRACK"
+            echo "- Upload cert SHA-1: ${UPLOAD_CERT_SHA1:-unknown}"
             echo
             if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
               echo "### Megjegyzések"
@@ -339,6 +373,7 @@ jobs:
             echo "- Tag: ${{ steps.prepare.outputs.tag }}"
             echo "- Play track: ${{ steps.prepare.outputs.play_track }}"
             echo "- Play feltöltés: ${{ inputs.publish_to_play }}"
+            echo "- Upload cert SHA-1: ${UPLOAD_CERT_SHA1:-unknown}"
             echo
             if [[ "${{ inputs.channel }}" == "beta" ]]; then
               echo "A GitHub Release Draft + Prerelease."
