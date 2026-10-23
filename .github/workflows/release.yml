@@ -1,0 +1,217 @@
+name: Create App Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Kiadási csatorna"
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - stable
+      source_ref:
+        description: "Branch, tag vagy commit SHA, amiből épüljön"
+        required: true
+        default: main
+        type: string
+      version_name:
+        description: "Verziónév, pl. 0.5.0"
+        required: true
+        default: "0.5.0"
+        type: string
+      version_code:
+        description: "Android versionCode, mindig növekvő egész szám"
+        required: true
+        default: "5"
+        type: string
+      release_notes:
+        description: "Rövid kiadási megjegyzés"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-release-${{ inputs.channel }}-${{ inputs.version_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Test, build and publish ${{ inputs.channel }}
+    runs-on: ubuntu-latest
+
+    env:
+      APP_VERSION_NAME: ${{ inputs.version_name }}
+      APP_VERSION_CODE: ${{ inputs.version_code }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout selected source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Validate release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$APP_VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "version_code must be a positive integer."
+            exit 1
+          fi
+
+          if [[ -z "$APP_VERSION_NAME" ]]; then
+            echo "version_name cannot be empty."
+            exit 1
+          fi
+
+          if [[ "${{ inputs.channel }}" == "stable" ]]; then
+            missing=0
+            for name in               ANDROID_KEYSTORE_BASE64               ANDROID_KEYSTORE_PASSWORD               ANDROID_KEY_ALIAS               ANDROID_KEY_PASSWORD
+            do
+              if [[ -z "${!name:-}" ]]; then
+                echo "::error::Missing GitHub Actions secret: $name"
+                missing=1
+              fi
+            done
+
+            if [[ "$missing" -ne 0 ]]; then
+              echo "::error::Stable release requires the permanent Android signing key."
+              exit 1
+            fi
+          fi
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Prepare stable signing key
+        if: ${{ inputs.channel == 'stable' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/meter-reader-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Build beta APK
+        if: ${{ inputs.channel == 'beta' }}
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build signed stable APK
+        if: ${{ inputs.channel == 'stable' }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare release files
+        id: prepare
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          if [[ "${{ inputs.channel }}" == "beta" ]]; then
+            SOURCE_APK="app/build/outputs/apk/debug/app-debug.apk"
+            FILE_NAME="meter-reader-${APP_VERSION_NAME}-beta-${GITHUB_RUN_NUMBER}.apk"
+            TAG="v${APP_VERSION_NAME}-beta.${GITHUB_RUN_NUMBER}"
+            TITLE="Mérőóra Napló ${APP_VERSION_NAME} Beta #${GITHUB_RUN_NUMBER}"
+          else
+            SOURCE_APK="app/build/outputs/apk/release/app-release.apk"
+            FILE_NAME="meter-reader-${APP_VERSION_NAME}.apk"
+            TAG="v${APP_VERSION_NAME}"
+            TITLE="Mérőóra Napló ${APP_VERSION_NAME}"
+          fi
+
+          test -f "$SOURCE_APK"
+          cp "$SOURCE_APK" "dist/$FILE_NAME"
+          sha256sum "dist/$FILE_NAME" > "dist/$FILE_NAME.sha256"
+
+          {
+            echo "## Mérőóra Napló ${APP_VERSION_NAME}"
+            echo
+            if [[ "${{ inputs.channel }}" == "beta" ]]; then
+              echo "**Csatorna:** zárt béta / Draft + Prerelease"
+            else
+              echo "**Csatorna:** stable"
+            fi
+            echo
+            echo "- Version code: ${APP_VERSION_CODE}"
+            echo "- Forrás: ${GITHUB_SHA}"
+            echo "- Workflow run: ${GITHUB_RUN_NUMBER}"
+            echo
+            if [[ -n "${{ inputs.release_notes }}" ]]; then
+              echo "### Megjegyzések"
+              echo "${{ inputs.release_notes }}"
+            fi
+          } > "$RUNNER_TEMP/release-notes.md"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "apk=dist/$FILE_NAME" >> "$GITHUB_OUTPUT"
+          echo "checksum=dist/$FILE_NAME.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meter-reader-${{ inputs.channel }}-${{ inputs.version_name }}-${{ github.run_number }}
+          path: |
+            ${{ steps.prepare.outputs.apk }}
+            ${{ steps.prepare.outputs.checksum }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create closed beta draft release
+        if: ${{ inputs.channel == 'beta' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.prepare.outputs.tag }}"             "${{ steps.prepare.outputs.apk }}"             "${{ steps.prepare.outputs.checksum }}"             --target "$GITHUB_SHA"             --title "${{ steps.prepare.outputs.title }}"             --notes-file "$RUNNER_TEMP/release-notes.md"             --draft             --prerelease
+
+      - name: Create stable release
+        if: ${{ inputs.channel == 'stable' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.prepare.outputs.tag }}"             "${{ steps.prepare.outputs.apk }}"             "${{ steps.prepare.outputs.checksum }}"             --target "$GITHUB_SHA"             --title "${{ steps.prepare.outputs.title }}"             --notes-file "$RUNNER_TEMP/release-notes.md"             --latest
+
+      - name: Release summary
+        shell: bash
+        run: |
+          {
+            echo "## Release elkészült"
+            echo
+            echo "- Csatorna: ${{ inputs.channel }}"
+            echo "- Verzió: ${APP_VERSION_NAME} (${APP_VERSION_CODE})"
+            echo "- Tag: ${{ steps.prepare.outputs.tag }}"
+            if [[ "${{ inputs.channel }}" == "beta" ]]; then
+              echo "- A GitHub Release Draft, ezért nem publikus."
+            else
+              echo "- A GitHub Release publikus és latest."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
