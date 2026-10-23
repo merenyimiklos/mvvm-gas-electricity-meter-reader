@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import hu.merenyimiklos.meterreader.model.ThemeMode
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF075E54),
@@ -48,9 +49,15 @@ private val AppShapes = Shapes(
 
 @Composable
 fun MeterReaderTheme(
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val darkTheme = isSystemInDarkTheme()
+    val darkTheme =
+        when (themeMode) {
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+        }
     val context = LocalContext.current
 
     val colors = when {
