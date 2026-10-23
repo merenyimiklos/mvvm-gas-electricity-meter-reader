@@ -257,3 +257,34 @@ Ha a tesztelt verzió jó:
 Ekkor a workflow a Play `production` tracket célozza és GitHub Latest Release-t készít.
 
 **Fontos:** minden Google Playre feltöltött új build `versionCode` értékének nagyobbnak kell lennie az összes korábban feltöltött build versionCode-jánál. Például ha a béta `versionCode = 6`, akkor a stable legyen legalább `7`.
+
+
+### Ha a Play Console rossz upload kulcsot jelez
+
+A Play App Signing két külön kulcsot használ:
+
+- **upload key**: ezzel írjuk alá az AAB-t feltöltés előtt;
+- **app signing key**: ezt a Google Play használja a felhasználóknak kiosztott APK-k végső aláírására.
+
+Ha a Play Console más SHA-1 fingerprintet vár, mint amit a GitHub release build használ, két lehetőség van:
+
+1. használd azt a régi keystore-t, amelynek SHA-1 fingerprintje megegyezik a Play által várt értékkel; vagy
+2. kérj **Upload key resetet**, és regisztráld a jelenlegi release keystore tanúsítványát új upload key-ként.
+
+A jelenlegi keystore fingerprintjének ellenőrzéséhez és a Playnek szükséges PEM fájl elkészítéséhez Windows CMD-ben:
+
+`scripts\\export-upload-certificate.cmd`
+
+A script létrehozza:
+
+`upload_certificate.pem`
+
+Play Console útvonal:
+
+**Protected with Play → Play Store protection → Manage Play app signing → Upload key certificate → Request upload key reset**
+
+A reset után GitHub Secretként érdemes felvenni:
+
+`ANDROID_EXPECTED_UPLOAD_SHA1`
+
+értéke az új, Play által elfogadott upload key SHA-1 fingerprint legyen. A release workflow ezután még build előtt ellenőrzi, hogy a GitHubban tárolt signing keystore valóban ezzel a tanúsítvánnyal ír-e alá.
