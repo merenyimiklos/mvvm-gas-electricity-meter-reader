@@ -65,8 +65,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.BuildConfig
 import hu.merenyimiklos.meterreader.export.CsvManager
+import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 import kotlinx.coroutines.launch
@@ -202,6 +204,16 @@ internal fun SettingsScreen(
             settings.backupFolderUri
         )
     }
+    var appLanguage by remember(settings) {
+        mutableStateOf(
+            settings.appLanguage
+        )
+    }
+    var themeMode by remember(settings) {
+        mutableStateOf(
+            settings.themeMode
+        )
+    }
 
     var showClearConfirmation by remember {
         mutableStateOf(false)
@@ -330,7 +342,11 @@ internal fun SettingsScreen(
             gasFlatMonthlyPayment =
                 parseDecimal(
                     gasFlatPayment
-                )
+                ),
+            appLanguage =
+                appLanguage,
+            themeMode =
+                themeMode
         )
 
     val backupFolderLauncher =
@@ -461,6 +477,128 @@ internal fun SettingsScreen(
                     16.dp
                 )
         ) {
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                10.dp
+                            )
+                    ) {
+                        Text(
+                            t("Megjelenés és nyelv"),
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .titleLarge,
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                        Text(
+                            t("Az alkalmazás nyelve és megjelenése"),
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodyMedium,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant
+                        )
+
+                        Text(
+                            t("Nyelv"),
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                        Row(
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    8.dp
+                                )
+                        ) {
+                            FilterChip(
+                                selected =
+                                    appLanguage ==
+                                        AppLanguage.HUNGARIAN,
+                                onClick = {
+                                    appLanguage =
+                                        AppLanguage.HUNGARIAN
+                                },
+                                label = {
+                                    Text(t("Magyar"))
+                                }
+                            )
+                            FilterChip(
+                                selected =
+                                    appLanguage ==
+                                        AppLanguage.ENGLISH,
+                                onClick = {
+                                    appLanguage =
+                                        AppLanguage.ENGLISH
+                                },
+                                label = {
+                                    Text("English")
+                                }
+                            )
+                        }
+
+                        Text(
+                            t("Téma"),
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                        Row(
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    8.dp
+                                )
+                        ) {
+                            ThemeMode.entries
+                                .forEach { mode ->
+                                    val label =
+                                        when (mode) {
+                                            ThemeMode.SYSTEM ->
+                                                t("Rendszer")
+                                            ThemeMode.LIGHT ->
+                                                t("Világos")
+                                            ThemeMode.DARK ->
+                                                t("Sötét")
+                                        }
+
+                                    FilterChip(
+                                        selected =
+                                            themeMode ==
+                                                mode,
+                                        onClick = {
+                                            themeMode =
+                                                mode
+                                        },
+                                        label = {
+                                            Text(label)
+                                        }
+                                    )
+                                }
+                        }
+                    }
+                }
+            }
+
             item {
                 TariffCard(
                     title = t("Normál áram"),
@@ -1165,27 +1303,6 @@ internal fun SettingsScreen(
                         AppInfoLine(
                             t("Verzió"),
                             BuildConfig.VERSION_NAME
-                        )
-                        AppInfoLine(
-                            "Version code",
-                            BuildConfig.VERSION_CODE
-                                .toString()
-                        )
-                        AppInfoLine(
-                            "Build típus",
-                            BuildConfig.BUILD_TYPE
-                        )
-                        AppInfoLine(
-                            "Csomagnév",
-                            BuildConfig.APPLICATION_ID
-                        )
-                        AppInfoLine(
-                            "Frissítési csatorna",
-                            "GitHub stable"
-                        )
-                        AppInfoLine(
-                            "Adattárolás",
-                            "Helyi · Room + DataStore"
                         )
 
                         val updateText =
