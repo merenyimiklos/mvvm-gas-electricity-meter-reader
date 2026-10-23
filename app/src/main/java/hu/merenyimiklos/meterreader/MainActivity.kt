@@ -13,13 +13,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hu.merenyimiklos.meterreader.auth.AuthViewModel
 import hu.merenyimiklos.meterreader.ui.AppText
+import hu.merenyimiklos.meterreader.ui.AuthGate
 import hu.merenyimiklos.meterreader.ui.MeterReaderApp
 import hu.merenyimiklos.meterreader.ui.theme.MeterReaderTheme
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MeterViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
     private val notificationPermissionLauncher =
         registerForActivityResult(
@@ -49,10 +52,17 @@ class MainActivity : ComponentActivity() {
             MeterReaderTheme(
                 themeMode = settings.themeMode
             ) {
-                MeterReaderApp(
-                    viewModel = viewModel,
-                    startOnAdd = startOnAdd
-                )
+                AuthGate(
+                    authViewModel =
+                        authViewModel
+                ) {
+                    MeterReaderApp(
+                        viewModel = viewModel,
+                        authViewModel =
+                            authViewModel,
+                        startOnAdd = startOnAdd
+                    )
+                }
             }
         }
     }
