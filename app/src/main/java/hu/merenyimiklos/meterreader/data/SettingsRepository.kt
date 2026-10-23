@@ -8,8 +8,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -57,6 +59,10 @@ class SettingsRepository(
             doublePreferencesKey("gas_monthly_fixed_fee")
         val gasFlatMonthlyPayment =
             doublePreferencesKey("gas_flat_monthly_payment")
+        val appLanguage =
+            stringPreferencesKey("app_language")
+        val themeMode =
+            stringPreferencesKey("theme_mode")
     }
 
     val settings: Flow<BillingSettings> =
@@ -109,7 +115,23 @@ class SettingsRepository(
                     gasMonthlyFixedFee =
                         preferences[Keys.gasMonthlyFixedFee] ?: 0.0,
                     gasFlatMonthlyPayment =
-                        preferences[Keys.gasFlatMonthlyPayment] ?: 0.0
+                        preferences[Keys.gasFlatMonthlyPayment] ?: 0.0,
+                    appLanguage =
+                        preferences[Keys.appLanguage]
+                            ?.let { value ->
+                                runCatching {
+                                    AppLanguage.valueOf(value)
+                                }.getOrNull()
+                            }
+                            ?: AppLanguage.HUNGARIAN,
+                    themeMode =
+                        preferences[Keys.themeMode]
+                            ?.let { value ->
+                                runCatching {
+                                    ThemeMode.valueOf(value)
+                                }.getOrNull()
+                            }
+                            ?: ThemeMode.SYSTEM
                 )
             }
 
@@ -149,6 +171,10 @@ class SettingsRepository(
                 settings.gasMonthlyFixedFee
             preferences[Keys.gasFlatMonthlyPayment] =
                 settings.gasFlatMonthlyPayment
+            preferences[Keys.appLanguage] =
+                settings.appLanguage.name
+            preferences[Keys.themeMode] =
+                settings.themeMode.name
         }
     }
 
