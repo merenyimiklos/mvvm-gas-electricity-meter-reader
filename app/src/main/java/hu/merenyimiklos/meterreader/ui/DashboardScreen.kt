@@ -142,9 +142,9 @@ internal fun DashboardScreen(
             LargeTopAppBar(
                 title = {
                     Column {
-                        Text("Mérőóra")
+                        Text(t("Mérőóra"))
                         Text(
-                            "Otthoni energiafigyelő",
+                            t("Otthoni energiafigyelő"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -196,7 +196,7 @@ internal fun DashboardScreen(
                                     .spacedBy(4.dp)
                         ) {
                             Text(
-                                "Állítsd be a tarifákat",
+                                t("Állítsd be a tarifákat"),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -206,7 +206,7 @@ internal fun DashboardScreen(
                                         .SemiBold
                             )
                             Text(
-                                "A normál és éjszakai áram külön egységárral számolható.",
+                                t("A normál és éjszakai áram külön egységárral számolható."),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -219,7 +219,7 @@ internal fun DashboardScreen(
 
             item {
                 Text(
-                    "Aktuális mérőállások",
+                    t("Aktuális mérőállások"),
                     modifier =
                         Modifier.padding(
                             horizontal = 16.dp
@@ -248,7 +248,7 @@ internal fun DashboardScreen(
                         listOf(
                             ReadingCardData(
                                 title =
-                                    "Normál áram",
+                                    t("Normál áram"),
                                 reading =
                                     latestNormal,
                                 icon =
@@ -256,14 +256,14 @@ internal fun DashboardScreen(
                             ),
                             ReadingCardData(
                                 title =
-                                    "Éjszakai áram",
+                                    t("Éjszakai áram"),
                                 reading =
                                     latestNight,
                                 icon =
                                     Icons.Default.Bedtime
                             ),
                             ReadingCardData(
-                                title = "Gáz",
+                                title = t("Gáz"),
                                 reading =
                                     latestGas,
                                 icon =
@@ -300,7 +300,7 @@ internal fun DashboardScreen(
                             Modifier.padding(20.dp)
                     ) {
                         Text(
-                            "Legutóbbi havi becslés",
+                            t("Legutóbbi havi becslés"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -317,12 +317,12 @@ internal fun DashboardScreen(
                             latestSummary == null
                         ) {
                             Text(
-                                "Legalább két azonos típusú mérőállás kell a fogyasztás kiszámításához."
+                                t("Legalább két azonos típusú mérőállás kell a fogyasztás kiszámításához.")
                             )
                         } else {
                             SummaryLine(
                                 label =
-                                    "Normál áram",
+                                    t("Normál áram"),
                                 usage =
                                     latestSummary
                                         .electricityUsage,
@@ -334,7 +334,7 @@ internal fun DashboardScreen(
 
                             SummaryLine(
                                 label =
-                                    "Éjszakai áram",
+                                    t("Éjszakai áram"),
                                 usage =
                                     latestSummary
                                         .electricityNightUsage,
@@ -345,7 +345,7 @@ internal fun DashboardScreen(
                             )
 
                             SummaryLine(
-                                label = "Gáz",
+                                label = t("Gáz"),
                                 usage =
                                     latestSummary
                                         .gasUsage,
@@ -370,7 +370,7 @@ internal fun DashboardScreen(
                                         .SpaceBetween
                             ) {
                                 Text(
-                                    "Becsült fizetendő",
+                                    t("Becsült fizetendő"),
                                     fontWeight =
                                         FontWeight.Bold
                                 )
@@ -410,7 +410,7 @@ internal fun DashboardScreen(
                     ) {
                         Text(
                             currentYear.toString() +
-                                " összesítés",
+                                t(" összesítés"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -420,21 +420,21 @@ internal fun DashboardScreen(
                         )
 
                         MetricRow(
-                            "Normál áram",
+                            t("Normál áram"),
                             formatDecimal(
                                 yearNormal
                             ) + " kWh"
                         )
 
                         MetricRow(
-                            "Éjszakai áram",
+                            t("Éjszakai áram"),
                             formatDecimal(
                                 yearNight
                             ) + " kWh"
                         )
 
                         MetricRow(
-                            "Összes áram",
+                            t("Összes áram"),
                             formatDecimal(
                                 yearNormal +
                                     yearNight
@@ -442,7 +442,7 @@ internal fun DashboardScreen(
                         )
 
                         MetricRow(
-                            "Gáz",
+                            t("Gáz"),
                             formatDecimal(
                                 yearGas
                             ) + " m³"
@@ -455,7 +455,7 @@ internal fun DashboardScreen(
                         )
 
                         MetricRow(
-                            "Becsült összköltség",
+                            t("Becsült összköltség"),
                             formatMoney(yearCost),
                             bold = true
                         )
@@ -466,7 +466,7 @@ internal fun DashboardScreen(
             item {
                 UsageChart(
                     title =
-                        "Normál áram · 6 hónap",
+                        t("Normál áram · 6 hónap"),
                     summaries = summaries,
                     valueSelector = {
                         it.electricityUsage
@@ -478,7 +478,7 @@ internal fun DashboardScreen(
             item {
                 UsageChart(
                     title =
-                        "Éjszakai áram · 6 hónap",
+                        t("Éjszakai áram · 6 hónap"),
                     summaries = summaries,
                     valueSelector = {
                         it.electricityNightUsage
@@ -490,7 +490,7 @@ internal fun DashboardScreen(
             item {
                 UsageChart(
                     title =
-                        "Gáz · 6 hónap",
+                        t("Gáz · 6 hónap"),
                     summaries = summaries,
                     valueSelector = {
                         it.gasUsage
@@ -541,7 +541,7 @@ private fun LatestReadingCard(
 
             if (data.reading == null) {
                 Text(
-                    "Még nincs mérés",
+                    t("Még nincs mérés"),
                     color =
                         MaterialTheme
                             .colorScheme
@@ -611,7 +611,7 @@ private fun SummaryLine(
                     formatDecimal(it) +
                         " " +
                         unit
-                } ?: "Nincs számítható fogyasztás",
+                } ?: t("Nincs számítható fogyasztás"),
                 style =
                     MaterialTheme
                         .typography
@@ -709,7 +709,7 @@ private fun UsageChart(
 
             if (data.isEmpty()) {
                 Text(
-                    "Még nincs elég adat a diagramhoz.",
+                    t("Még nincs elég adat a diagramhoz."),
                     color =
                         MaterialTheme
                             .colorScheme
@@ -836,7 +836,7 @@ private fun UsageChart(
             }
 
             Text(
-                "Egység: " + unit,
+                t("Egység: ") + unit,
                 style =
                     MaterialTheme
                         .typography
