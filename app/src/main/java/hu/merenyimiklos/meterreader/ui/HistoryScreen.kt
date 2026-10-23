@@ -358,7 +358,8 @@ internal fun HistoryScreen(
                                 Text(
                                     reading
                                         .type
-                                        .displayName,
+                                        .displayName
+                                        .let(::t),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -603,6 +604,7 @@ internal fun HistoryScreen(
                         reading
                             .type
                             .displayName
+                            .let(::t)
                             .lowercase() +
                         " " +
                         LocalDate
