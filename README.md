@@ -107,37 +107,71 @@ A GitHub Actions minden `main` pushnál és PR-nél lefuttatja a unit teszteket,
 
 ## GitHub kiadások
 
-A repository két kiadási módot támogat a **Create App Release** GitHub Actionből.
+A repository a **Create App Release** GitHub Actionből tud zárt béta vagy stable kiadást készíteni.
+
+### Kiadás egy korábbi sikeres Actionből
+
+Az **Actions → Create App Release → Run workflow** képernyőn megadható a `source_run_id`.
+
+Ez annak a sikeres GitHub Actions futásnak az azonosítója, amelyből kiadást szeretnél készíteni. Például egy ilyen URL-ben:
+
+`.../actions/runs/40019995720`
+
+a run ID:
+
+`40019995720`
+
+A release workflow ellenőrzi, hogy a kiválasztott Action **completed + success** állapotú-e, kiveszi belőle a pontos commit SHA-t, majd ugyanabból a commitból újrafuttatja a teszteket és elkészíti a release buildet.
+
+Ha nem adsz meg `source_run_id`-t, a `source_ref` mezőben branch, tag vagy commit SHA is megadható.
 
 ### Zárt béta
 
-Az **Actions → Create App Release → Run workflow** alatt válaszd:
+Válaszd:
 
 - `channel: beta`
-- `source_ref`: például `main` vagy egy konkrét commit SHA
+- `source_run_id`: opcionálisan egy sikeres Action run ID
+- `source_ref`: alapból `main`
 - `version_name`: például `0.5.0`
-- `version_code`: növekvő egész szám
+- `version_code`: mindig növekvő egész szám
 - opcionális release notes
 
-A workflow lefuttatja a unit teszteket, elkészíti a **release-signed APK-t** és létrehoz egy **Draft + Prerelease** GitHub Release-t. Mivel Draft, a publikus repository ellenére sem jelenik meg nyilvános kiadásként.
+A workflow unit teszteket futtat, release-signed APK-t készít, SHA-256 checksumot generál, majd **Draft + Prerelease** GitHub Release-t hoz létre.
 
-A béta és a stable **ugyanazt az állandó signing key-t** használja, ezért a béta verziók és a későbbi stable kiadás egymásra frissíthetők.
+A repository publikus, de a Draft release nem jelenik meg nyilvánosan; draft release-eket csak push jogosultsággal rendelkező felhasználók látják.
 
 ### Signing key egyszeri beállítása
 
-Windows alatt futtasd CMD-ből:
+A béta és a stable ugyanazt az állandó signing key-t használja, így a béta verziók és a későbbi stable verzió egymásra telepíthetők.
+
+Windows alatt CMD-ből futtasd:
 
 `scripts\\create-release-keystore.cmd`
 
-Ez létrehozza a `meter-reader-release.jks` és `meter-reader-release.b64` fájlt. A JKS fájlt mentsd el biztonságos helyre; a fájlokat a `.gitignore` kizárja.
+Ez létrehozza:
 
-A repository **Settings → Secrets and variables → Actions** részében hozd létre:
+- `meter-reader-release.jks`
+- `meter-reader-release.b64`
 
-- `ANDROID_KEYSTORE_BASE64`
+A JKS fájlt mentsd el biztonságos helyre. A repository `.gitignore` fájlja kizárja a signing fájlokat.
+
+A GitHub repository **Settings → Secrets and variables → Actions** részében hozd létre:
+
+- `ANDROID_KEYSTORE_BASE64` – a `meter-reader-release.b64` teljes tartalma
 - `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_ALIAS` – alapból `meter-reader`
 - `ANDROID_KEY_PASSWORD`
 
-A signing key soha ne kerüljön a repositoryba. Stable kiadásnál a workflow signed release APK-t készít, `v<version>` taget és publikus Latest GitHub Release-t hoz létre.
+A signing key és a jelszavak soha ne kerüljenek commitba.
 
-A Gradle build CI-ből felülírható `APP_VERSION_NAME` és `APP_VERSION_CODE` környezeti változókkal, így a repositoryban lévő alapverzió módosítása nélkül is készíthető külön béta vagy stable build.
+### Stable
+
+Ha a béta rendben van, indítsd újra a **Create App Release** workflow-t:
+
+- ugyanazzal a forrás Actionnel vagy commit SHA-val
+- `channel: stable`
+- a kívánt végleges `version_name` és `version_code` értékekkel
+
+A stable workflow signed release APK-t készít, `v<version>` taget hoz létre és publikus **Latest GitHub Release**-ként teszi közzé.
+
+A Gradle build CI-ből felülírható az `APP_VERSION_NAME` és `APP_VERSION_CODE` környezeti változókkal, ezért a béta/stable kiadáshoz nem kell kézzel átírni a repository verziószámát.
