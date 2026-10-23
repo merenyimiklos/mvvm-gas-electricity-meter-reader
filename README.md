@@ -132,11 +132,11 @@ Válaszd:
 - `channel: beta`
 - `source_run_id`: opcionálisan egy sikeres Action run ID
 - `source_ref`: alapból `main`
-- `version_name`: például `0.5.0`
+- `version_name`: az alapverzió, például `0.5.0`
 - `version_code`: mindig növekvő egész szám
 - opcionális release notes
 
-A workflow unit teszteket futtat, release-signed APK-t készít, SHA-256 checksumot generál, majd **Draft + Prerelease** GitHub Release-t hoz létre.
+A workflow unit teszteket futtat, release-signed APK-t készít, SHA-256 checksumot generál, majd **Draft + Prerelease** GitHub Release-t hoz létre. A béta APK verzióneve automatikusan például `0.5.0-beta.123` lesz.
 
 A repository publikus, de a Draft release nem jelenik meg nyilvánosan; draft release-eket csak push jogosultsággal rendelkező felhasználók látják.
 
