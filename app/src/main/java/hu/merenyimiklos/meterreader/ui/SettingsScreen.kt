@@ -1775,6 +1775,29 @@ internal fun SettingsScreen(
                                 Modifier.fillMaxWidth(),
                             onClick = {
                                 authViewModel
+                                    .replayOnboarding()
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                t("Útmutató újranézése")
+                            )
+                        }
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            onClick = {
+                                authViewModel
                                     .signOut()
                             }
                         ) {
