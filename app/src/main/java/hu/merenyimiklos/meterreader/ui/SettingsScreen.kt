@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
@@ -24,9 +25,11 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -43,8 +46,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,9 +63,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hu.merenyimiklos.meterreader.BuildConfig
 import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -72,6 +79,9 @@ internal fun SettingsScreen(
 ) {
     val settings by
         viewModel.settings
+            .collectAsStateWithLifecycle()
+    val updateState by
+        viewModel.updateState
             .collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
@@ -167,6 +177,26 @@ internal fun SettingsScreen(
             settings.reminderEnabled
         )
     }
+    var reminderDayText by remember(settings) {
+        mutableStateOf(
+            settings.reminderDayOfMonth
+                .toString()
+        )
+    }
+    var reminderHour by remember(settings) {
+        mutableStateOf(
+            settings.reminderHour
+        )
+    }
+    var reminderMinute by remember(settings) {
+        mutableStateOf(
+            settings.reminderMinute
+        )
+    }
+    var showReminderTimePicker by
+        remember {
+            mutableStateOf(false)
+        }
     var backupFolderUri by remember(settings) {
         mutableStateOf(
             settings.backupFolderUri
@@ -274,6 +304,17 @@ internal fun SettingsScreen(
                 } ?: 34.8,
             reminderEnabled =
                 reminderEnabled,
+            reminderDayOfMonth =
+                reminderDayText
+                    .toIntOrNull()
+                    ?.coerceIn(1, 31)
+                    ?: 23,
+            reminderHour =
+                reminderHour
+                    .coerceIn(0, 23),
+            reminderMinute =
+                reminderMinute
+                    .coerceIn(0, 59),
             backupFolderUri =
                 backupFolderUri,
             gasBillingMode =
@@ -675,55 +716,149 @@ internal fun SettingsScreen(
                                         .surfaceContainerLow
                             )
                 ) {
-                    Row(
+                    Column(
                         modifier =
                             Modifier.padding(
                                 18.dp
                             ),
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default
-                                .NotificationsActive,
-                            contentDescription =
-                                null
-                        )
-                        Spacer(
-                            Modifier.width(12.dp)
-                        )
-                        Column(
-                            modifier =
-                                Modifier.weight(
-                                    1f
-                                )
-                        ) {
-                            Text(
-                                "Havi leolvasási emlékeztető",
-                                style =
-                                    MaterialTheme
-                                        .typography
-                                        .titleMedium,
-                                fontWeight =
-                                    FontWeight
-                                        .SemiBold
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                14.dp
                             )
-                            Text(
-                                "Minden hónap 23-ától naponta kb. 18:00-kor jelez, amíg a normál, éjszakai és gázmérőből nincs e havi rögzítés.",
-                                style =
-                                    MaterialTheme
-                                        .typography
-                                        .bodySmall
+                    ) {
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default
+                                    .NotificationsActive,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    12.dp
+                                )
+                            )
+                            Column(
+                                modifier =
+                                    Modifier.weight(
+                                        1f
+                                    )
+                            ) {
+                                Text(
+                                    "Havi leolvasási emlékeztető",
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .titleMedium,
+                                    fontWeight =
+                                        FontWeight
+                                            .SemiBold
+                                )
+                                Text(
+                                    "A választott naptól minden nap emlékeztet, amíg a havi normál, éjszakai és gázmérés nincs meg.",
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .bodySmall
+                                )
+                            }
+                            Switch(
+                                checked =
+                                    reminderEnabled,
+                                onCheckedChange = {
+                                    reminderEnabled =
+                                        it
+                                }
                             )
                         }
-                        Switch(
-                            checked =
-                                reminderEnabled,
-                            onCheckedChange = {
-                                reminderEnabled =
-                                    it
+
+                        if (reminderEnabled) {
+                            OutlinedTextField(
+                                value =
+                                    reminderDayText,
+                                onValueChange = {
+                                    value ->
+                                    reminderDayText =
+                                        value
+                                            .filter {
+                                                char ->
+                                                char.isDigit()
+                                            }
+                                            .take(2)
+                                },
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                label = {
+                                    Text(
+                                        "Emlékeztetés kezdőnapja (1–31)"
+                                    )
+                                },
+                                keyboardOptions =
+                                    KeyboardOptions(
+                                        keyboardType =
+                                            KeyboardType.Number
+                                    ),
+                                singleLine = true
+                            )
+
+                            OutlinedButton(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    showReminderTimePicker =
+                                        true
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default
+                                        .AccessTime,
+                                    contentDescription =
+                                        null
+                                )
+                                Spacer(
+                                    Modifier.width(
+                                        8.dp
+                                    )
+                                )
+                                Text(
+                                    "Időpont: " +
+                                        formatReminderTime(
+                                            reminderHour,
+                                            reminderMinute
+                                        )
+                                )
                             }
-                        )
+
+                            Text(
+                                "Beállítva: minden hónap " +
+                                    (
+                                        reminderDayText
+                                            .toIntOrNull()
+                                            ?.coerceIn(
+                                                1,
+                                                31
+                                            )
+                                            ?: 23
+                                        ) +
+                                    ". napjától naponta kb. " +
+                                    formatReminderTime(
+                                        reminderHour,
+                                        reminderMinute
+                                    ) +
+                                    ". Ha a hónap rövidebb, a hónap utolsó napján indul.",
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .bodySmall,
+                                color =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -981,6 +1116,178 @@ internal fun SettingsScreen(
             }
 
             item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults
+                            .elevatedCardColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .surfaceContainerLow
+                            )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(
+                                18.dp
+                            ),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                10.dp
+                            )
+                    ) {
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically,
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    10.dp
+                                )
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription =
+                                    null
+                            )
+                            Text(
+                                "Alkalmazás",
+                                style =
+                                    MaterialTheme
+                                        .typography
+                                        .titleLarge,
+                                fontWeight =
+                                    FontWeight.SemiBold
+                            )
+                        }
+
+                        AppInfoLine(
+                            "Verzió",
+                            BuildConfig.VERSION_NAME
+                        )
+                        AppInfoLine(
+                            "Version code",
+                            BuildConfig.VERSION_CODE
+                                .toString()
+                        )
+                        AppInfoLine(
+                            "Csomagnév",
+                            BuildConfig.APPLICATION_ID
+                        )
+                        AppInfoLine(
+                            "Frissítési csatorna",
+                            "GitHub stable"
+                        )
+                        AppInfoLine(
+                            "Adattárolás",
+                            "Helyi · Room + DataStore"
+                        )
+
+                        val updateText =
+                            when (
+                                val state =
+                                    updateState
+                            ) {
+                                UpdateState.Idle ->
+                                    "Még nincs ellenőrizve"
+
+                                UpdateState.Checking ->
+                                    "Frissítés keresése…"
+
+                                UpdateState.UpToDate ->
+                                    "A legfrissebb verzió van telepítve."
+
+                                is UpdateState.Available ->
+                                    "Új verzió: " +
+                                        state.info.version
+
+                                is UpdateState.Error ->
+                                    "Ellenőrzési hiba: " +
+                                        state.message
+                            }
+
+                        Text(
+                            updateText,
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodySmall,
+                            color =
+                                if (
+                                    updateState is
+                                    UpdateState.Available
+                                ) {
+                                    MaterialTheme
+                                        .colorScheme
+                                        .primary
+                                } else {
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                }
+                        )
+
+                        OutlinedButton(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            onClick = {
+                                viewModel
+                                    .checkForUpdates()
+                            },
+                            enabled =
+                                updateState !=
+                                    UpdateState.Checking
+                        ) {
+                            Icon(
+                                Icons.Default
+                                    .SystemUpdateAlt,
+                                contentDescription =
+                                    null
+                            )
+                            Spacer(
+                                Modifier.width(
+                                    8.dp
+                                )
+                            )
+                            Text(
+                                "Frissítések keresése"
+                            )
+                        }
+
+                        val available =
+                            (updateState as?
+                                UpdateState.Available)
+                                ?.info
+
+                        if (available != null) {
+                            Button(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                onClick = {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                android.net.Uri.parse(
+                                                    available
+                                                        .downloadUrl
+                                                )
+                                            )
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    "Frissítés letöltése"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
                 OutlinedButton(
                     modifier =
                         Modifier.fillMaxWidth(),
@@ -1018,6 +1325,59 @@ internal fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (showReminderTimePicker) {
+        val timePickerState =
+            rememberTimePickerState(
+                initialHour =
+                    reminderHour,
+                initialMinute =
+                    reminderMinute,
+                is24Hour = true
+            )
+
+        AlertDialog(
+            onDismissRequest = {
+                showReminderTimePicker =
+                    false
+            },
+            title = {
+                Text(
+                    "Emlékeztetés időpontja"
+                )
+            },
+            text = {
+                TimePicker(
+                    state =
+                        timePickerState
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        reminderHour =
+                            timePickerState.hour
+                        reminderMinute =
+                            timePickerState.minute
+                        showReminderTimePicker =
+                            false
+                    }
+                ) {
+                    Text("Beállítás")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showReminderTimePicker =
+                            false
+                    }
+                ) {
+                    Text("Mégse")
+                }
+            }
+        )
     }
 
     if (showClearConfirmation) {
@@ -1166,3 +1526,53 @@ private fun MoneyField(
         singleLine = true
     )
 }
+
+
+@Composable
+private fun AppInfoLine(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+        horizontalArrangement =
+            Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            style =
+                MaterialTheme
+                    .typography
+                    .bodyMedium,
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant
+        )
+        Spacer(
+            Modifier.width(16.dp)
+        )
+        Text(
+            value,
+            style =
+                MaterialTheme
+                    .typography
+                    .bodyMedium,
+            fontWeight =
+                FontWeight.SemiBold
+        )
+    }
+}
+
+private fun formatReminderTime(
+    hour: Int,
+    minute: Int
+): String =
+    hour.coerceIn(0, 23)
+        .toString()
+        .padStart(2, '0') +
+        ":" +
+        minute.coerceIn(0, 59)
+            .toString()
+            .padStart(2, '0')
