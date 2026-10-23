@@ -314,7 +314,11 @@ object AppText {
             "BEÁLLÍTÁSOK" to "SETTINGS",
             "Saját beállításaid" to "Your preferences",
             "Magyar · Sötét téma" to "English · Dark theme",
-            "Havi emlékeztető · 23. nap" to "Monthly reminder · day 23"
+            "Havi emlékeztető · 23. nap" to "Monthly reminder · day 23",
+            "Menü" to "Menu",
+            "Felhasználó" to "User",
+            "Családi csoport" to "Family group",
+            "Szinkronhiba" to "Sync error"
         )
 
     fun text(
