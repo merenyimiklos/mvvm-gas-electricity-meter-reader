@@ -34,12 +34,12 @@ on:
       version_name:
         description: "Alapverzió, pl. 0.8.0"
         required: true
-        default: "0.8.0"
+        default: "0.9.0"
         type: string
       version_code:
         description: "Android versionCode, mindig növekvő egész szám"
         required: true
-        default: "9"
+        default: "10"
         type: string
       release_notes:
         description: "Rövid kiadási megjegyzés"
@@ -67,6 +67,7 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
       ANDROID_EXPECTED_UPLOAD_SHA1: ${{ secrets.ANDROID_EXPECTED_UPLOAD_SHA1 }}
       RELEASE_NOTES_INPUT: ${{ inputs.release_notes }}
       SOURCE_RUN_ID: ${{ inputs.source_run_id }}
@@ -126,6 +127,16 @@ jobs:
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+
+      - name: Prepare optional Firebase config
+        shell: bash
+        run: |
+          if [[ -n "${FIREBASE_GOOGLE_SERVICES_JSON:-}" ]]; then
+            printf '%s' "$FIREBASE_GOOGLE_SERVICES_JSON" > app/google-services.json
+            echo "Firebase Android config enabled for this release."
+          else
+            echo "Firebase config secret not set."
+          fi
 
       - name: Validate release inputs and secrets
         shell: bash
