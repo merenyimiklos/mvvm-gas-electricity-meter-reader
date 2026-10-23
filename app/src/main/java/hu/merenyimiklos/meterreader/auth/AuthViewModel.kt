@@ -52,18 +52,11 @@ class AuthViewModel(
                 user =
                     initialUser,
                 showOnboarding =
-                    initialUser
-                        ?.let {
-                            user ->
-                            !onboardingPreferences
-                                .getBoolean(
-                                    onboardingKey(
-                                        user.uid
-                                    ),
-                                    true
-                                )
-                        }
-                        ?: false
+                    !onboardingPreferences
+                        .getBoolean(
+                            ONBOARDING_COMPLETED_KEY,
+                            false
+                        )
             )
         )
 
@@ -88,41 +81,12 @@ class AuthViewModel(
         email: String,
         password: String
     ) {
-        viewModelScope.launch {
-            setLoading()
-
-            runCatching {
-                repository.register(
-                    name,
-                    email,
-                    password
-                )
-            }.onSuccess {
-                user ->
-                onboardingPreferences
-                    .edit()
-                    .putBoolean(
-                        onboardingKey(
-                            user.uid
-                        ),
-                        false
-                    )
-                    .apply()
-
-                _state.value =
-                    _state.value.copy(
-                        configured = true,
-                        loading = false,
-                        user = user,
-                        guestMode = false,
-                        showOnboarding = true,
-                        error = null,
-                        message = null
-                    )
-            }.onFailure {
-                error ->
-                setError(error)
-            }
+        launchAuth {
+            repository.register(
+                name,
+                email,
+                password
+            )
         }
     }
 
@@ -202,20 +166,13 @@ class AuthViewModel(
     }
 
     fun completeOnboarding() {
-        val user =
-            _state.value.user
-
-        if (user != null) {
-            onboardingPreferences
-                .edit()
-                .putBoolean(
-                    onboardingKey(
-                        user.uid
-                    ),
-                    true
-                )
-                .apply()
-        }
+        onboardingPreferences
+            .edit()
+            .putBoolean(
+                ONBOARDING_COMPLETED_KEY,
+                true
+            )
+            .apply()
 
         _state.value =
             _state.value.copy(
@@ -224,12 +181,10 @@ class AuthViewModel(
     }
 
     fun replayOnboarding() {
-        if (_state.value.authenticated) {
-            _state.value =
-                _state.value.copy(
-                    showOnboarding = true
-                )
-        }
+        _state.value =
+            _state.value.copy(
+                showOnboarding = true
+            )
     }
 
     fun clearFeedback() {
@@ -257,14 +212,7 @@ class AuthViewModel(
                         loading = false,
                         user = user,
                         guestMode = false,
-                        showOnboarding =
-                            !onboardingPreferences
-                                .getBoolean(
-                                    onboardingKey(
-                                        user.uid
-                                    ),
-                                    true
-                                ),
+                        showOnboarding = false,
                         error = null,
                         message = null
                     )
@@ -297,11 +245,6 @@ class AuthViewModel(
                 message = null
             )
     }
-
-    private fun onboardingKey(
-        uid: String
-    ): String =
-        "completed_" + uid
 
     private fun friendlyMessage(
         error: Throwable
@@ -343,5 +286,10 @@ class AuthViewModel(
             else ->
                 "A művelet nem sikerült."
         }
+    }
+
+    private companion object {
+        const val ONBOARDING_COMPLETED_KEY =
+            "intro_completed_v1"
     }
 }
