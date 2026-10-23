@@ -10,7 +10,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
-import hu.merenyimiklos.meterreader.reminder.ReadingReminderScheduler
 import hu.merenyimiklos.meterreader.ui.MeterReaderApp
 import hu.merenyimiklos.meterreader.ui.theme.MeterReaderTheme
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -28,7 +27,6 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onCreate(savedInstanceState)
 
-        ReadingReminderScheduler.schedule(this)
         requestNotificationPermissionIfNeeded()
 
         val startOnAdd =
