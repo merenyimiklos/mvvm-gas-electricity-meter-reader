@@ -68,7 +68,8 @@ private enum class StatisticsMetric(
     NORMAL(t("Normál"), "kWh"),
     NIGHT(t("Éjszakai"), "kWh"),
     TOTAL_ELECTRICITY(t("Összes áram"), "kWh"),
-    GAS(t("Gáz"), "m³")
+    GAS(t("Gáz"), "m³"),
+    WATER(t("Víz"), "m³")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,9 +84,36 @@ internal fun StatisticsScreen(
     val settings by
         viewModel.settings.collectAsStateWithLifecycle()
 
-    var metric by remember {
+    val availableMetrics =
+        buildList {
+            if (settings.electricityEnabled) {
+                add(StatisticsMetric.NORMAL)
+            }
+            if (settings.electricityNightEnabled) {
+                add(StatisticsMetric.NIGHT)
+            }
+            if (
+                settings.electricityEnabled ||
+                settings.electricityNightEnabled
+            ) {
+                add(
+                    StatisticsMetric.TOTAL_ELECTRICITY
+                )
+            }
+            if (settings.gasEnabled) {
+                add(StatisticsMetric.GAS)
+            }
+            if (settings.waterEnabled) {
+                add(StatisticsMetric.WATER)
+            }
+        }
+
+    var metric by remember(
+        availableMetrics
+    ) {
         mutableStateOf(
-            StatisticsMetric.TOTAL_ELECTRICITY
+            availableMetrics.firstOrNull()
+                ?: StatisticsMetric.TOTAL_ELECTRICITY
         )
     }
 
@@ -220,7 +248,7 @@ internal fun StatisticsScreen(
                         )
                 ) {
                     items(
-                        StatisticsMetric.entries
+                        availableMetrics
                     ) { item ->
                         FilterChip(
                             selected =
@@ -309,7 +337,7 @@ internal fun StatisticsScreen(
                     title =
                         t("Becsült havi költség"),
                     subtitle =
-                        t("Normál + éjszakai áram + gáz"),
+                        t("Bekapcsolt mérők összesen"),
                     insights =
                         costInsights,
                     unit = "Ft",
@@ -1927,6 +1955,37 @@ private fun projectedMonthlyCost(
                     }
             }
         }
+
+        StatisticsMetric.WATER -> {
+            val usage =
+                projectedUsage(
+                    MeterType.WATER
+                ) ?: return null
+
+            when (
+                settings.waterBillingMode
+            ) {
+                hu.merenyimiklos.meterreader.model.GasBillingMode.FLAT_RATE ->
+                    settings
+                        .waterFlatMonthlyPayment
+                        .takeIf {
+                            it > 0.0
+                        }
+
+                hu.merenyimiklos.meterreader.model.GasBillingMode.METERED ->
+                    if (
+                        settings.waterUnitPrice >
+                        0.0
+                    ) {
+                        usage *
+                            settings.waterUnitPrice +
+                            settings
+                                .waterMonthlyFixedFee
+                    } else {
+                        null
+                    }
+            }
+        }
     }
 }
 
@@ -1979,6 +2038,9 @@ private fun goalForMetric(
         StatisticsMetric.GAS ->
             settings
                 .gasMonthlyGoalM3
+        StatisticsMetric.WATER ->
+            settings
+                .waterMonthlyGoalM3
     }
 
 private fun consumptionValues(
@@ -2015,6 +2077,9 @@ private fun consumptionValues(
 
                 StatisticsMetric.GAS ->
                     summary.gasUsage
+
+                StatisticsMetric.WATER ->
+                    summary.waterUsage
             }
 
         value?.let {
@@ -2054,6 +2119,13 @@ private fun dailyAverage(
                 .latestDailyAverage(
                     readings,
                     MeterType.GAS
+                )
+
+        StatisticsMetric.WATER ->
+            AnalyticsCalculator
+                .latestDailyAverage(
+                    readings,
+                    MeterType.WATER
                 )
     }
 
