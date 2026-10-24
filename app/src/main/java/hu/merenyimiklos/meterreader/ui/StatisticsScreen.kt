@@ -1,6 +1,8 @@
 package hu.merenyimiklos.meterreader.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.graphics.Color
+import hu.merenyimiklos.meterreader.ui.theme.PlayColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -290,7 +292,14 @@ internal fun StatisticsScreen(
                     subtitle =
                         t("Az utolsó 12 mérési hónap"),
                     insights = insights,
-                    unit = metric.unit
+                    unit = metric.unit,
+                    accent = when (metric) {
+                        StatisticsMetric.NORMAL -> PlayColors.Electricity
+                        StatisticsMetric.NIGHT -> PlayColors.NightElectricity
+                        StatisticsMetric.TOTAL_ELECTRICITY -> PlayColors.Blue
+                        StatisticsMetric.GAS -> PlayColors.Gas
+                        StatisticsMetric.WATER -> PlayColors.Water
+                    }
                 )
             }
 
@@ -659,6 +668,14 @@ private fun MetricOverview(
                         6.dp
                     )
             ) {
+                when (metric) {
+                    StatisticsMetric.NORMAL -> PlayMeterIcon(MeterType.ELECTRICITY, size = 46.dp)
+                    StatisticsMetric.NIGHT -> PlayMeterIcon(MeterType.ELECTRICITY_NIGHT, size = 46.dp)
+                    StatisticsMetric.GAS -> PlayMeterIcon(MeterType.GAS, size = 46.dp)
+                    StatisticsMetric.WATER -> PlayMeterIcon(MeterType.WATER, size = 46.dp)
+                    StatisticsMetric.TOTAL_ELECTRICITY -> Unit
+                }
+
                 Text(
                     t("Legutóbbi fogyasztás"),
                     style =
@@ -1008,7 +1025,8 @@ private fun ConsumptionChartCard(
     subtitle: String,
     insights: UsageInsights,
     unit: String,
-    money: Boolean = false
+    money: Boolean = false,
+    accent: Color = PlayColors.Blue
 ) {
     var selectedMonth by
         remember(insights.points) {
@@ -1182,7 +1200,8 @@ private fun ConsumptionChartCard(
                     selectedMonth = it
                 },
                 money = money,
-                unit = unit
+                unit = unit,
+                accent = accent
             )
         }
     }
@@ -1194,7 +1213,8 @@ private fun MonthlyBars(
     selectedMonth: YearMonth?,
     onSelect: (YearMonth) -> Unit,
     money: Boolean,
-    unit: String
+    unit: String,
+    accent: Color
 ) {
     val maximum =
         points.maxOfOrNull {
@@ -1235,18 +1255,9 @@ private fun MonthlyBars(
                     selectedMonth
 
             val barColor = when {
-                point.isOutlier ->
-                    MaterialTheme
-                        .colorScheme
-                        .error
-                selected ->
-                    MaterialTheme
-                        .colorScheme
-                        .primary
-                else ->
-                    MaterialTheme
-                        .colorScheme
-                        .secondary
+                point.isOutlier -> MaterialTheme.colorScheme.error
+                selected -> accent
+                else -> accent.copy(alpha = 0.50f)
             }
 
             Column(
