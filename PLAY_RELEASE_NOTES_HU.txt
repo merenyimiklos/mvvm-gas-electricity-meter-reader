@@ -1,9 +1,9 @@
-Új külsőt kapott a Mérőóra Napló!
+Megújult a Mérőóra Napló!
 
-• Modern, egységes megjelenés az összes fő képernyőn.
-• Új alkalmazásikon és finomított alsó navigáció.
-• Javított Google-fiókos bejelentkezés.
-• Megújult kezdő útmutató.
-• Sötét mód: javított szövegek és kontraszt.
-• Frissített színek, kártyák és animációk.
-• További kisebb hibajavítások.
+• Új, kék–türkiz megjelenés a Play Áruház képeinek stílusában.
+• Színkódolt mérőkártyák az Áttekintés és Leolvasás oldalakon.
+• Átdolgozott navigáció és fejléc.
+• Kiemelt fotós, OCR-alapú leolvasás.
+• Áttekinthetőbb statisztikák, előzmények és beállítások.
+• Egységesebb világos és sötét téma.
+• Apróbb felületi finomítások.

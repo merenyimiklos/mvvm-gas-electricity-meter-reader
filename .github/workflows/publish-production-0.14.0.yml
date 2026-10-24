@@ -1,0 +1,37 @@
+# Single-use dispatcher: deleting the trigger after the release prevents repeats.
+# Stable release logic stays in release.yml and reuses the existing Play secrets.
+name: Publish version 0.14.0 to Google Play Production
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".release/production-0.14.0.trigger"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: publish-production-0.14.0
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch signed production release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching 0.14.0 versionCode 18 from commit $GITHUB_SHA"
+          gh workflow run release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            --field channel=stable \
+            --field publish_to_play=true \
+            --field source_ref="$GITHUB_SHA" \
+            --field version_name=0.14.0 \
+            --field version_code=18
+          echo "Production workflow_dispatch requested successfully."
