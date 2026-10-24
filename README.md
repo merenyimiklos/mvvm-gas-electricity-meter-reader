@@ -1,290 +1,142 @@
 # Mérőóra Napló
 
-Jetpack Compose alapú Android alkalmazás havi áram- és gázmérőállások rögzítésére, fogyasztási kimutatásokkal és költségbecsléssel.
+Modern Android alkalmazás otthoni mérőállások rögzítésére, követésére és megosztására.
 
-## Funkciók
+A cél egyszerű: az áram-, gáz- és vízfogyasztás legyen átlátható, könnyen rögzíthető és egy helyen visszanézhető.
 
-- külön **normál**, **éjszakai/vezérelt** áram- és gázmérőállás kezelése
-- **Gyors havi leolvasás**: mindhárom mérő egy képernyőn, egyetlen mentéssel
-- Material 3 **DatePicker**, előző mérőállás, élő fogyasztás- és költségbecslés
-- fotózás vagy galériakép alapján ML Kit OCR-es mérőállás-felismerés
-- mérőfotók visszanézése a Naplóban
-- részletes mérési adatlap: előző állás, eltelt napok, napi átlag, becsült költség
-- duplikációvédelem és szokatlan mérőugrások figyelmeztetése
-- havi és éves fogyasztási összesítések
-- külön **Statisztika** nézet 12 havi diagramokkal
-- előző havi és előző évi összehasonlítás
-- 3 havi átlag, napi átlag, minimum/maximum és automatikus kiugrásjelzés
-- havi fogyasztási célok és havi előrejelzés
-- **magyar lakossági rezsikeret-becslés**
-  - 2523 kWh/év külön a normál és külön az éjszakai/vezérelt mérőre
-  - gáz 63 645 MJ/év keret és szezonális havi MVM-görbe
-  - állítható gáz-fűtőérték a m³-becsléshez
-- becsült havi költségdiagram
-- szabadon beállítható havi leolvasási emlékeztető **nap + időpont** alapján
-- a kiválasztott naptól napi értesítés, amíg mindhárom e havi mérés nincs meg
-- app-on-belüli stable verzióellenőrzés és frissítési figyelmeztetés
-- az értesítésből közvetlenül megnyitható a Rögzítés képernyő
-- kezdőképernyős Android widget a három legutóbbi mérőállással
-- appikon hosszú nyomására gyors **Új mérőállás** parancs
-- állítható egységárak, havi fix díjak és gáz-átalány
-- mérőállások szerkesztése, törlése és típus szerinti szűrése
-- valódi **.xlsx** export Excelhez
-- **CSV export és import**
-- kézi **JSON biztonsági mentés és visszaállítás**
-- minden adatváltozás után automatikus helyi JSON backup
-- opcionálisan kiválasztható külső/Drive-kompatibilis SAF mappa az automatikus backuphoz
-- Room adatbázis a mérőállásokhoz
-- Preferences DataStore a beállításokhoz
-- automatikus migráció a korábbi SharedPreferences alapú verzióból
-- Material 3 + Jetpack Compose
-- MVVM felépítés
-- GitHub Actions unit teszt + debug APK artifact
+## Fő funkciók
+
+- normál áram, éjszakai áram, gáz és opcionális vízóra kezelése
+- a használt mérőtípusok külön ki- és bekapcsolhatók
+- gyors havi leolvasás több mérő egyidejű rögzítésével
+- egyedi és fotóalapú mérőállás-rögzítés
+- OCR-alapú mérőállás-felismerés
+- fogyasztási előzmények és havi statisztikák
+- költségbecslés egyedi tarifákkal és havi fix díjakkal
+- gáz- és vízelszámolás mérőállás vagy havi átalány alapján
+- havi fogyasztási célok
+- emlékeztetők a hiányzó havi leolvasásokhoz
+- JSON biztonsági mentés és visszaállítás
+- CSV import/export
+- XLSX export
+- családi / többkészülékes szinkron
+- Firebase Authentication
+  - e-mail + jelszó
+  - Google-belépés
+  - jelszó-visszaállítás
+- magyar és angol felület
+- világos, sötét és rendszer témamód
+- első indításkor interaktív onboarding
+- alkalmazáson belüli verzióellenőrzés
+- modern Material 3 felület és animációk
+
+## Mérőtípusok
+
+A felhasználó csak azokat a mérőket kapcsolja be, amelyeket ténylegesen használ:
+
+- **Normál áram** — kWh
+- **Éjszakai / vezérelt áram** — kWh
+- **Gáz** — m³
+- **Víz** — m³
+
+A víz opcionális, így frissítés után a meglévő felhasználóknál nem jelenik meg automatikusan.
+
+## Adatok és költségek
+
+Az alkalmazás a rögzített mérőállások különbségéből számolja a fogyasztást.
+
+A költségbecsléshez külön megadható:
+
+- egységár,
+- havi fix díj,
+- havi átalány,
+- havi fogyasztási cél.
+
+A gáz és a víz esetén választható:
+
+- **Mérőállás alapján**
+- **Átalánydíj**
+
+A megjelenített költségek becslések; a tényleges számla szolgáltatótól, tarifától és egyéb díjaktól eltérhet.
 
 ## Adattárolás
 
-A mérőállások Room/SQLite adatbázisban vannak, a tarifák, célok, emlékeztető és mentési beállítások pedig DataStore-ban.
+- **Room / SQLite** — mérőállások
+- **Preferences DataStore** — beállítások
+- **Firebase Authentication** — felhasználói azonosítás
+- **JSON backup** — kézi és automatikus biztonsági mentés
 
-Az alkalmazás az első induláskor megpróbálja automatikusan áthozni a 0.1.x verzió SharedPreferences + JSON adatait.
-
-A **Beállítások → Adatkezelés** részen készíthető JSON mentés, CSV export/import és kiválasztható külső automatikus mentési mappa. Az app minden adatváltozás után frissít egy belső `auto-backup.json` fájlt, és ha külső mappa van beállítva, oda is tükrözi azt. A fotófájlokat a JSON/CSV mentés nem ágyazza be.
-
-## Fontos
-
-A költségszámítás becslés. A tényleges számlázás szolgáltatótól, tarifacsomagtól, kedvezményes/versenypiaci sávoktól, korrekciós tényezőktől és egyéb díjaktól függhet. Emiatt az alkalmazás nem éget be aktuális szolgáltatói árakat: ezeket a **Beállítások** képernyőn kell megadni.
-
-Az OCR segédfunkció. A felismert mérőállás mentés előtt szerkeszthető és ellenőrizendő.
+A helyi adatok frissítéskor megmaradnak, amennyiben az alkalmazás azonos csomagnévvel és megfelelő aláírással frissül.
 
 ## Technológia
 
-- Kotlin 2.3
+- Kotlin
 - Jetpack Compose
 - Material 3
 - Navigation Compose
-- Room 2.8
-- Preferences DataStore
-- Kotlin Coroutines / Flow
+- Room
+- DataStore
+- Coroutines / Flow
+- WorkManager
+- Firebase Authentication
+- Android Credential Manager
 - ML Kit Text Recognition
-- saját minimális XLSX generátor
-- JUnit unit tesztek
+- Lottie
+- R8 optimalizálás és resource shrinking
 
-## Architektúra
+## Projektstruktúra
 
-```
+```text
 Compose UI
    ↓
-MeterViewModel
-   ├── MeterRepository
-   │     ↓
-   │   Room / SQLite
-   │
-   ├── SettingsRepository
-   │     ↓
-   │   Preferences DataStore
-   │
+ViewModel
+   ├── MeterRepository → Room
+   ├── SettingsRepository → DataStore
    ├── UsageCalculator
    ├── AnalyticsCalculator
-   ├── HungarianEnergyLimits
    ├── OcrMeterReader
-   ├── XlsxExporter / CsvManager
    ├── BackupManager
-   ├── ReadingReminderWorker
-   └── MeterWidgetProvider
+   ├── CSV / XLSX export
+   ├── Reminder Worker
+   └── Shared / family sync
 ```
 
 ## Build
 
 JDK 17 szükséges.
 
+### Windows
+
+```bat
+gradlew.bat testDebugUnitTest assembleDebug
+```
+
+### Linux / macOS
+
 ```bash
 ./gradlew testDebugUnitTest assembleDebug
 ```
 
-A GitHub Actions minden `main` pushnál és PR-nél lefuttatja a unit teszteket, elkészíti a debug APK-t, majd artifactként feltölti.
+A CI unit teszteket, debug buildet és optimalizált release buildet is ellenőriz.
 
-## Csomagnév
+## Firebase
 
-`hu.merenyimiklos.meterreader`
+A Firebase Authentication beállításának részletes leírása:
 
+```
+FIREBASE_SETUP.md
+```
 
-## GitHub kiadások
+Android package:
 
-A repository a **Create App Release** GitHub Actionből tud zárt béta vagy stable kiadást készíteni.
+```
+hu.merenyimiklos.meterreader
+```
 
-### Kiadás egy korábbi sikeres Actionből
+## Megjegyzés
 
-Az **Actions → Create App Release → Run workflow** képernyőn megadható a `source_run_id`.
+Az OCR és a költségbecslés segédfunkció. A felismert mérőállást mentés előtt mindig érdemes ellenőrizni.
 
-Ez annak a sikeres GitHub Actions futásnak az azonosítója, amelyből kiadást szeretnél készíteni. Például egy ilyen URL-ben:
+---
 
-`.../actions/runs/40019995720`
-
-a run ID:
-
-`40019995720`
-
-A release workflow ellenőrzi, hogy a kiválasztott Action **completed + success** állapotú-e, kiveszi belőle a pontos commit SHA-t, majd ugyanabból a commitból újrafuttatja a teszteket és elkészíti a release buildet.
-
-Ha nem adsz meg `source_run_id`-t, a `source_ref` mezőben branch, tag vagy commit SHA is megadható.
-
-### Zárt béta
-
-Válaszd:
-
-- `channel: beta`
-- `source_run_id`: opcionálisan egy sikeres Action run ID
-- `source_ref`: alapból `main`
-- `version_name`: az alapverzió, például `0.5.0`
-- `version_code`: mindig növekvő egész szám
-- opcionális release notes
-
-A workflow unit teszteket futtat, release-signed APK-t készít, SHA-256 checksumot generál, majd **Draft + Prerelease** GitHub Release-t hoz létre. A béta APK verzióneve automatikusan például `0.5.0-beta.123` lesz.
-
-A repository publikus, de a Draft release nem jelenik meg nyilvánosan; draft release-eket csak push jogosultsággal rendelkező felhasználók látják.
-
-### Signing key egyszeri beállítása
-
-A béta és a stable ugyanazt az állandó signing key-t használja, így a béta verziók és a későbbi stable verzió egymásra telepíthetők.
-
-Windows alatt CMD-ből futtasd:
-
-`scripts\\create-release-keystore.cmd`
-
-Ez létrehozza:
-
-- `meter-reader-release.jks`
-- `meter-reader-release.b64`
-
-A JKS fájlt mentsd el biztonságos helyre. A repository `.gitignore` fájlja kizárja a signing fájlokat.
-
-A GitHub repository **Settings → Secrets and variables → Actions** részében hozd létre:
-
-- `ANDROID_KEYSTORE_BASE64` – a `meter-reader-release.b64` teljes tartalma
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS` – alapból `meter-reader`
-- `ANDROID_KEY_PASSWORD`
-
-A signing key és a jelszavak soha ne kerüljenek commitba.
-
-### Stable
-
-Ha a béta rendben van, indítsd újra a **Create App Release** workflow-t:
-
-- ugyanazzal a forrás Actionnel vagy commit SHA-val
-- `channel: stable`
-- a kívánt végleges `version_name` és `version_code` értékekkel
-
-A stable workflow signed release APK-t készít, `v<version>` taget hoz létre és publikus **Latest GitHub Release**-ként teszi közzé.
-
-A Gradle build CI-ből felülírható az `APP_VERSION_NAME` és `APP_VERSION_CODE` környezeti változókkal, ezért a béta/stable kiadáshoz nem kell kézzel átírni a repository verziószámát.
-
-
-## Frissítés és adatmegőrzés
-
-Azonos `applicationId` és azonos release signing key esetén az APK frissítése megőrzi a Room adatbázist, a DataStore beállításokat és az app belső adatait.
-
-### Első átállás debug APK-ról signed bétára
-
-A GitHub Actions debug APK és a saját release key-jel aláírt béta eltérő aláírást használ. Emiatt az első signed béta nem telepíthető közvetlenül a korábbi debug APK fölé.
-
-Az első átállás menete:
-
-1. a régi appban készíts JSON biztonsági mentést;
-2. töröld a debug verziót;
-3. telepítsd a release-signed bétát;
-4. állítsd vissza a JSON mentést.
-
-Ezután a további **beta → beta → stable** frissítések ugyanazzal a signing key-jel készülnek, ezért rátelepíthetők és az adatok megmaradnak.
-
-## Beépített frissítésellenőrzés
-
-Az app induláskor ellenőrzi a repository legfrissebb **publikus stable GitHub Release** kiadását. Ha újabb verzió érhető el, Material 3 frissítési ablak jelenik meg, amely közvetlenül az APK letöltésére visz.
-
-A zárt, Draft béta release-eket az app nem kérdezi le, mert azok GitHub-hitelesítést igényelnének; hozzáférési tokent nem tárolunk az APK-ban.
-
-
-## Google Play Closed Testing
-
-A `.github/workflows/release.yml` már signed APK-t és signed AAB-t is készít. A `beta` csatorna a Google Play egy zárt teszt trackjére tölthet, a `stable` csatorna később a `production` trackre.
-
-### Egyszeri Play Console bootstrap
-
-1. Play Consoleban hozd létre a **Mérőóra Napló** alkalmazást ezzel a package névvel:
-   `hu.merenyimiklos.meterreader`
-2. Menj ide: **Test and release → Testing → Closed testing**.
-3. Hozz létre egy tracket pontosan ezzel a névvel:
-   `closed-beta`
-4. A **Testers** fülön adj hozzá e-mail listát vagy Google Groupot, majd mentsd el a tesztelői opt-in linket.
-5. Az első Play feltöltést még kézzel kell elvégezni:
-   - GitHub Actions → **Create App Release**
-   - `channel: beta`
-   - `publish_to_play: false`
-   - töltsd le a workflow artifactból a signed `.aab` fájlt
-   - töltsd fel kézzel a `closed-beta` track első release-éhez
-6. Ha a Play Console kéri, fejezd be a Play App Signing / alkalmazásadatok szükséges lépéseit.
-
-### Google Play Developer API
-
-A további automatikus feltöltéshez:
-
-1. Google Cloudban engedélyezd a **Google Play Android Developer API** szolgáltatást.
-2. Hozz létre egy service accountot.
-3. Készíts hozzá JSON kulcsot.
-4. Play Console → **Users and permissions** alatt hívd meg a service account e-mail címét, és adj neki ehhez az alkalmazáshoz release-kezelési jogosultságot.
-5. GitHub repo → **Settings → Secrets and variables → Actions**:
-   - új secret: `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
-   - értéke: a letöltött service-account JSON teljes tartalma
-
-Ezután a **Create App Release** workflowban:
-
-- `channel: beta`
-- `publish_to_play: true`
-- `play_track: closed-beta`
-
-A workflow:
-- lefuttatja a unit teszteket,
-- ugyanazzal az állandó upload/signing key-jel elkészíti az APK-t és AAB-t,
-- az AAB-t feltölti a `closed-beta` Play trackre,
-- a GitHubon külön Draft + Prerelease kiadást is készít.
-
-### Stable kiadás
-
-Ha a tesztelt verzió jó:
-
-- `channel: stable`
-- `publish_to_play: true`
-
-Ekkor a workflow a Play `production` tracket célozza és GitHub Latest Release-t készít.
-
-**Fontos:** minden Google Playre feltöltött új build `versionCode` értékének nagyobbnak kell lennie az összes korábban feltöltött build versionCode-jánál. Például ha a béta `versionCode = 6`, akkor a stable legyen legalább `7`.
-
-
-### Ha a Play Console rossz upload kulcsot jelez
-
-A Play App Signing két külön kulcsot használ:
-
-- **upload key**: ezzel írjuk alá az AAB-t feltöltés előtt;
-- **app signing key**: ezt a Google Play használja a felhasználóknak kiosztott APK-k végső aláírására.
-
-Ha a Play Console más SHA-1 fingerprintet vár, mint amit a GitHub release build használ, két lehetőség van:
-
-1. használd azt a régi keystore-t, amelynek SHA-1 fingerprintje megegyezik a Play által várt értékkel; vagy
-2. kérj **Upload key resetet**, és regisztráld a jelenlegi release keystore tanúsítványát új upload key-ként.
-
-A jelenlegi keystore fingerprintjének ellenőrzéséhez és a Playnek szükséges PEM fájl elkészítéséhez Windows CMD-ben:
-
-`scripts\\export-upload-certificate.cmd`
-
-A script létrehozza:
-
-`upload_certificate.pem`
-
-Play Console útvonal:
-
-**Protected with Play → Play Store protection → Manage Play app signing → Upload key certificate → Request upload key reset**
-
-A reset után GitHub Secretként érdemes felvenni:
-
-`ANDROID_EXPECTED_UPLOAD_SHA1`
-
-értéke az új, Play által elfogadott upload key SHA-1 fingerprint legyen. A release workflow ezután még build előtt ellenőrzi, hogy a GitHubban tárolt signing keystore valóban ezzel a tanúsítvánnyal ír-e alá.
+**Mérőóra Napló** — egyszerűbb leolvasás, átláthatóbb fogyasztás.
