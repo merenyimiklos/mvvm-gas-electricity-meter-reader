@@ -1,10 +1,9 @@
 Új külsőt kapott a Mérőóra Napló!
 
-• Teljesen megújítottuk a megjelenést, hogy modernebb, letisztultabb és egységesebb legyen.
-• Új alkalmazásikont kapott az app.
-• Javítottuk a Google-fiókkal történő bejelentkezést.
-• Szebb és kényelmesebb lett az első indításkor megjelenő útmutató.
-• Javítottuk a sötét mód szöveg- és kontrasztproblémáit.
-• Az Áttekintés, Rögzítés, Napló, Statisztika és Beállítások képernyők egységes új dizájnt kaptak.
-• Finomítottuk az alsó navigációt, a színeket, a kártyákat és az animációkat.
-• Több kisebb hibát és megjelenítési problémát is javítottunk.
+• Modern, egységes megjelenés az összes fő képernyőn.
+• Új alkalmazásikon és finomított alsó navigáció.
+• Javított Google-fiókos bejelentkezés.
+• Megújult kezdő útmutató.
+• Sötét mód: javított szövegek és kontraszt.
+• Frissített színek, kártyák és animációk.
+• További kisebb hibajavítások.
