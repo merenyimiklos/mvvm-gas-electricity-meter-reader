@@ -2464,6 +2464,7 @@ private fun MeterToggleRow(
     }
 }
 
+@Composable
 private fun MoneyField(
     value: String,
     onValueChange:
