@@ -252,8 +252,48 @@ class AuthViewModel(
         val message =
             error.message
                 .orEmpty()
+        val className =
+            error::class.simpleName
+                .orEmpty()
 
         return when {
+            className.contains(
+                "Cancellation",
+                ignoreCase = true
+            ) ->
+                "A Google-belépést megszakítottad."
+
+            className.contains(
+                "GetCredential",
+                ignoreCase = true
+            ) ->
+                "A Google-belépés nem indult el. Ellenőrizd, hogy a Google bejelentkezés engedélyezve van Firebase-ben, és a telepített app aláírásának SHA-1 ujjlenyomata hozzá van adva."
+
+            message.contains(
+                "DEVELOPER_ERROR",
+                ignoreCase = true
+            ) ||
+                message.contains(
+                    "12500",
+                    ignoreCase = true
+                ) ||
+                message.contains(
+                    "10:",
+                    ignoreCase = true
+                ) ->
+                "Google-bejelentkezési konfigurációs hiba. Ellenőrizd a Firebase Google providert, a támogatási e-mailt és az alkalmazás SHA-1 ujjlenyomatát."
+
+            message.contains(
+                "OAuth",
+                ignoreCase = true
+            ) ||
+                message.contains(
+                    "default_web_client_id",
+                    ignoreCase = true
+                ) ->
+                "Hiányzik vagy elavult a Google OAuth konfiguráció. Engedélyezd a Google belépést Firebase-ben, majd töltsd le újra a google-services.json fájlt."
+
+
             message.contains(
                 "password",
                 ignoreCase = true
