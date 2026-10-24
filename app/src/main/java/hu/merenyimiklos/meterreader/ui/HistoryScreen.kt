@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -185,26 +186,20 @@ internal fun HistoryScreen(
         }
 
     Scaffold(
+        containerColor =
+            MaterialTheme
+                .colorScheme
+                .background,
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(t("Mérési napló"))
-                        Text(
-                            readings.size
-                                .toString() +
-                                t(" rögzített mérés"),
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodyMedium,
-                            color =
-                                MaterialTheme
-                                    .colorScheme
-                                    .onSurfaceVariant
-                        )
-                    }
-                },
+            BrandTopBar(
+                title =
+                    t("Mérési napló"),
+                subtitle =
+                    readings.size
+                        .toString() +
+                        t(" rögzített mérés"),
+                icon =
+                    Icons.Default.ReceiptLong,
                 actions = {
                     IconButton(
                         onClick = {
@@ -218,10 +213,13 @@ internal fun HistoryScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Default
-                                .Download,
+                            Icons.Default.Download,
                             contentDescription =
-                                t("Excel export")
+                                t("Excel export"),
+                            tint =
+                                MaterialTheme
+                                    .colorScheme
+                                    .primary
                         )
                     }
                 }
