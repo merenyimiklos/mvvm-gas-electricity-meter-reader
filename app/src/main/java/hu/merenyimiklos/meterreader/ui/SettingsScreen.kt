@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -640,24 +641,18 @@ internal fun SettingsScreen(
         }
 
     Scaffold(
+        containerColor =
+            MaterialTheme
+                .colorScheme
+                .background,
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(t("Beállítások"))
-                        Text(
-                            t("Tarifák, célok és emlékeztetők"),
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodyMedium,
-                            color =
-                                MaterialTheme
-                                    .colorScheme
-                                    .onSurfaceVariant
-                        )
-                    }
-                }
+            BrandTopBar(
+                title =
+                    t("Beállítások"),
+                subtitle =
+                    t("Tarifák, célok és emlékeztetők"),
+                icon =
+                    Icons.Default.Settings
             )
         },
         snackbarHost = {
