@@ -238,7 +238,11 @@ private fun AuthScreen(
                         .typography
                         .headlineLarge,
                 fontWeight =
-                    FontWeight.Bold
+                    FontWeight.Bold,
+                color =
+                    MaterialTheme
+                        .colorScheme
+                        .onBackground
             )
             Text(
                 text =
