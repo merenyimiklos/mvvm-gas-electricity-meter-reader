@@ -168,9 +168,13 @@ internal fun DashboardScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier =
-                Modifier.padding(
-                    innerPadding
-                ),
+                Modifier
+                    .background(
+                        brandScreenBrush()
+                    )
+                    .padding(
+                        innerPadding
+                    ),
             contentPadding =
                 PaddingValues(
                     bottom = 24.dp
