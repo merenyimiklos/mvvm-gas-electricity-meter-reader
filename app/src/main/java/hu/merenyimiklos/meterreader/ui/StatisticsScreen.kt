@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.TrendingDown
@@ -179,24 +180,18 @@ internal fun StatisticsScreen(
     }
 
     Scaffold(
+        containerColor =
+            MaterialTheme
+                .colorScheme
+                .background,
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(t("Statisztika"))
-                        Text(
-                            t("Trendek, keretek és előrejelzés"),
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodyMedium,
-                            color =
-                                MaterialTheme
-                                    .colorScheme
-                                    .onSurfaceVariant
-                        )
-                    }
-                }
+            BrandTopBar(
+                title =
+                    t("Statisztika"),
+                subtitle =
+                    t("Trendek, keretek és előrejelzés"),
+                icon =
+                    Icons.Default.BarChart
             )
         }
     ) { innerPadding ->
