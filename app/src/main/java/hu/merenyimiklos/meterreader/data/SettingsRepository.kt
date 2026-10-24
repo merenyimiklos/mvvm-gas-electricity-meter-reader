@@ -3,14 +3,14 @@ package hu.merenyimiklos.meterreader.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import hu.merenyimiklos.meterreader.model.AppLanguage
+import hu.merenyimiklos.meterreader.model.BillingMode
 import hu.merenyimiklos.meterreader.model.BillingSettings
-import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -25,6 +25,14 @@ class SettingsRepository(
     private val context: Context
 ) {
     private object Keys {
+        val electricityEnabled =
+            booleanPreferencesKey("electricity_enabled")
+        val electricityNightEnabled =
+            booleanPreferencesKey("electricity_night_enabled")
+        val gasEnabled =
+            booleanPreferencesKey("gas_enabled")
+        val waterEnabled =
+            booleanPreferencesKey("water_enabled")
         val electricityUnitPrice =
             doublePreferencesKey("electricity_unit_price")
         val electricityMonthlyFixedFee =
@@ -39,6 +47,8 @@ class SettingsRepository(
             doublePreferencesKey("electricity_night_monthly_goal_kwh")
         val gasMonthlyGoalM3 =
             doublePreferencesKey("gas_monthly_goal_m3")
+        val waterMonthlyGoalM3 =
+            doublePreferencesKey("water_monthly_goal_m3")
         val gasHeatingValueMjPerM3 =
             doublePreferencesKey("gas_heating_value_mj_per_m3")
         val reminderEnabled =
@@ -59,6 +69,14 @@ class SettingsRepository(
             doublePreferencesKey("gas_monthly_fixed_fee")
         val gasFlatMonthlyPayment =
             doublePreferencesKey("gas_flat_monthly_payment")
+        val waterBillingMode =
+            stringPreferencesKey("water_billing_mode")
+        val waterUnitPrice =
+            doublePreferencesKey("water_unit_price")
+        val waterMonthlyFixedFee =
+            doublePreferencesKey("water_monthly_fixed_fee")
+        val waterFlatMonthlyPayment =
+            doublePreferencesKey("water_flat_monthly_payment")
         val appLanguage =
             stringPreferencesKey("app_language")
         val themeMode =
@@ -86,6 +104,14 @@ class SettingsRepository(
             }
             .map { preferences ->
                 BillingSettings(
+                    electricityEnabled =
+                        preferences[Keys.electricityEnabled] ?: true,
+                    electricityNightEnabled =
+                        preferences[Keys.electricityNightEnabled] ?: true,
+                    gasEnabled =
+                        preferences[Keys.gasEnabled] ?: true,
+                    waterEnabled =
+                        preferences[Keys.waterEnabled] ?: false,
                     electricityUnitPrice =
                         preferences[Keys.electricityUnitPrice] ?: 0.0,
                     electricityMonthlyFixedFee =
@@ -100,6 +126,8 @@ class SettingsRepository(
                         preferences[Keys.electricityNightMonthlyGoalKwh] ?: 0.0,
                     gasMonthlyGoalM3 =
                         preferences[Keys.gasMonthlyGoalM3] ?: 0.0,
+                    waterMonthlyGoalM3 =
+                        preferences[Keys.waterMonthlyGoalM3] ?: 0.0,
                     gasHeatingValueMjPerM3 =
                         preferences[Keys.gasHeatingValueMjPerM3] ?: 34.8,
                     reminderEnabled =
@@ -116,16 +144,30 @@ class SettingsRepository(
                         preferences[Keys.gasBillingMode]
                             ?.let { value ->
                                 runCatching {
-                                    GasBillingMode.valueOf(value)
+                                    BillingMode.valueOf(value)
                                 }.getOrNull()
                             }
-                            ?: GasBillingMode.FLAT_RATE,
+                            ?: BillingMode.FLAT_RATE,
                     gasUnitPrice =
                         preferences[Keys.gasUnitPrice] ?: 0.0,
                     gasMonthlyFixedFee =
                         preferences[Keys.gasMonthlyFixedFee] ?: 0.0,
                     gasFlatMonthlyPayment =
                         preferences[Keys.gasFlatMonthlyPayment] ?: 0.0,
+                    waterBillingMode =
+                        preferences[Keys.waterBillingMode]
+                            ?.let { value ->
+                                runCatching {
+                                    BillingMode.valueOf(value)
+                                }.getOrNull()
+                            }
+                            ?: BillingMode.METERED,
+                    waterUnitPrice =
+                        preferences[Keys.waterUnitPrice] ?: 0.0,
+                    waterMonthlyFixedFee =
+                        preferences[Keys.waterMonthlyFixedFee] ?: 0.0,
+                    waterFlatMonthlyPayment =
+                        preferences[Keys.waterFlatMonthlyPayment] ?: 0.0,
                     appLanguage =
                         preferences[Keys.appLanguage]
                             ?.let { value ->
@@ -155,8 +197,18 @@ class SettingsRepository(
                 )
             }
 
-    suspend fun update(settings: BillingSettings) {
+    suspend fun update(
+        settings: BillingSettings
+    ) {
         context.billingSettingsDataStore.edit { preferences ->
+            preferences[Keys.electricityEnabled] =
+                settings.electricityEnabled
+            preferences[Keys.electricityNightEnabled] =
+                settings.electricityNightEnabled
+            preferences[Keys.gasEnabled] =
+                settings.gasEnabled
+            preferences[Keys.waterEnabled] =
+                settings.waterEnabled
             preferences[Keys.electricityUnitPrice] =
                 settings.electricityUnitPrice
             preferences[Keys.electricityMonthlyFixedFee] =
@@ -171,6 +223,8 @@ class SettingsRepository(
                 settings.electricityNightMonthlyGoalKwh
             preferences[Keys.gasMonthlyGoalM3] =
                 settings.gasMonthlyGoalM3
+            preferences[Keys.waterMonthlyGoalM3] =
+                settings.waterMonthlyGoalM3
             preferences[Keys.gasHeatingValueMjPerM3] =
                 settings.gasHeatingValueMjPerM3
             preferences[Keys.reminderEnabled] =
@@ -191,6 +245,14 @@ class SettingsRepository(
                 settings.gasMonthlyFixedFee
             preferences[Keys.gasFlatMonthlyPayment] =
                 settings.gasFlatMonthlyPayment
+            preferences[Keys.waterBillingMode] =
+                settings.waterBillingMode.name
+            preferences[Keys.waterUnitPrice] =
+                settings.waterUnitPrice
+            preferences[Keys.waterMonthlyFixedFee] =
+                settings.waterMonthlyFixedFee
+            preferences[Keys.waterFlatMonthlyPayment] =
+                settings.waterFlatMonthlyPayment
             preferences[Keys.appLanguage] =
                 settings.appLanguage.name
             preferences[Keys.themeMode] =
