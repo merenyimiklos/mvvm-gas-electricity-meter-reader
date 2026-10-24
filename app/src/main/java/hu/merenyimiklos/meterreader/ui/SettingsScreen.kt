@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -90,7 +91,8 @@ import java.time.LocalDate
 @Composable
 internal fun SettingsScreen(
     viewModel: MeterViewModel,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onOpenMenu: () -> Unit = {}
 ) {
     val settings by
         viewModel.settings
@@ -655,7 +657,16 @@ internal fun SettingsScreen(
                 subtitle =
                     t("Minden fontos beállítás egy helyen"),
                 icon =
-                    Icons.Default.Settings
+                    Icons.Default.Settings,
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onOpenMenu) {
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = t("Menü"),
+                            tint = androidx.compose.ui.graphics.Color.White
+                        )
+                    }
+                }
             )
         },
         snackbarHost = {
