@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -77,6 +78,8 @@ import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.model.MeterType
+import androidx.compose.foundation.shape.RoundedCornerShape
 import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -88,7 +91,8 @@ import java.time.LocalDate
 @Composable
 internal fun SettingsScreen(
     viewModel: MeterViewModel,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onOpenMenu: () -> Unit = {}
 ) {
     val settings by
         viewModel.settings
@@ -651,9 +655,18 @@ internal fun SettingsScreen(
                 title =
                     t("Beállítások"),
                 subtitle =
-                    t("Tarifák, célok és emlékeztetők"),
+                    t("Minden fontos beállítás egy helyen"),
                 icon =
-                    Icons.Default.Settings
+                    Icons.Default.Settings,
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onOpenMenu) {
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = t("Menü"),
+                            tint = androidx.compose.ui.graphics.Color.White
+                        )
+                    }
+                }
             )
         },
         snackbarHost = {
@@ -706,7 +719,7 @@ internal fun SettingsScreen(
                             )
                     ) {
                         Text(
-                            t("Megjelenés és nyelv"),
+                            t("Általános beállítások"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -823,7 +836,7 @@ internal fun SettingsScreen(
                             Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            t("Használt mérők"),
+                            t("Díjszabás és mérők"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -844,6 +857,7 @@ internal fun SettingsScreen(
                         )
 
                         MeterToggleRow(
+                            type = MeterType.ELECTRICITY,
                             title = t("Normál áram"),
                             checked = electricityEnabled,
                             onCheckedChange = {
@@ -851,6 +865,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.ELECTRICITY_NIGHT,
                             title = t("Éjszakai áram"),
                             checked = nightEnabled,
                             onCheckedChange = {
@@ -858,6 +873,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.GAS,
                             title = t("Gáz"),
                             checked = gasEnabled,
                             onCheckedChange = {
@@ -865,6 +881,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.WATER,
                             title = t("Víz"),
                             checked = waterEnabled,
                             onCheckedChange = {
@@ -2441,25 +2458,32 @@ private fun TariffCard(
 
 @Composable
 private fun MeterToggleRow(
+    type: MeterType,
     title: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier =
-            Modifier.fillMaxWidth(),
-        verticalAlignment =
-            Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                playMeterColor(type).copy(alpha = 0.09f),
+                RoundedCornerShape(18.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        PlayMeterIcon(type = type, size = 42.dp)
         Text(
-            title,
-            modifier =
-                Modifier.weight(1f)
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
         )
         Switch(
             checked = checked,
-            onCheckedChange =
-                onCheckedChange
+            onCheckedChange = onCheckedChange
         )
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -111,9 +113,9 @@ internal fun AddReadingScreen(
         topBar = {
             BrandTopBar(
                 title =
-                    t("Mérőállás rögzítése"),
+                    t("Új leolvasás"),
                 subtitle =
-                    t("Gyors havi leolvasás vagy egyedi mérés"),
+                    t("Fotózd le vagy írd be • OCR és kézi bevitel"),
                 icon =
                     Icons.Default.CameraAlt
             )
@@ -169,6 +171,43 @@ internal fun AddReadingScreen(
                             date = selectedDate,
                             snackbarHostState = snackbarHostState
                         )
+                    }
+                    item {
+                        androidx.compose.material3.Surface(
+                            onClick = { mode = ReadingEntryMode.SINGLE },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(24.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(18.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                androidx.compose.material3.Icon(
+                                    Icons.Default.CameraAlt,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        t("Mérőóra fotózása"),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        t("Automatikus leolvasás OCR-rel"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                androidx.compose.material3.Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -560,9 +599,30 @@ private fun QuickMeterField(
         )
 
     Column(
-        verticalArrangement =
-            Arrangement.spacedBy(5.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(playMeterColor(type).copy(alpha = 0.105f), RoundedCornerShape(22.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PlayMeterIcon(type = type, size = 44.dp)
+            Column {
+                Text(
+                    t(type.displayName),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    type.unit,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         OutlinedTextField(
             value = value,
             onValueChange =

@@ -270,7 +270,12 @@ fun MeterReaderApp(
                         viewModel =
                             viewModel,
                         authViewModel =
-                            authViewModel
+                            authViewModel,
+                        onOpenMenu = {
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }
                     )
                 }
             }
