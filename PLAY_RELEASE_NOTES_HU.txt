@@ -5,3 +5,4 @@ Megújult a Mérőóra Napló!
 • Javult a bejelentkezési és fiókkezelési élmény.
 • A frissítések ellenőrzése megbízhatóbb lett, és fontos új verziónál az app jelzi, hogy frissítés szükséges.
 • Több kisebb hibát javítottunk, és finomítottunk az animációkon és a kezelőfelületen.
+• Csökkentettük az alkalmazás méretét és javítottuk a háttérben futó kód optimalizálását, így gyorsabb és takarékosabb lett.
