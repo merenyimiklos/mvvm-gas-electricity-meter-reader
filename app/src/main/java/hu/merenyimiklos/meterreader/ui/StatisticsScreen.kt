@@ -198,6 +198,9 @@ internal fun StatisticsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    brandScreenBrush()
+                )
                 .padding(innerPadding),
             contentPadding =
                 PaddingValues(
