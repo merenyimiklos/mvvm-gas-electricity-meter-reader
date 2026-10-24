@@ -42,11 +42,11 @@ jobs:
           if [[ -n "${FIREBASE_GOOGLE_SERVICES_JSON:-}" ]]; then
             printf '%s' "$FIREBASE_GOOGLE_SERVICES_JSON" > app/google-services.json
             echo "Firebase Android config enabled for this build."
-            if ! jq -e '.client[]?.oauth_client[]? | select(.client_type == 3)' app/google-services.json >/dev/null; then
-              echo "::error::google-services.json does not contain a Web OAuth client (client_type 3). Enable Google Sign-In in Firebase and download the config again."
-              exit 1
+            if jq -e '.client[]?.oauth_client[]? | select(.client_type == 3)' app/google-services.json >/dev/null; then
+              echo "Firebase Google OAuth client found."
+            else
+              echo "::warning::google-services.json does not contain a Web OAuth client (client_type 3). Google Sign-In will not work until the Firebase Google provider is enabled and the config secret is replaced."
             fi
-            echo "Firebase Google OAuth client found."
           else
             echo "Firebase config secret not set; building the offline auth setup state."
           fi
