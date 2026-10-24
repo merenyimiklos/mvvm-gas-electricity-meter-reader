@@ -6,7 +6,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -126,17 +126,10 @@ class AuthRepository(
 
         val serverClientId =
             defaultWebClientId()
-        val googleIdOption =
-            GetGoogleIdOption
-                .Builder()
-                .setFilterByAuthorizedAccounts(
-                    false
-                )
-                .setServerClientId(
+        val googleSignInOption =
+            GetSignInWithGoogleOption
+                .Builder(
                     serverClientId
-                )
-                .setAutoSelectEnabled(
-                    false
                 )
                 .build()
 
@@ -144,7 +137,7 @@ class AuthRepository(
             GetCredentialRequest
                 .Builder()
                 .addCredentialOption(
-                    googleIdOption
+                    googleSignInOption
                 )
                 .build()
 
