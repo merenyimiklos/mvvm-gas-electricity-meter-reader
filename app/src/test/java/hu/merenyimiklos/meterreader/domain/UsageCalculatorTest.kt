@@ -5,6 +5,8 @@ import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -149,6 +151,128 @@ class UsageCalculatorTest {
             5800.0,
             february.totalEstimatedPayable,
             0.001
+        )
+    }
+
+    @Test
+    fun meteredWaterUsesConsumptionAndFixedFee() {
+        val readings =
+            listOf(
+                reading(
+                    "w1",
+                    MeterType.WATER,
+                    100.0,
+                    "2026-01-01"
+                ),
+                reading(
+                    "w2",
+                    MeterType.WATER,
+                    110.0,
+                    "2026-02-01"
+                )
+            )
+
+        val settings =
+            BillingSettings(
+                waterEnabled = true,
+                waterBillingMode =
+                    GasBillingMode.METERED,
+                waterUnitPrice = 500.0,
+                waterMonthlyFixedFee = 100.0
+            )
+
+        val february =
+            UsageCalculator
+                .monthlySummaries(
+                    readings,
+                    settings
+                )
+                .first {
+                    it.month.monthValue == 2
+                }
+
+        assertEquals(
+            10.0,
+            february.waterUsage ?: 0.0,
+            0.001
+        )
+        assertEquals(
+            5100.0,
+            february.waterConsumptionCost,
+            0.001
+        )
+        assertEquals(
+            5100.0,
+            february.waterPayable,
+            0.001
+        )
+    }
+
+    @Test
+    fun flatRateWaterUsesConfiguredMonthlyPayment() {
+        val readings =
+            listOf(
+                reading(
+                    "w1",
+                    MeterType.WATER,
+                    100.0,
+                    "2026-01-01"
+                ),
+                reading(
+                    "w2",
+                    MeterType.WATER,
+                    112.0,
+                    "2026-02-01"
+                )
+            )
+
+        val settings =
+            BillingSettings(
+                waterEnabled = true,
+                waterBillingMode =
+                    GasBillingMode.FLAT_RATE,
+                waterUnitPrice = 500.0,
+                waterFlatMonthlyPayment = 6500.0
+            )
+
+        val february =
+            UsageCalculator
+                .monthlySummaries(
+                    readings,
+                    settings
+                )
+                .first {
+                    it.month.monthValue == 2
+                }
+
+        assertEquals(
+            6000.0,
+            february.waterConsumptionCost,
+            0.001
+        )
+        assertEquals(
+            6500.0,
+            february.waterPayable,
+            0.001
+        )
+    }
+
+    @Test
+    fun enabledMeterTypesRespectUserSettings() {
+        val settings =
+            BillingSettings(
+                gasEnabled = false,
+                waterEnabled = true
+            )
+
+        val types =
+            settings.enabledMeterTypes()
+
+        assertTrue(
+            MeterType.WATER in types
+        )
+        assertFalse(
+            MeterType.GAS in types
         )
     }
 
