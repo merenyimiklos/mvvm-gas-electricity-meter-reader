@@ -261,34 +261,34 @@ private fun QuickMonthlyReading(
     snackbarHostState: SnackbarHostState
 ) {
     val scope = rememberCoroutineScope()
+    val activeTypes =
+        settings.enabledMeterTypes()
 
-    var normal by remember(date) {
-        mutableStateOf("")
-    }
-    var night by remember(date) {
-        mutableStateOf("")
-    }
-    var gas by remember(date) {
-        mutableStateOf("")
-    }
+    var values by
+        remember(
+            date,
+            activeTypes
+        ) {
+            mutableStateOf(
+                activeTypes.associateWith {
+                    ""
+                }
+            )
+        }
     var note by remember(date) {
         mutableStateOf("")
     }
     var pendingDuplicateTypes by remember {
-        mutableStateOf<List<MeterType>>(emptyList())
+        mutableStateOf<List<MeterType>>(
+            emptyList()
+        )
     }
 
-    fun values(): Map<MeterType, String> =
-        mapOf(
-            MeterType.ELECTRICITY to normal,
-            MeterType.ELECTRICITY_NIGHT to night,
-            MeterType.GAS to gas
-        )
-
     fun clear() {
-        normal = ""
-        night = ""
-        gas = ""
+        values =
+            activeTypes.associateWith {
+                ""
+            }
         note = ""
     }
 
@@ -298,7 +298,7 @@ private fun QuickMonthlyReading(
         scope.launch {
             val result =
                 viewModel.saveQuickReadings(
-                    values = values(),
+                    values = values,
                     date = date,
                     note = note,
                     allowMonthlyDuplicate =
@@ -312,7 +312,7 @@ private fun QuickMonthlyReading(
                         emptyList()
                     snackbarHostState
                         .showSnackbar(
-                            t("✓ Mindhárom mérőállás sikeresen rögzítve")
+                            t("✓ A mérőállások sikeresen rögzítve")
                         )
                 }
 
@@ -334,7 +334,8 @@ private fun QuickMonthlyReading(
     }
 
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier.fillMaxWidth(),
         colors =
             CardDefaults.elevatedCardColors(
                 containerColor =
@@ -344,13 +345,20 @@ private fun QuickMonthlyReading(
             )
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
+            modifier =
+                Modifier.padding(
+                    18.dp
+                ),
             verticalArrangement =
-                Arrangement.spacedBy(16.dp)
+                Arrangement.spacedBy(
+                    16.dp
+                )
         ) {
             Column(
                 verticalArrangement =
-                    Arrangement.spacedBy(4.dp)
+                    Arrangement.spacedBy(
+                        4.dp
+                    )
             ) {
                 Text(
                     t("Gyors havi leolvasás"),
@@ -362,7 +370,7 @@ private fun QuickMonthlyReading(
                         FontWeight.SemiBold
                 )
                 Text(
-                    t("Írd be egymás után a három óra állását, és egyben elmentjük."),
+                    t("A bekapcsolt mérők állását egy helyen rögzítheted."),
                     style =
                         MaterialTheme
                             .typography
@@ -374,79 +382,87 @@ private fun QuickMonthlyReading(
                 )
             }
 
-            QuickMeterField(
-                type = MeterType.ELECTRICITY,
-                value = normal,
-                onValueChange = {
-                    normal = it
-                },
-                date = date,
-                readings = readings,
-                settings = settings
-            )
-
-            QuickMeterField(
-                type =
-                    MeterType.ELECTRICITY_NIGHT,
-                value = night,
-                onValueChange = {
-                    night = it
-                },
-                date = date,
-                readings = readings,
-                settings = settings
-            )
-
-            QuickMeterField(
-                type = MeterType.GAS,
-                value = gas,
-                onValueChange = {
-                    gas = it
-                },
-                date = date,
-                readings = readings,
-                settings = settings
-            )
-
-            OutlinedTextField(
-                value = note,
-                onValueChange = {
-                    note = it
-                },
-                modifier =
-                    Modifier.fillMaxWidth(),
-                label = {
-                    Text(
-                        t("Közös megjegyzés – opcionális")
-                    )
-                },
-                minLines = 2
-            )
-
-            Button(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                contentPadding =
-                    PaddingValues(
-                        vertical = 14.dp
-                    ),
-                onClick = {
-                    save(false)
-                }
-            ) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null
-                )
-                Spacer(Modifier.width(8.dp))
+            if (activeTypes.isEmpty()) {
                 Text(
-                    t("Mindhárom mentése")
+                    t("Nincs bekapcsolt mérő. A Beállításokban válassz legalább egyet."),
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .error
                 )
+            } else {
+                activeTypes.forEach {
+                    type ->
+                    QuickMeterField(
+                        type = type,
+                        value =
+                            values[type]
+                                .orEmpty(),
+                        onValueChange = {
+                            value ->
+                            values =
+                                values +
+                                    (
+                                        type to
+                                            value
+                                        )
+                        },
+                        date = date,
+                        readings = readings,
+                        settings = settings
+                    )
+                }
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = {
+                        note = it
+                    },
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    label = {
+                        Text(
+                            t("Közös megjegyzés – opcionális")
+                        )
+                    },
+                    minLines = 2
+                )
+
+                Button(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    contentPadding =
+                        PaddingValues(
+                            vertical =
+                                14.dp
+                        ),
+                    onClick = {
+                        save(false)
+                    }
+                ) {
+                    Icon(
+                        Icons.Default
+                            .CheckCircle,
+                        contentDescription =
+                            null
+                    )
+                    Spacer(
+                        Modifier.width(
+                            8.dp
+                        )
+                    )
+                    Text(
+                        t("Összes bekapcsolt mérő mentése")
+                    )
+                }
             }
         }
     }
 
-    if (pendingDuplicateTypes.isNotEmpty()) {
+    if (
+        pendingDuplicateTypes
+            .isNotEmpty()
+    ) {
         AlertDialog(
             onDismissRequest = {
                 pendingDuplicateTypes =
@@ -461,8 +477,12 @@ private fun QuickMonthlyReading(
                 Text(
                     t("Már található ") +
                         pendingDuplicateTypes
-                            .joinToString(", ") {
-                                t(it.displayName)
+                            .joinToString(
+                                ", "
+                            ) {
+                                t(
+                                    it.displayName
+                                )
                             } +
                         t(" mérés erre a hónapra. Ha folytatod, új mérésként kerülnek be az értékek.")
                 )
@@ -473,7 +493,9 @@ private fun QuickMonthlyReading(
                         save(true)
                     }
                 ) {
-                    Text(t("Mentés így is"))
+                    Text(
+                        t("Mentés így is")
+                    )
                 }
             },
             dismissButton = {
@@ -660,9 +682,15 @@ private fun SingleReadingEntry(
 ) {
     val scope = rememberCoroutineScope()
 
-    var meterType by remember {
+    val activeTypes =
+        settings.enabledMeterTypes()
+
+    var meterType by remember(
+        activeTypes
+    ) {
         mutableStateOf(
-            MeterType.ELECTRICITY
+            activeTypes.firstOrNull()
+                ?: MeterType.ELECTRICITY
         )
     }
     var valueText by remember {
@@ -826,7 +854,7 @@ private fun SingleReadingEntry(
                     )
             ) {
                 items(
-                    MeterType.entries
+                    activeTypes
                 ) { type ->
                     FilterChip(
                         selected =
@@ -1223,6 +1251,31 @@ private fun estimateCost(
                                 .gasUnitPrice +
                             settings
                                 .gasMonthlyFixedFee
+                    } else {
+                        null
+                    }
+            }
+
+        MeterType.WATER ->
+            when (
+                settings.waterBillingMode
+            ) {
+                GasBillingMode.FLAT_RATE ->
+                    settings
+                        .waterFlatMonthlyPayment
+                        .takeIf {
+                            it > 0.0
+                        }
+
+                GasBillingMode.METERED ->
+                    if (
+                        settings.waterUnitPrice >
+                        0.0
+                    ) {
+                        value *
+                            settings.waterUnitPrice +
+                            settings
+                                .waterMonthlyFixedFee
                     } else {
                         null
                     }
