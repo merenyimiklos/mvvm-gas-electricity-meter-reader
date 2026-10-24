@@ -48,6 +48,9 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Validate optimized release build (R8)
+        run: ./gradlew assembleRelease --stacktrace
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
