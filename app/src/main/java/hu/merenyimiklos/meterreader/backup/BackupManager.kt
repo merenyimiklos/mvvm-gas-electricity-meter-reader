@@ -3,8 +3,8 @@ package hu.merenyimiklos.meterreader.backup
 import android.content.ContentResolver
 import android.net.Uri
 import hu.merenyimiklos.meterreader.model.AppLanguage
+import hu.merenyimiklos.meterreader.model.BillingMode
 import hu.merenyimiklos.meterreader.model.BillingSettings
-import hu.merenyimiklos.meterreader.model.GasBillingMode
 import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
@@ -83,7 +83,7 @@ class BackupManager(
                 0
             )
 
-        require(version in 1..4) {
+        require(version in 1..5) {
             "Nem támogatott mentési formátum."
         }
 
@@ -161,7 +161,7 @@ class BackupManager(
         JSONObject()
             .put(
                 "version",
-                4
+                5
             )
             .put(
                 "exportedAt",
@@ -226,6 +226,22 @@ class BackupManager(
     ): JSONObject =
         JSONObject()
             .put(
+                "electricityEnabled",
+                settings.electricityEnabled
+            )
+            .put(
+                "electricityNightEnabled",
+                settings.electricityNightEnabled
+            )
+            .put(
+                "gasEnabled",
+                settings.gasEnabled
+            )
+            .put(
+                "waterEnabled",
+                settings.waterEnabled
+            )
+            .put(
                 "electricityUnitPrice",
                 settings
                     .electricityUnitPrice
@@ -265,6 +281,10 @@ class BackupManager(
                     .gasHeatingValueMjPerM3
             )
             .put(
+                "waterMonthlyGoalM3",
+                settings.waterMonthlyGoalM3
+            )
+            .put(
                 "reminderEnabled",
                 settings.reminderEnabled
             )
@@ -301,6 +321,26 @@ class BackupManager(
                     .gasFlatMonthlyPayment
             )
             .put(
+                "waterBillingMode",
+                settings
+                    .waterBillingMode
+                    .name
+            )
+            .put(
+                "waterUnitPrice",
+                settings.waterUnitPrice
+            )
+            .put(
+                "waterMonthlyFixedFee",
+                settings
+                    .waterMonthlyFixedFee
+            )
+            .put(
+                "waterFlatMonthlyPayment",
+                settings
+                    .waterFlatMonthlyPayment
+            )
+            .put(
                 "appLanguage",
                 settings.appLanguage.name
             )
@@ -313,6 +353,26 @@ class BackupManager(
         item: JSONObject
     ): BillingSettings =
         BillingSettings(
+            electricityEnabled =
+                item.optBoolean(
+                    "electricityEnabled",
+                    true
+                ),
+            electricityNightEnabled =
+                item.optBoolean(
+                    "electricityNightEnabled",
+                    true
+                ),
+            gasEnabled =
+                item.optBoolean(
+                    "gasEnabled",
+                    true
+                ),
+            waterEnabled =
+                item.optBoolean(
+                    "waterEnabled",
+                    false
+                ),
             electricityUnitPrice =
                 item.optDouble(
                     "electricityUnitPrice",
@@ -353,6 +413,11 @@ class BackupManager(
                     "gasHeatingValueMjPerM3",
                     34.8
                 ),
+            waterMonthlyGoalM3 =
+                item.optDouble(
+                    "waterMonthlyGoalM3",
+                    0.0
+                ),
             reminderEnabled =
                 item.optBoolean(
                     "reminderEnabled",
@@ -375,16 +440,16 @@ class BackupManager(
                 ).coerceIn(0, 59),
             gasBillingMode =
                 runCatching {
-                    GasBillingMode.valueOf(
+                    BillingMode.valueOf(
                         item.optString(
                             "gasBillingMode",
-                            GasBillingMode
+                            BillingMode
                                 .FLAT_RATE
                                 .name
                         )
                     )
                 }.getOrDefault(
-                    GasBillingMode
+                    BillingMode
                         .FLAT_RATE
                 ),
             gasUnitPrice =
@@ -400,6 +465,34 @@ class BackupManager(
             gasFlatMonthlyPayment =
                 item.optDouble(
                     "gasFlatMonthlyPayment",
+                    0.0
+                ),
+            waterBillingMode =
+                runCatching {
+                    BillingMode.valueOf(
+                        item.optString(
+                            "waterBillingMode",
+                            BillingMode
+                                .METERED
+                                .name
+                        )
+                    )
+                }.getOrDefault(
+                    BillingMode.METERED
+                ),
+            waterUnitPrice =
+                item.optDouble(
+                    "waterUnitPrice",
+                    0.0
+                ),
+            waterMonthlyFixedFee =
+                item.optDouble(
+                    "waterMonthlyFixedFee",
+                    0.0
+                ),
+            waterFlatMonthlyPayment =
+                item.optDouble(
+                    "waterFlatMonthlyPayment",
                     0.0
                 ),
             appLanguage =
