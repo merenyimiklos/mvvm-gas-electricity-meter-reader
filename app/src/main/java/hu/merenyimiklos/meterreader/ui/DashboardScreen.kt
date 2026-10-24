@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -60,31 +61,19 @@ internal fun DashboardScreen(
         viewModel.summaries
             .collectAsStateWithLifecycle()
 
-    val latestNormal = readings
-        .filter {
-            it.type ==
-                MeterType.ELECTRICITY
-        }
-        .maxByOrNull {
-            it.dateEpochDay
-        }
+    val activeTypes =
+        settings.enabledMeterTypes()
 
-    val latestNight = readings
-        .filter {
-            it.type ==
-                MeterType.ELECTRICITY_NIGHT
-        }
-        .maxByOrNull {
-            it.dateEpochDay
-        }
-
-    val latestGas = readings
-        .filter {
-            it.type == MeterType.GAS
-        }
-        .maxByOrNull {
-            it.dateEpochDay
-        }
+    fun latest(
+        type: MeterType
+    ): MeterReading? =
+        readings
+            .filter {
+                it.type == type
+            }
+            .maxByOrNull {
+                it.dateEpochDay
+            }
 
     val latestSummary =
         summaries.maxByOrNull {
@@ -100,41 +89,65 @@ internal fun DashboardScreen(
                 currentYear
         }
 
-    val yearNormal =
-        yearSummaries.sumOf {
-            it.electricityUsage ?: 0.0
-        }
-
-    val yearNight =
-        yearSummaries.sumOf {
-            it.electricityNightUsage
-                ?: 0.0
-        }
-
-    val yearGas =
-        yearSummaries.sumOf {
-            it.gasUsage ?: 0.0
-        }
-
     val yearCost =
         yearSummaries.sumOf {
             it.totalEstimatedPayable
         }
 
+    val readingCards =
+        activeTypes.map {
+            type ->
+            ReadingCardData(
+                title =
+                    t(type.displayName),
+                reading =
+                    latest(type),
+                icon =
+                    when (type) {
+                        MeterType.ELECTRICITY ->
+                            Icons.Default.Bolt
+                        MeterType.ELECTRICITY_NIGHT ->
+                            Icons.Default.Bedtime
+                        MeterType.GAS ->
+                            Icons.Default.LocalFireDepartment
+                        MeterType.WATER ->
+                            Icons.Default.Info
+                    }
+            )
+        }
+
     val priceSetupNeeded =
-        settings.electricityUnitPrice <= 0.0 ||
-            settings
-                .electricityNightUnitPrice <= 0.0 ||
+        (
+            settings.electricityEnabled &&
+                settings.electricityUnitPrice <= 0.0
+            ) ||
             (
-                settings.gasBillingMode ==
-                    GasBillingMode.FLAT_RATE &&
-                    settings
-                        .gasFlatMonthlyPayment <= 0.0
+                settings.electricityNightEnabled &&
+                    settings.electricityNightUnitPrice <= 0.0
                 ) ||
             (
-                settings.gasBillingMode ==
+                settings.gasEnabled &&
+                    settings.gasBillingMode ==
+                    GasBillingMode.FLAT_RATE &&
+                    settings.gasFlatMonthlyPayment <= 0.0
+                ) ||
+            (
+                settings.gasEnabled &&
+                    settings.gasBillingMode ==
                     GasBillingMode.METERED &&
                     settings.gasUnitPrice <= 0.0
+                ) ||
+            (
+                settings.waterEnabled &&
+                    settings.waterBillingMode ==
+                    GasBillingMode.FLAT_RATE &&
+                    settings.waterFlatMonthlyPayment <= 0.0
+                ) ||
+            (
+                settings.waterEnabled &&
+                    settings.waterBillingMode ==
+                    GasBillingMode.METERED &&
+                    settings.waterUnitPrice <= 0.0
                 )
 
     Scaffold(
@@ -144,7 +157,7 @@ internal fun DashboardScreen(
                     Column {
                         Text(t("Mérőóra"))
                         Text(
-                            t("Otthoni energiafigyelő"),
+                            t("Otthoni energia- és vízfigyelő"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -160,23 +173,28 @@ internal fun DashboardScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding),
+            modifier =
+                Modifier.padding(
+                    innerPadding
+                ),
             contentPadding =
                 PaddingValues(
                     bottom = 24.dp
                 ),
             verticalArrangement =
-                Arrangement.spacedBy(16.dp)
+                Arrangement.spacedBy(
+                    16.dp
+                )
         ) {
             if (priceSetupNeeded) {
                 item {
                     ElevatedCard(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp
-                            )
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .padding(
+                                    horizontal = 16.dp
+                                )
+                                .fillMaxWidth(),
                         colors =
                             CardDefaults
                                 .elevatedCardColors(
@@ -192,8 +210,9 @@ internal fun DashboardScreen(
                                     18.dp
                                 ),
                             verticalArrangement =
-                                Arrangement
-                                    .spacedBy(4.dp)
+                                Arrangement.spacedBy(
+                                    4.dp
+                                )
                         ) {
                             Text(
                                 t("Állítsd be a tarifákat"),
@@ -202,11 +221,10 @@ internal fun DashboardScreen(
                                         .typography
                                         .titleMedium,
                                 fontWeight =
-                                    FontWeight
-                                        .SemiBold
+                                    FontWeight.SemiBold
                             )
                             Text(
-                                t("A normál és éjszakai áram külön egységárral számolható."),
+                                t("A bekapcsolt mérők költségbecsléséhez add meg a tarifákat."),
                                 style =
                                     MaterialTheme
                                         .typography
@@ -234,58 +252,47 @@ internal fun DashboardScreen(
             }
 
             item {
-                LazyRow(
-                    contentPadding =
-                        PaddingValues(
-                            horizontal = 16.dp
-                        ),
-                    horizontalArrangement =
-                        Arrangement.spacedBy(
-                            12.dp
-                        )
-                ) {
-                    items(
-                        listOf(
-                            ReadingCardData(
-                                title =
-                                    t("Normál áram"),
-                                reading =
-                                    latestNormal,
-                                icon =
-                                    Icons.Default.Bolt
+                if (readingCards.isEmpty()) {
+                    Text(
+                        t("Nincs bekapcsolt mérő."),
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 16.dp
                             ),
-                            ReadingCardData(
-                                title =
-                                    t("Éjszakai áram"),
-                                reading =
-                                    latestNight,
-                                icon =
-                                    Icons.Default.Bedtime
+                        color =
+                            MaterialTheme
+                                .colorScheme
+                                .onSurfaceVariant
+                    )
+                } else {
+                    LazyRow(
+                        contentPadding =
+                            PaddingValues(
+                                horizontal = 16.dp
                             ),
-                            ReadingCardData(
-                                title = t("Gáz"),
-                                reading =
-                                    latestGas,
-                                icon =
-                                    Icons.Default
-                                        .LocalFireDepartment
+                        horizontalArrangement =
+                            Arrangement.spacedBy(
+                                12.dp
                             )
-                        )
-                    ) { item ->
-                        LatestReadingCard(
-                            data = item
-                        )
+                    ) {
+                        items(readingCards) {
+                            item ->
+                            LatestReadingCard(
+                                data = item
+                            )
+                        }
                     }
                 }
             }
 
             item {
                 ElevatedCard(
-                    modifier = Modifier
-                        .padding(
-                            horizontal = 16.dp
-                        )
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .padding(
+                                horizontal = 16.dp
+                            )
+                            .fillMaxWidth(),
                     colors =
                         CardDefaults
                             .elevatedCardColors(
@@ -297,7 +304,9 @@ internal fun DashboardScreen(
                 ) {
                     Column(
                         modifier =
-                            Modifier.padding(20.dp)
+                            Modifier.padding(
+                                20.dp
+                            )
                     ) {
                         Text(
                             t("Legutóbbi havi becslés"),
@@ -310,7 +319,9 @@ internal fun DashboardScreen(
                         )
 
                         Spacer(
-                            Modifier.height(12.dp)
+                            Modifier.height(
+                                12.dp
+                            )
                         )
 
                         if (
@@ -320,40 +331,59 @@ internal fun DashboardScreen(
                                 t("Legalább két azonos típusú mérőállás kell a fogyasztás kiszámításához.")
                             )
                         } else {
-                            SummaryLine(
-                                label =
-                                    t("Normál áram"),
-                                usage =
-                                    latestSummary
-                                        .electricityUsage,
-                                unit = "kWh",
-                                cost =
-                                    latestSummary
-                                        .electricityCost
-                            )
+                            if (settings.electricityEnabled) {
+                                SummaryLine(
+                                    label =
+                                        t("Normál áram"),
+                                    usage =
+                                        latestSummary
+                                            .electricityUsage,
+                                    unit = "kWh",
+                                    cost =
+                                        latestSummary
+                                            .electricityCost
+                                )
+                            }
 
-                            SummaryLine(
-                                label =
-                                    t("Éjszakai áram"),
-                                usage =
-                                    latestSummary
-                                        .electricityNightUsage,
-                                unit = "kWh",
-                                cost =
-                                    latestSummary
-                                        .electricityNightCost
-                            )
+                            if (settings.electricityNightEnabled) {
+                                SummaryLine(
+                                    label =
+                                        t("Éjszakai áram"),
+                                    usage =
+                                        latestSummary
+                                            .electricityNightUsage,
+                                    unit = "kWh",
+                                    cost =
+                                        latestSummary
+                                            .electricityNightCost
+                                )
+                            }
 
-                            SummaryLine(
-                                label = t("Gáz"),
-                                usage =
-                                    latestSummary
-                                        .gasUsage,
-                                unit = "m³",
-                                cost =
-                                    latestSummary
-                                        .gasPayable
-                            )
+                            if (settings.gasEnabled) {
+                                SummaryLine(
+                                    label = t("Gáz"),
+                                    usage =
+                                        latestSummary
+                                            .gasUsage,
+                                    unit = "m³",
+                                    cost =
+                                        latestSummary
+                                            .gasPayable
+                                )
+                            }
+
+                            if (settings.waterEnabled) {
+                                SummaryLine(
+                                    label = t("Víz"),
+                                    usage =
+                                        latestSummary
+                                            .waterUsage,
+                                    unit = "m³",
+                                    cost =
+                                        latestSummary
+                                            .waterPayable
+                                )
+                            }
 
                             HorizontalDivider(
                                 Modifier.padding(
@@ -363,11 +393,9 @@ internal fun DashboardScreen(
 
                             Row(
                                 modifier =
-                                    Modifier
-                                        .fillMaxWidth(),
+                                    Modifier.fillMaxWidth(),
                                 horizontalArrangement =
-                                    Arrangement
-                                        .SpaceBetween
+                                    Arrangement.SpaceBetween
                             ) {
                                 Text(
                                     t("Becsült fizetendő"),
@@ -394,15 +422,18 @@ internal fun DashboardScreen(
 
             item {
                 ElevatedCard(
-                    modifier = Modifier
-                        .padding(
-                            horizontal = 16.dp
-                        )
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .padding(
+                                horizontal = 16.dp
+                            )
+                            .fillMaxWidth()
                 ) {
                     Column(
                         modifier =
-                            Modifier.padding(20.dp),
+                            Modifier.padding(
+                                20.dp
+                            ),
                         verticalArrangement =
                             Arrangement.spacedBy(
                                 6.dp
@@ -419,34 +450,74 @@ internal fun DashboardScreen(
                                 FontWeight.SemiBold
                         )
 
-                        MetricRow(
-                            t("Normál áram"),
-                            formatDecimal(
-                                yearNormal
-                            ) + " kWh"
-                        )
+                        if (settings.electricityEnabled) {
+                            MetricRow(
+                                t("Normál áram"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        it.electricityUsage
+                                            ?: 0.0
+                                    }
+                                ) + " kWh"
+                            )
+                        }
 
-                        MetricRow(
-                            t("Éjszakai áram"),
-                            formatDecimal(
-                                yearNight
-                            ) + " kWh"
-                        )
+                        if (settings.electricityNightEnabled) {
+                            MetricRow(
+                                t("Éjszakai áram"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        it.electricityNightUsage
+                                            ?: 0.0
+                                    }
+                                ) + " kWh"
+                            )
+                        }
 
-                        MetricRow(
-                            t("Összes áram"),
-                            formatDecimal(
-                                yearNormal +
-                                    yearNight
-                            ) + " kWh"
-                        )
+                        if (
+                            settings.electricityEnabled ||
+                            settings.electricityNightEnabled
+                        ) {
+                            MetricRow(
+                                t("Összes áram"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        (
+                                            it.electricityUsage
+                                                ?: 0.0
+                                            ) +
+                                            (
+                                                it.electricityNightUsage
+                                                    ?: 0.0
+                                                )
+                                    }
+                                ) + " kWh"
+                            )
+                        }
 
-                        MetricRow(
-                            t("Gáz"),
-                            formatDecimal(
-                                yearGas
-                            ) + " m³"
-                        )
+                        if (settings.gasEnabled) {
+                            MetricRow(
+                                t("Gáz"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        it.gasUsage
+                                            ?: 0.0
+                                    }
+                                ) + " m³"
+                            )
+                        }
+
+                        if (settings.waterEnabled) {
+                            MetricRow(
+                                t("Víz"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        it.waterUsage
+                                            ?: 0.0
+                                    }
+                                ) + " m³"
+                            )
+                        }
 
                         HorizontalDivider(
                             Modifier.padding(
@@ -456,47 +527,73 @@ internal fun DashboardScreen(
 
                         MetricRow(
                             t("Becsült összköltség"),
-                            formatMoney(yearCost),
+                            formatMoney(
+                                yearCost
+                            ),
                             bold = true
                         )
                     }
                 }
             }
 
-            item {
-                UsageChart(
-                    title =
-                        t("Normál áram · 6 hónap"),
-                    summaries = summaries,
-                    valueSelector = {
-                        it.electricityUsage
-                    },
-                    unit = "kWh"
-                )
+            if (settings.electricityEnabled) {
+                item {
+                    UsageChart(
+                        title =
+                            t("Normál áram · 6 hónap"),
+                        summaries =
+                            summaries,
+                        valueSelector = {
+                            it.electricityUsage
+                        },
+                        unit = "kWh"
+                    )
+                }
             }
 
-            item {
-                UsageChart(
-                    title =
-                        t("Éjszakai áram · 6 hónap"),
-                    summaries = summaries,
-                    valueSelector = {
-                        it.electricityNightUsage
-                    },
-                    unit = "kWh"
-                )
+            if (settings.electricityNightEnabled) {
+                item {
+                    UsageChart(
+                        title =
+                            t("Éjszakai áram · 6 hónap"),
+                        summaries =
+                            summaries,
+                        valueSelector = {
+                            it.electricityNightUsage
+                        },
+                        unit = "kWh"
+                    )
+                }
             }
 
-            item {
-                UsageChart(
-                    title =
-                        t("Gáz · 6 hónap"),
-                    summaries = summaries,
-                    valueSelector = {
-                        it.gasUsage
-                    },
-                    unit = "m³"
-                )
+            if (settings.gasEnabled) {
+                item {
+                    UsageChart(
+                        title =
+                            t("Gáz · 6 hónap"),
+                        summaries =
+                            summaries,
+                        valueSelector = {
+                            it.gasUsage
+                        },
+                        unit = "m³"
+                    )
+                }
+            }
+
+            if (settings.waterEnabled) {
+                item {
+                    UsageChart(
+                        title =
+                            t("Víz · 6 hónap"),
+                        summaries =
+                            summaries,
+                        valueSelector = {
+                            it.waterUsage
+                        },
+                        unit = "m³"
+                    )
+                }
             }
         }
     }
