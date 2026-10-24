@@ -9,16 +9,23 @@ enum class MeterType(
 ) {
     ELECTRICITY("Normál áram", "Normál", "kWh"),
     ELECTRICITY_NIGHT("Éjszakai áram", "Éjszakai", "kWh"),
-    GAS("Gáz", "Gáz", "m³");
+    GAS("Gáz", "Gáz", "m³"),
+    WATER("Víz", "Víz", "m³");
 
     val isElectricity: Boolean
-        get() = this == ELECTRICITY || this == ELECTRICITY_NIGHT
+        get() =
+            this == ELECTRICITY ||
+                this == ELECTRICITY_NIGHT
 }
 
-enum class GasBillingMode(val displayName: String) {
+enum class BillingMode(
+    val displayName: String
+) {
     FLAT_RATE("Átalánydíj"),
     METERED("Mérőállás alapján")
 }
+
+typealias GasBillingMode = BillingMode
 
 enum class AppLanguage {
     HUNGARIAN,
@@ -38,10 +45,15 @@ data class MeterReading(
     val dateEpochDay: Long,
     val note: String = "",
     val photoUri: String? = null,
-    val createdAtMillis: Long = System.currentTimeMillis()
+    val createdAtMillis: Long =
+        System.currentTimeMillis()
 )
 
 data class BillingSettings(
+    val electricityEnabled: Boolean = true,
+    val electricityNightEnabled: Boolean = true,
+    val gasEnabled: Boolean = true,
+    val waterEnabled: Boolean = false,
     val electricityUnitPrice: Double = 0.0,
     val electricityMonthlyFixedFee: Double = 0.0,
     val electricityNightUnitPrice: Double = 0.0,
@@ -49,41 +61,87 @@ data class BillingSettings(
     val electricityMonthlyGoalKwh: Double = 0.0,
     val electricityNightMonthlyGoalKwh: Double = 0.0,
     val gasMonthlyGoalM3: Double = 0.0,
+    val waterMonthlyGoalM3: Double = 0.0,
     val gasHeatingValueMjPerM3: Double = 34.8,
     val reminderEnabled: Boolean = true,
     val reminderDayOfMonth: Int = 23,
     val reminderHour: Int = 18,
     val reminderMinute: Int = 0,
     val backupFolderUri: String = "",
-    val gasBillingMode: GasBillingMode = GasBillingMode.FLAT_RATE,
+    val gasBillingMode: BillingMode =
+        BillingMode.FLAT_RATE,
     val gasUnitPrice: Double = 0.0,
     val gasMonthlyFixedFee: Double = 0.0,
     val gasFlatMonthlyPayment: Double = 0.0,
-    val appLanguage: AppLanguage = AppLanguage.HUNGARIAN,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val waterBillingMode: BillingMode =
+        BillingMode.METERED,
+    val waterUnitPrice: Double = 0.0,
+    val waterMonthlyFixedFee: Double = 0.0,
+    val waterFlatMonthlyPayment: Double = 0.0,
+    val appLanguage: AppLanguage =
+        AppLanguage.HUNGARIAN,
+    val themeMode: ThemeMode =
+        ThemeMode.SYSTEM,
     val sharedHomeFolderUri: String = "",
     val sharedHomeId: String = "",
     val sharedHomeName: String = "",
     val sharedDeviceId: String = "",
     val sharedDeviceName: String = ""
-)
+) {
+    fun enabledMeterTypes(): List<MeterType> =
+        buildList {
+            if (electricityEnabled) {
+                add(MeterType.ELECTRICITY)
+            }
+            if (electricityNightEnabled) {
+                add(MeterType.ELECTRICITY_NIGHT)
+            }
+            if (gasEnabled) {
+                add(MeterType.GAS)
+            }
+            if (waterEnabled) {
+                add(MeterType.WATER)
+            }
+        }
+
+    fun isMeterEnabled(
+        type: MeterType
+    ): Boolean =
+        when (type) {
+            MeterType.ELECTRICITY ->
+                electricityEnabled
+            MeterType.ELECTRICITY_NIGHT ->
+                electricityNightEnabled
+            MeterType.GAS ->
+                gasEnabled
+            MeterType.WATER ->
+                waterEnabled
+        }
+}
 
 data class MonthlySummary(
     val month: YearMonth,
     val electricityUsage: Double?,
     val electricityNightUsage: Double?,
     val gasUsage: Double?,
+    val waterUsage: Double?,
     val electricityCost: Double,
     val electricityNightCost: Double,
     val gasConsumptionCost: Double,
     val gasPayable: Double,
+    val waterConsumptionCost: Double,
+    val waterPayable: Double,
     val totalEstimatedPayable: Double
 ) {
     val totalElectricityUsage: Double
-        get() = (electricityUsage ?: 0.0) + (electricityNightUsage ?: 0.0)
+        get() =
+            (electricityUsage ?: 0.0) +
+                (electricityNightUsage ?: 0.0)
 
     val totalElectricityCost: Double
-        get() = electricityCost + electricityNightCost
+        get() =
+            electricityCost +
+                electricityNightCost
 }
 
 data class OcrResult(
