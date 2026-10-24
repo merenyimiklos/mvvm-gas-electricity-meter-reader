@@ -1,7 +1,5 @@
 package hu.merenyimiklos.meterreader.ui
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -9,31 +7,21 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import hu.merenyimiklos.meterreader.BuildConfig
 import hu.merenyimiklos.meterreader.auth.AuthViewModel
-import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
 import kotlinx.coroutines.launch
 
@@ -51,8 +39,6 @@ fun MeterReaderApp(
 ) {
     val navController =
         rememberNavController()
-    val context =
-        LocalContext.current
     val drawerState =
         rememberDrawerState(
             DrawerValue.Closed
@@ -60,22 +46,12 @@ fun MeterReaderApp(
     val scope =
         rememberCoroutineScope()
 
-    val updateState by
-        viewModel.updateState
-            .collectAsStateWithLifecycle()
     val authState by
         authViewModel.state
             .collectAsStateWithLifecycle()
     val sharedHomeSyncState by
         viewModel.sharedHomeSyncState
             .collectAsStateWithLifecycle()
-
-    var dismissedUpdateVersion by
-        rememberSaveable {
-            mutableStateOf<String?>(
-                null
-            )
-        }
 
     val currentRoute =
         navController
@@ -299,126 +275,5 @@ fun MeterReaderApp(
                 }
             }
         }
-    }
-
-    val availableUpdate =
-        (
-            updateState as?
-                UpdateState.Available
-            )
-            ?.info
-
-    if (
-        availableUpdate != null &&
-        dismissedUpdateVersion !=
-        availableUpdate.version
-    ) {
-        AlertDialog(
-            onDismissRequest = {
-                dismissedUpdateVersion =
-                    availableUpdate
-                        .version
-            },
-            title = {
-                Text(
-                    t(
-                        "Új verzió érhető el"
-                    )
-                )
-            },
-            text = {
-                Text(
-                    buildString {
-                        append(
-                            t(
-                                "Telepített: "
-                            )
-                        )
-                        append(
-                            BuildConfig
-                                .VERSION_NAME
-                        )
-                        append(
-                            "\nÚj verzió: "
-                        )
-                        append(
-                            availableUpdate
-                                .version
-                        )
-
-                        if (
-                            availableUpdate
-                                .notes
-                                .isNotBlank()
-                        ) {
-                            append(
-                                "\n\nÚjdonságok:\n"
-                            )
-                            append(
-                                availableUpdate
-                                    .notes
-                                    .take(
-                                        900
-                                    )
-                            )
-                        }
-
-                        if (
-                            BuildConfig
-                                .BUILD_TYPE ==
-                            "debug"
-                        ) {
-                            append(
-                                "\n\n⚠ Első signed átállás: ez még debug build. Készíts JSON mentést, töröld a debug appot, telepítsd a signed verziót, majd állítsd vissza a mentést."
-                            )
-                        } else {
-                            append(
-                                "\n\nA letöltés után az Android megerősítést kér az APK frissítéséhez. Az alkalmazás adatai megmaradnak."
-                            )
-                        }
-                    }
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        runCatching {
-                            context
-                                .startActivity(
-                                    Intent(
-                                        Intent
-                                            .ACTION_VIEW,
-                                        Uri.parse(
-                                            availableUpdate
-                                                .downloadUrl
-                                        )
-                                    )
-                                )
-                        }
-                    }
-                ) {
-                    Text(
-                        t(
-                            "Frissítés letöltése"
-                        )
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        dismissedUpdateVersion =
-                            availableUpdate
-                                .version
-                    }
-                ) {
-                    Text(
-                        t(
-                            "Később"
-                        )
-                    )
-                }
-            }
-        )
     }
 }
