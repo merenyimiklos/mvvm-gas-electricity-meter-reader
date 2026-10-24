@@ -87,8 +87,8 @@ fun ModernBottomBar(
         )
 
     Surface(
-        tonalElevation = 8.dp,
-        shadowElevation = 14.dp,
+        tonalElevation = 4.dp,
+        shadowElevation = 10.dp,
         shape =
             RoundedCornerShape(
                 topStart = 24.dp,
@@ -97,7 +97,7 @@ fun ModernBottomBar(
         color =
             MaterialTheme
                 .colorScheme
-                .surfaceContainer
+                .surface
     ) {
         Column {
             Row(
@@ -152,8 +152,10 @@ fun ModernBottomBar(
                             MaterialTheme
                                 .colorScheme
                                 .onPrimary,
+                        tonalElevation =
+                            4.dp,
                         shadowElevation =
-                            10.dp
+                            12.dp
                     ) {
                         Box(
                             contentAlignment =
@@ -245,7 +247,7 @@ private fun ModernNavItem(
             if (selected) {
                 MaterialTheme
                     .colorScheme
-                    .secondaryContainer
+                    .primaryContainer
             } else {
                 MaterialTheme
                     .colorScheme
@@ -255,7 +257,7 @@ private fun ModernNavItem(
             if (selected) {
                 MaterialTheme
                     .colorScheme
-                    .onSecondaryContainer
+                    .onPrimaryContainer
             } else {
                 MaterialTheme
                     .colorScheme
