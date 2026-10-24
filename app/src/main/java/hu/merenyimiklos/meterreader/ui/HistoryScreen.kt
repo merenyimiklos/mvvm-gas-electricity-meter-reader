@@ -80,7 +80,8 @@ private enum class HistoryFilter(
         t("Éjszakai"),
         MeterType.ELECTRICITY_NIGHT
     ),
-    GAS(t("Gáz"), MeterType.GAS)
+    GAS(t("Gáz"), MeterType.GAS),
+    WATER(t("Víz"), MeterType.WATER)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
