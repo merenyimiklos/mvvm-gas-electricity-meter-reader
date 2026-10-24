@@ -194,7 +194,7 @@ internal fun HistoryScreen(
         topBar = {
             BrandTopBar(
                 title =
-                    t("Mérési napló"),
+                    t("Előzmények"),
                 subtitle =
                     readings.size
                         .toString() +
@@ -348,6 +348,10 @@ internal fun HistoryScreen(
                                 Alignment
                                     .CenterVertically
                         ) {
+                            PlayMeterIcon(type = reading.type, size = 48.dp)
+                            androidx.compose.foundation.layout.Spacer(
+                                Modifier.padding(horizontal = 7.dp)
+                            )
                             Column(
                                 modifier =
                                     Modifier

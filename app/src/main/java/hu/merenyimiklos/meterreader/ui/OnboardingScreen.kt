@@ -78,7 +78,7 @@ fun OnboardingScreen(
         listOf(
             TutorialPage(
                 title =
-                    t("Minden fontos adat egy helyen"),
+                    t("Minden mérőállás egy helyen"),
                 description =
                     t("Az Áttekintés képernyőn azonnal látod az áram-, gáz- és vízmérőket, a havi fogyasztást és a becsült költséget."),
                 icon =

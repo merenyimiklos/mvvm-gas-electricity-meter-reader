@@ -651,7 +651,7 @@ internal fun SettingsScreen(
                 title =
                     t("Beállítások"),
                 subtitle =
-                    t("Tarifák, célok és emlékeztetők"),
+                    t("Minden fontos beállítás egy helyen"),
                 icon =
                     Icons.Default.Settings
             )
@@ -706,7 +706,7 @@ internal fun SettingsScreen(
                             )
                     ) {
                         Text(
-                            t("Megjelenés és nyelv"),
+                            t("Általános beállítások"),
                             style =
                                 MaterialTheme
                                     .typography
@@ -823,7 +823,7 @@ internal fun SettingsScreen(
                             Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            t("Használt mérők"),
+                            t("Díjszabás és mérők"),
                             style =
                                 MaterialTheme
                                     .typography

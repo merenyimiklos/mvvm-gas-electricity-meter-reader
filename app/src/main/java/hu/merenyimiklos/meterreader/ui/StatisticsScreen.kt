@@ -189,7 +189,7 @@ internal fun StatisticsScreen(
                 title =
                     t("Statisztika"),
                 subtitle =
-                    t("Trendek, keretek és előrejelzés"),
+                    t("Fogyasztási trendek, költségek és célok"),
                 icon =
                     Icons.Default.BarChart
             )
@@ -220,7 +220,7 @@ internal fun StatisticsScreen(
 
             item {
                 Text(
-                    t("Saját fogyasztás"),
+                    t("Fogyasztás és költségek"),
                     modifier =
                         Modifier.padding(
                             horizontal = 16.dp
