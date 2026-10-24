@@ -25,8 +25,8 @@ android {
         applicationId = "hu.merenyimiklos.meterreader"
         minSdk = 24
         targetSdk = 36
-        versionCode = ciVersionCode ?: 14
-        versionName = ciVersionName ?: "0.11.2"
+        versionCode = ciVersionCode ?: 15
+        versionName = ciVersionName ?: "0.12.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "boolean",
