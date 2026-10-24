@@ -82,9 +82,11 @@ class ReadingReminderWorker(
                     .toSet()
 
             val missing =
-                MeterType.entries.filter {
-                    it !in completedTypes
-                }
+                settings
+                    .enabledMeterTypes()
+                    .filter {
+                        it !in completedTypes
+                    }
 
             if (missing.isEmpty()) {
                 cancelNotification(context)
