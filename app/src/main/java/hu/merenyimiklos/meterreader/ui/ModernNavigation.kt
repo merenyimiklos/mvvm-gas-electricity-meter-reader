@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
@@ -63,149 +64,37 @@ fun ModernBottomBar(
     onAdd: () -> Unit,
     onMenu: () -> Unit
 ) {
-    val left =
-        listOf(
-            ModernDestination(
-                "home",
-                t("Áttekintés"),
-                Icons.Default.Home
-            ),
-            ModernDestination(
-                "history",
-                t("Napló"),
-                Icons.Default.ReceiptLong
-            )
-        )
-
-    val right =
-        listOf(
-            ModernDestination(
-                "statistics",
-                t("Statisztika"),
-                Icons.Default.BarChart
-            )
-        )
-
+    val tabs = listOf(
+        ModernDestination("home", t("Áttekintés"), Icons.Default.Home),
+        ModernDestination("add", t("Leolvasás"), Icons.Default.Bolt),
+        ModernDestination("history", t("Napló"), Icons.Default.ReceiptLong),
+        ModernDestination("statistics", t("Statisztika"), Icons.Default.BarChart),
+        ModernDestination("settings", t("Beállítások"), Icons.Default.Settings)
+    )
     Surface(
-        tonalElevation = 4.dp,
-        shadowElevation = 10.dp,
-        shape =
-            RoundedCornerShape(
-                topStart = 24.dp,
-                topEnd = 24.dp
-            ),
-        color =
-            MaterialTheme
-                .colorScheme
-                .surface
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 12.dp,
+        shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
     ) {
         Column {
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(76.dp)
-                        .padding(
-                            horizontal = 8.dp
-                        ),
-                verticalAlignment =
-                    Alignment.CenterVertically,
-                horizontalArrangement =
-                    Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth().height(78.dp)
+                    .padding(horizontal = 5.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                left.forEach {
-                    destination ->
+                tabs.forEach { tab ->
                     ModernNavItem(
-                        label = destination.label,
-                        icon = destination.icon,
-                        selected =
-                            currentRoute ==
-                                destination.route,
+                        label = tab.label,
+                        icon = tab.icon,
+                        selected = currentRoute == tab.route,
+                        modifier = Modifier.weight(1f),
                         onClick = {
-                            onNavigate(
-                                destination.route
-                            )
+                            if (tab.route == "add") onAdd() else onNavigate(tab.route)
                         }
                     )
                 }
-
-                Box(
-                    modifier =
-                        Modifier.size(
-                            72.dp
-                        ),
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-                    Surface(
-                        onClick = onAdd,
-                        modifier =
-                            Modifier.size(
-                                62.dp
-                            ),
-                        shape = CircleShape,
-                        color =
-                            MaterialTheme
-                                .colorScheme
-                                .primary,
-                        contentColor =
-                            MaterialTheme
-                                .colorScheme
-                                .onPrimary,
-                        tonalElevation =
-                            4.dp,
-                        shadowElevation =
-                            12.dp
-                    ) {
-                        Box(
-                            contentAlignment =
-                                Alignment.Center
-                        ) {
-                            Text(
-                                "+",
-                                style =
-                                    MaterialTheme
-                                        .typography
-                                        .headlineMedium,
-                                fontWeight =
-                                    FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                right.forEach {
-                    destination ->
-                    ModernNavItem(
-                        label = destination.label,
-                        icon = destination.icon,
-                        selected =
-                            currentRoute ==
-                                destination.route,
-                        onClick = {
-                            onNavigate(
-                                destination.route
-                            )
-                        }
-                    )
-                }
-
-                ModernNavItem(
-                    label = t("Menü"),
-                    icon =
-                        Icons.Default.Menu,
-                    selected =
-                        currentRoute ==
-                            "settings",
-                    onClick = onMenu
-                )
             }
-
-            Spacer(
-                Modifier.windowInsetsBottomHeight(
-                    WindowInsets.navigationBars
-                )
-            )
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
 }
@@ -215,95 +104,31 @@ private fun ModernNavItem(
     label: String,
     icon: ImageVector,
     selected: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val scale by
-        animateFloatAsState(
-            targetValue =
-                if (selected) {
-                    1.08f
-                } else {
-                    1f
-                },
-            animationSpec =
-                tween(180),
-            label = "nav-scale"
-        )
-
     Surface(
         onClick = onClick,
-        modifier =
-            Modifier
-                .size(
-                    width = 68.dp,
-                    height = 62.dp
-                )
-                .scale(scale),
-        shape =
-            RoundedCornerShape(
-                18.dp
-            ),
-        color =
-            if (selected) {
-                MaterialTheme
-                    .colorScheme
-                    .primaryContainer
-            } else {
-                MaterialTheme
-                    .colorScheme
-                    .surfaceContainer
-            },
-        contentColor =
-            if (selected) {
-                MaterialTheme
-                    .colorScheme
-                    .onPrimaryContainer
-            } else {
-                MaterialTheme
-                    .colorScheme
-                    .onSurfaceVariant
-            }
+        modifier = modifier.padding(horizontal = 2.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface,
+        contentColor = if (selected) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant
     ) {
         Column(
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.Center
+            modifier = Modifier.height(64.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                icon,
-                contentDescription =
-                    label,
-                modifier =
-                    Modifier.size(
-                        if (selected) {
-                            25.dp
-                        } else {
-                            23.dp
-                        }
-                    )
+            Icon(icon, contentDescription = label, modifier = Modifier.size(23.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-
-            AnimatedVisibility(
-                visible = selected,
-                enter = fadeIn(
-                    tween(160)
-                ),
-                exit = fadeOut(
-                    tween(120)
-                )
-            ) {
-                Text(
-                    label,
-                    style =
-                        MaterialTheme
-                            .typography
-                            .labelSmall,
-                    maxLines = 1,
-                    overflow =
-                        TextOverflow.Ellipsis
-                )
-            }
         }
     }
 }
