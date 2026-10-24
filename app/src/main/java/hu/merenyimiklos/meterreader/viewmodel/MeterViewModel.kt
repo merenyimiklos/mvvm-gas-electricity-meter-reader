@@ -269,17 +269,33 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         note: String,
         allowMonthlyDuplicate: Boolean = false
     ): QuickSaveResult {
-        val missing = MeterType.entries.filter {
-            values[it].isNullOrBlank()
-        }
+        val activeTypes =
+            settings.value
+                .enabledMeterTypes()
 
-        if (missing.isNotEmpty()) {
+        if (activeTypes.isEmpty()) {
             return QuickSaveResult(
-                error = "Add meg mindhárom mérőállást."
+                error = "Kapcsolj be legalább egy mérőt a Beállításokban."
             )
         }
 
-        val duplicates = monthlyDuplicates(date)
+        val missing =
+            activeTypes.filter {
+                values[it].isNullOrBlank()
+            }
+
+        if (missing.isNotEmpty()) {
+            return QuickSaveResult(
+                error =
+                    "Add meg az összes bekapcsolt mérőállást."
+            )
+        }
+
+        val duplicates =
+            monthlyDuplicates(date)
+                .filter {
+                    it in activeTypes
+                }
         if (
             duplicates.isNotEmpty() &&
             !allowMonthlyDuplicate
@@ -292,7 +308,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         val parsedValues =
             mutableMapOf<MeterType, ParsedReading>()
 
-        for (type in MeterType.entries) {
+        for (type in activeTypes) {
             val parsed = parseAndValidate(
                 type = type,
                 valueText = values[type].orEmpty(),
@@ -311,7 +327,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         val savedReadings =
             mutableListOf<MeterReading>()
 
-        for (type in MeterType.entries) {
+        for (type in activeTypes) {
             val parsed =
                 requireNotNull(parsedValues[type])
 
@@ -333,7 +349,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
         syncAfterChange()
 
         return QuickSaveResult(
-            savedCount = MeterType.entries.size
+            savedCount = activeTypes.size
         )
     }
 
