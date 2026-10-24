@@ -1,8 +1,9 @@
 Megújult a Mérőóra Napló!
 
-• Átláthatóbb, modernebb menürendszert kapott az alkalmazás.
-• Első indításkor egy rövid útmutató segít megismerni a fő funkciókat.
-• Javult a bejelentkezési és fiókkezelési élmény.
-• A frissítések ellenőrzése megbízhatóbb lett, és fontos új verziónál az app jelzi, hogy frissítés szükséges.
-• Több kisebb hibát javítottunk, és finomítottunk az animációkon és a kezelőfelületen.
-• Csökkentettük az alkalmazás méretét és javítottuk a háttérben futó kód optimalizálását, így gyorsabb és takarékosabb lett.
+• Mostantól a vízórát is nyomon követheted.
+• Beállíthatod, mely mérőket használod: normál áram, éjszakai áram, gáz és víz.
+• A gyors havi leolvasás, statisztikák, emlékeztetők és widget automatikusan a bekapcsolt mérőkhöz igazodnak.
+• A víznél is választhatsz mérőállás alapú vagy havi átalányos elszámolást.
+• Külön vízdíj, fix díj és havi fogyasztási cél is beállítható.
+• Több kisebb felületi és működésbeli hibát javítottunk.
+• Tovább finomítottuk a teljesítményt és az alkalmazás méretét.
