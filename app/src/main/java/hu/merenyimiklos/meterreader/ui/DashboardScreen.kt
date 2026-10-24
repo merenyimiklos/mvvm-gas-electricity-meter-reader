@@ -152,24 +152,17 @@ internal fun DashboardScreen(
                 )
 
     Scaffold(
+        containerColor =
+            MaterialTheme
+                .colorScheme
+                .background,
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(t("Mérőóra"))
-                        Text(
-                            t("Otthoni energia- és vízfigyelő"),
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodyMedium,
-                            color =
-                                MaterialTheme
-                                    .colorScheme
-                                    .onSurfaceVariant
-                        )
-                    }
-                }
+            BrandTopBar(
+                title = t("Mérőóra"),
+                subtitle =
+                    t("Otthoni energia- és vízfigyelő"),
+                icon =
+                    Icons.Default.Bolt
             )
         }
     ) { innerPadding ->
