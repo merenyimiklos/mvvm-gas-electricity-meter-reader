@@ -103,18 +103,18 @@ internal fun AddReadingScreen(
     }
 
     Scaffold(
+        containerColor =
+            MaterialTheme
+                .colorScheme
+                .background,
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(t("Mérőállás rögzítése"))
-                        Text(
-                            t("Gyors havi leolvasás vagy egyedi mérés"),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+            BrandTopBar(
+                title =
+                    t("Mérőállás rögzítése"),
+                subtitle =
+                    t("Gyors havi leolvasás vagy egyedi mérés"),
+                icon =
+                    Icons.Default.CameraAlt
             )
         },
         snackbarHost = {
