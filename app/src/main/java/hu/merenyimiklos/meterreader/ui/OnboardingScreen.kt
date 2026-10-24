@@ -79,7 +79,7 @@ fun OnboardingScreen(
                 title =
                     t("Minden fontos adat egy helyen"),
                 description =
-                    t("Az Áttekintés képernyőn azonnal látod az aktuális mérőállásokat, a havi fogyasztást és a becsült költséget."),
+                    t("Az Áttekintés képernyőn azonnal látod az áram-, gáz- és vízmérőket, a havi fogyasztást és a becsült költséget."),
                 icon =
                     Icons.Default.Home,
                 eyebrow =
@@ -95,7 +95,7 @@ fun OnboardingScreen(
                 title =
                     t("Fotózd le vagy írd be"),
                 description =
-                    t("A Rögzítésnél gyorsan felviheted mindhárom mérőt, vagy fotóból is felismerheted a mérőállást."),
+                    t("A Rögzítésnél gyorsan felviheted az összes bekapcsolt mérőt, a vizet is, vagy fotóból felismerheted a mérőállást."),
                 icon =
                     Icons.Default.CameraAlt,
                 eyebrow =
@@ -103,7 +103,7 @@ fun OnboardingScreen(
                 previewTitle =
                     t("Gyors havi leolvasás"),
                 previewPrimary =
-                    t("Normál ✓  Éjszakai ✓  Gáz ○"),
+                    t("Normál ✓  Éjszakai ✓  Gáz ✓  Víz ○"),
                 previewSecondary =
                     t("Fotós leolvasás és OCR")
             ),
