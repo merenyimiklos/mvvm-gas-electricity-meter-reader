@@ -105,6 +105,27 @@ internal fun SettingsScreen(
     val snackbarHostState =
         remember { SnackbarHostState() }
 
+    var electricityEnabled by remember(settings) {
+        mutableStateOf(
+            settings.electricityEnabled
+        )
+    }
+    var nightEnabled by remember(settings) {
+        mutableStateOf(
+            settings.electricityNightEnabled
+        )
+    }
+    var gasEnabled by remember(settings) {
+        mutableStateOf(
+            settings.gasEnabled
+        )
+    }
+    var waterEnabled by remember(settings) {
+        mutableStateOf(
+            settings.waterEnabled
+        )
+    }
+
     var electricityUnitPrice by remember(settings) {
         mutableStateOf(
             editableNumber(
@@ -159,6 +180,32 @@ internal fun SettingsScreen(
             )
         )
     }
+    var waterMode by remember(settings) {
+        mutableStateOf(
+            settings.waterBillingMode
+        )
+    }
+    var waterUnitPrice by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.waterUnitPrice
+            )
+        )
+    }
+    var waterFixedFee by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.waterMonthlyFixedFee
+            )
+        )
+    }
+    var waterFlatPayment by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.waterFlatMonthlyPayment
+            )
+        )
+    }
 
     var normalGoal by remember(settings) {
         mutableStateOf(
@@ -178,6 +225,13 @@ internal fun SettingsScreen(
         mutableStateOf(
             editableNumber(
                 settings.gasMonthlyGoalM3
+            )
+        )
+    }
+    var waterGoal by remember(settings) {
+        mutableStateOf(
+            editableNumber(
+                settings.waterMonthlyGoalM3
             )
         )
     }
@@ -311,6 +365,14 @@ internal fun SettingsScreen(
 
     fun currentSettings() =
         BillingSettings(
+            electricityEnabled =
+                electricityEnabled,
+            electricityNightEnabled =
+                nightEnabled,
+            gasEnabled =
+                gasEnabled,
+            waterEnabled =
+                waterEnabled,
             electricityUnitPrice =
                 parseDecimal(
                     electricityUnitPrice
@@ -338,6 +400,10 @@ internal fun SettingsScreen(
             gasMonthlyGoalM3 =
                 parseDecimal(
                     gasGoal
+                ),
+            waterMonthlyGoalM3 =
+                parseDecimal(
+                    waterGoal
                 ),
             gasHeatingValueMjPerM3 =
                 parseDecimal(
@@ -373,6 +439,20 @@ internal fun SettingsScreen(
             gasFlatMonthlyPayment =
                 parseDecimal(
                     gasFlatPayment
+                ),
+            waterBillingMode =
+                waterMode,
+            waterUnitPrice =
+                parseDecimal(
+                    waterUnitPrice
+                ),
+            waterMonthlyFixedFee =
+                parseDecimal(
+                    waterFixedFee
+                ),
+            waterFlatMonthlyPayment =
+                parseDecimal(
+                    waterFlatPayment
                 ),
             appLanguage =
                 appLanguage,
@@ -720,6 +800,77 @@ internal fun SettingsScreen(
                                     )
                                 }
                         }
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.elevatedCardColors(
+                            containerColor =
+                                MaterialTheme
+                                    .colorScheme
+                                    .surfaceContainerLow
+                        )
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(18.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            t("Használt mérők"),
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .titleLarge,
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                        Text(
+                            t("Csak azok a mérők jelennek meg az appban, amelyeket itt bekapcsolsz."),
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodySmall,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant
+                        )
+
+                        MeterToggleRow(
+                            title = t("Normál áram"),
+                            checked = electricityEnabled,
+                            onCheckedChange = {
+                                electricityEnabled = it
+                            }
+                        )
+                        MeterToggleRow(
+                            title = t("Éjszakai áram"),
+                            checked = nightEnabled,
+                            onCheckedChange = {
+                                nightEnabled = it
+                            }
+                        )
+                        MeterToggleRow(
+                            title = t("Gáz"),
+                            checked = gasEnabled,
+                            onCheckedChange = {
+                                gasEnabled = it
+                            }
+                        )
+                        MeterToggleRow(
+                            title = t("Víz"),
+                            checked = waterEnabled,
+                            onCheckedChange = {
+                                waterEnabled = it
+                            }
+                        )
                     }
                 }
             }
@@ -1190,6 +1341,93 @@ internal fun SettingsScreen(
                 }
             }
 
+            if (waterEnabled) {
+                item {
+                    TariffCard(
+                        title = t("Víz"),
+                        subtitle =
+                            t("Átalány vagy fogyasztás alapján"),
+                        icon =
+                            Icons.Default.Info,
+                        containerColor =
+                            MaterialTheme
+                                .colorScheme
+                                .primaryContainer
+                    ) {
+                        Text(
+                            t("Elszámolás módja"),
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+
+                        Row(
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    8.dp
+                                )
+                        ) {
+                            GasBillingMode.entries
+                                .forEach { mode ->
+                                    FilterChip(
+                                        selected =
+                                            waterMode ==
+                                                mode,
+                                        onClick = {
+                                            waterMode =
+                                                mode
+                                        },
+                                        label = {
+                                            Text(
+                                                t(
+                                                    mode.displayName
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                        }
+
+                        MoneyField(
+                            value =
+                                waterFlatPayment,
+                            onValueChange = {
+                                waterFlatPayment =
+                                    it
+                            },
+                            label =
+                                t("Havi vízátalány (Ft)")
+                        )
+                        MoneyField(
+                            value =
+                                waterUnitPrice,
+                            onValueChange = {
+                                waterUnitPrice =
+                                    it
+                            },
+                            label =
+                                if (
+                                    waterMode ==
+                                    GasBillingMode.FLAT_RATE
+                                ) {
+                                    t("Víz egységár – kimutatáshoz (Ft/m³)")
+                                } else {
+                                    t("Víz egységár (Ft/m³)")
+                                }
+                        )
+                        MoneyField(
+                            value =
+                                waterFixedFee,
+                            onValueChange = {
+                                waterFixedFee =
+                                    it
+                            },
+                            label =
+                                t("Víz havi fix díj (Ft)")
+                        )
+                    }
+                }
+            }
+
             item {
                 ElevatedCard(
                     modifier =
@@ -1263,14 +1501,26 @@ internal fun SettingsScreen(
                             label =
                                 t("Éjszakai áram cél (kWh/hó)")
                         )
-                        MoneyField(
-                            value = gasGoal,
-                            onValueChange = {
-                                gasGoal = it
-                            },
-                            label =
-                                t("Gáz cél (m³/hó)")
-                        )
+                        if (gasEnabled) {
+                            MoneyField(
+                                value = gasGoal,
+                                onValueChange = {
+                                    gasGoal = it
+                                },
+                                label =
+                                    t("Gáz cél (m³/hó)")
+                            )
+                        }
+                        if (waterEnabled) {
+                            MoneyField(
+                                value = waterGoal,
+                                onValueChange = {
+                                    waterGoal = it
+                                },
+                                label =
+                                    t("Víz cél (m³/hó)")
+                            )
+                        }
                     }
                 }
             }
@@ -1330,7 +1580,7 @@ internal fun SettingsScreen(
                                             .SemiBold
                                 )
                                 Text(
-                                    t("A választott naptól minden nap emlékeztet, amíg a havi normál, éjszakai és gázmérés nincs meg."),
+                                    t("A választott naptól minden nap emlékeztet, amíg valamelyik bekapcsolt havi mérés hiányzik."),
                                     style =
                                         MaterialTheme
                                             .typography
@@ -2190,6 +2440,31 @@ private fun TariffCard(
 }
 
 @Composable
+@Composable
+private fun MeterToggleRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+        verticalAlignment =
+            Alignment.CenterVertically
+    ) {
+        Text(
+            title,
+            modifier =
+                Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange =
+                onCheckedChange
+        )
+    }
+}
+
 private fun MoneyField(
     value: String,
     onValueChange:
