@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -1348,7 +1349,7 @@ internal fun SettingsScreen(
                         subtitle =
                             t("Átalány vagy fogyasztás alapján"),
                         icon =
-                            Icons.Default.Info,
+                            Icons.Default.WaterDrop,
                         containerColor =
                             MaterialTheme
                                 .colorScheme
