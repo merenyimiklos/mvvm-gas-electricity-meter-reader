@@ -4,118 +4,120 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import hu.merenyimiklos.meterreader.model.ThemeMode
 
-private val LightColors =
-    lightColorScheme(
-        primary = Color(0xFF0A6E67),
-        onPrimary = Color.White,
-        primaryContainer = Color(0xFFC0F3E8),
-        onPrimaryContainer = Color(0xFF00201D),
+/**
+ * Play Store screenshots are the source of truth for the visual language.
+ * Real meter readings and analytics remain provided by the existing ViewModels.
+ */
+object PlayColors {
+    val Navy = Color(0xFF05285D)
+    val DeepBlue = Color(0xFF073F91)
+    val Blue = Color(0xFF075DE0)
+    val Cyan = Color(0xFF12BDE9)
+    val Mint = Color(0xFF21D3B0)
+    val Ink = Color(0xFF0A204B)
+    val Slate = Color(0xFF60779F)
+    val Canvas = Color(0xFFF1F7FF)
+    val NightCanvas = Color(0xFF06152C)
+    val Electricity = Color(0xFFFFB915)
+    val NightElectricity = Color(0xFF1469E9)
+    val Gas = Color(0xFF0CBF8D)
+    val Water = Color(0xFF0DABD5)
+    val Success = Color(0xFF0AAF7D)
+}
 
-        secondary = Color(0xFF315FA8),
-        onSecondary = Color.White,
-        secondaryContainer = Color(0xFFD9E5FF),
-        onSecondaryContainer = Color(0xFF001B3F),
+private val LightColors = lightColorScheme(
+    primary = PlayColors.Blue,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFD9EBFF),
+    onPrimaryContainer = PlayColors.Ink,
+    secondary = PlayColors.DeepBlue,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFDCEBFF),
+    onSecondaryContainer = PlayColors.Ink,
+    tertiary = PlayColors.Gas,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFDBFAF1),
+    onTertiaryContainer = Color(0xFF064F41),
+    background = PlayColors.Canvas,
+    onBackground = PlayColors.Ink,
+    surface = Color.White,
+    onSurface = PlayColors.Ink,
+    surfaceVariant = Color(0xFFEAF2FC),
+    onSurfaceVariant = PlayColors.Slate,
+    outline = Color(0xFF8299B9),
+    outlineVariant = Color(0xFFD8E5F6),
+    error = Color(0xFFB32644),
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDDE7),
+    onErrorContainer = Color(0xFF5E0922)
+)
 
-        tertiary = Color(0xFF0C8F79),
-        onTertiary = Color.White,
-        tertiaryContainer = Color(0xFFA7F2DE),
-        onTertiaryContainer = Color(0xFF00201A),
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF89C6FF),
+    onPrimary = Color(0xFF002955),
+    primaryContainer = Color(0xFF134B84),
+    onPrimaryContainer = Color(0xFFE3F1FF),
+    secondary = Color(0xFF82DAF8),
+    onSecondary = Color(0xFF00374B),
+    secondaryContainer = Color(0xFF134259),
+    onSecondaryContainer = Color(0xFFDCF5FF),
+    tertiary = Color(0xFF70E8C7),
+    onTertiary = Color(0xFF003A2D),
+    tertiaryContainer = Color(0xFF125445),
+    onTertiaryContainer = Color(0xFFB9FFE9),
+    background = PlayColors.NightCanvas,
+    onBackground = Color(0xFFF1F7FF),
+    surface = Color(0xFF102545),
+    onSurface = Color(0xFFF1F7FF),
+    surfaceVariant = Color(0xFF193456),
+    onSurfaceVariant = Color(0xFFBED0E8),
+    outline = Color(0xFF92A8C4),
+    outlineVariant = Color(0xFF2D4668),
+    error = Color(0xFFFFB0C2),
+    onError = Color(0xFF670027),
+    errorContainer = Color(0xFF852743),
+    onErrorContainer = Color(0xFFFFE0E7)
+)
 
-        background = Color(0xFFF6F9FC),
-        onBackground = Color(0xFF172026),
-        surface = Color(0xFFF8FAFC),
-        onSurface = Color(0xFF172026),
-        surfaceVariant = Color(0xFFE1E8EC),
-        onSurfaceVariant = Color(0xFF445159),
+private val PlayShapes = Shapes(
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(34.dp)
+)
 
-        outline = Color(0xFF748188),
-        outlineVariant = Color(0xFFC4CDD2),
-
-        error = Color(0xFFBA1A1A),
-        onError = Color.White,
-        errorContainer = Color(0xFFFFDAD6),
-        onErrorContainer = Color(0xFF410002)
-    )
-
-private val DarkColors =
-    darkColorScheme(
-        primary = Color(0xFF67D9CA),
-        onPrimary = Color(0xFF003731),
-        primaryContainer = Color(0xFF005048),
-        onPrimaryContainer = Color(0xFFB8F3E8),
-
-        secondary = Color(0xFFACC8FF),
-        onSecondary = Color(0xFF002F65),
-        secondaryContainer = Color(0xFF234979),
-        onSecondaryContainer = Color(0xFFD9E5FF),
-
-        tertiary = Color(0xFF58DCC1),
-        onTertiary = Color(0xFF00382F),
-        tertiaryContainer = Color(0xFF005044),
-        onTertiaryContainer = Color(0xFFA7F2DE),
-
-        background = Color(0xFF07131F),
-        onBackground = Color(0xFFE5EEF5),
-        surface = Color(0xFF0B1827),
-        onSurface = Color(0xFFE5EEF5),
-        surfaceVariant = Color(0xFF24323E),
-        onSurfaceVariant = Color(0xFFC2CCD4),
-
-        outline = Color(0xFF8C9AA4),
-        outlineVariant = Color(0xFF3A4854),
-
-        error = Color(0xFFFFB4AB),
-        onError = Color(0xFF690005),
-        errorContainer = Color(0xFF93000A),
-        onErrorContainer = Color(0xFFFFDAD6)
-    )
-
-private val AppShapes =
-    Shapes(
-        extraSmall =
-            RoundedCornerShape(10.dp),
-        small =
-            RoundedCornerShape(14.dp),
-        medium =
-            RoundedCornerShape(20.dp),
-        large =
-            RoundedCornerShape(28.dp),
-        extraLarge =
-            RoundedCornerShape(36.dp)
-    )
+private val PlayTypography = Typography(
+    headlineMedium = Typography().headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+    headlineSmall = Typography().headlineSmall.copy(fontWeight = FontWeight.Bold),
+    titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.Bold),
+    titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold),
+    labelLarge = Typography().labelLarge.copy(fontWeight = FontWeight.SemiBold)
+)
 
 @Composable
 fun MeterReaderTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val darkTheme =
-        when (themeMode) {
-            ThemeMode.SYSTEM ->
-                isSystemInDarkTheme()
-
-            ThemeMode.LIGHT ->
-                false
-
-            ThemeMode.DARK ->
-                true
-        }
-
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
     MaterialTheme(
-        colorScheme =
-            if (darkTheme) {
-                DarkColors
-            } else {
-                LightColors
-            },
-        shapes = AppShapes,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = PlayTypography,
+        shapes = PlayShapes,
         content = content
     )
 }
