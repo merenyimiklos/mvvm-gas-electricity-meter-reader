@@ -281,8 +281,10 @@ jobs:
 
           if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
             printf '%s\n' "$RELEASE_NOTES_INPUT" > distribution/whatsnew/whatsnew-hu-HU
+          elif [[ -s PLAY_RELEASE_NOTES_HU.txt ]]; then
+            cp PLAY_RELEASE_NOTES_HU.txt distribution/whatsnew/whatsnew-hu-HU
           else
-            printf 'Mérőóra Napló %s\n' "$APP_VERSION_NAME" > distribution/whatsnew/whatsnew-hu-HU
+            printf 'Megújult a Mérőóra Napló. Több kisebb fejlesztést és hibajavítást készítettünk.\n' > distribution/whatsnew/whatsnew-hu-HU
           fi
 
           if [[ "${{ inputs.channel }}" == "beta" ]]; then
@@ -303,9 +305,11 @@ jobs:
             echo "- Google Play track: $PLAY_TRACK"
             echo "- Upload cert SHA-1: ${UPLOAD_CERT_SHA1:-unknown}"
             echo
+            echo "### Újdonságok"
             if [[ -n "$RELEASE_NOTES_INPUT" ]]; then
-              echo "### Megjegyzések"
               printf '%s\n' "$RELEASE_NOTES_INPUT"
+            elif [[ -s PLAY_RELEASE_NOTES_HU.txt ]]; then
+              cat PLAY_RELEASE_NOTES_HU.txt
             fi
           } > "$RUNNER_TEMP/release-notes.md"
 
