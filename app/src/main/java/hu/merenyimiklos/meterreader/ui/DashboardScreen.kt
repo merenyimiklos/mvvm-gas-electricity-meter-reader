@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -111,7 +112,7 @@ internal fun DashboardScreen(
                         MeterType.GAS ->
                             Icons.Default.LocalFireDepartment
                         MeterType.WATER ->
-                            Icons.Default.Info
+                            Icons.Default.WaterDrop
                     }
             )
         }
