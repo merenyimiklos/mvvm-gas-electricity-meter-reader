@@ -198,45 +198,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # A Google Play legfeljebb 500 UTF-16 karaktert enged nyelvenként.
-          # A GitHub Release teljes leírása ettől függetlenül változatlan marad.
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("distribution/whatsnew/whatsnew-hu-HU")
-          notes = path.read_text(encoding="utf-8").strip()
-          limit = 500
-
-          if not notes:
-              raise SystemExit("::error::Google Play release notes cannot be empty.")
-
-          def play_length(value: str) -> int:
-              return len(value.encode("utf-16-le")) // 2
-
-          if play_length(notes) > limit:
-              chars = []
-              count = 0
-              for char in notes:
-                  width = 2 if ord(char) > 0xFFFF else 1
-                  if count + width > limit - 3:
-                      break
-                  chars.append(char)
-                  count += width
-
-              shortened = "".join(chars)
-              last_newline = shortened.rfind("\n")
-              if last_newline >= len(shortened) // 2:
-                  shortened = shortened[:last_newline]
-              notes = shortened.rstrip(" \n,;:-.") + "..."
-              print("::warning::Google Play release notes automatically shortened to 500 characters.")
-
-          if play_length(notes) > limit:
-              raise SystemExit("::error::Google Play release notes are still too long.")
-
-          path.write_text(notes + "\n", encoding="utf-8")
-          print(f"Google Play release notes length: {play_length(notes)}/{limit}.")
-          PY
-
           if [[ "${{ inputs.channel }}" == "beta" ]]; then
             EFFECTIVE_VERSION="${APP_VERSION_BASE}-beta.${GITHUB_RUN_NUMBER}"
           else
@@ -330,6 +291,45 @@ jobs:
           else
             printf 'Megújult a Mérőóra Napló. Több kisebb fejlesztést és hibajavítást készítettünk.\n' > distribution/whatsnew/whatsnew-hu-HU
           fi
+
+          # A Google Play legfeljebb 500 UTF-16 karaktert enged nyelvenként.
+          # A GitHub Release teljes leírása ettől függetlenül változatlan marad.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("distribution/whatsnew/whatsnew-hu-HU")
+          notes = path.read_text(encoding="utf-8").strip()
+          limit = 500
+
+          if not notes:
+              raise SystemExit("::error::Google Play release notes cannot be empty.")
+
+          def play_length(value: str) -> int:
+              return len(value.encode("utf-16-le")) // 2
+
+          if play_length(notes) > limit:
+              chars = []
+              count = 0
+              for char in notes:
+                  width = 2 if ord(char) > 0xFFFF else 1
+                  if count + width > limit - 3:
+                      break
+                  chars.append(char)
+                  count += width
+
+              shortened = "".join(chars)
+              last_newline = shortened.rfind("\n")
+              if last_newline >= len(shortened) // 2:
+                  shortened = shortened[:last_newline]
+              notes = shortened.rstrip(" \n,;:-.") + "..."
+              print("::warning::Google Play release notes automatically shortened to 500 characters.")
+
+          if play_length(notes) > limit:
+              raise SystemExit("::error::Google Play release notes are still too long.")
+
+          path.write_text(notes + "\n", encoding="utf-8")
+          print(f"Google Play release notes length: {play_length(notes)}/{limit}.")
+          PY
 
           if [[ "${{ inputs.channel }}" == "beta" ]]; then
             PLAY_TRACK="$BETA_PLAY_TRACK"
