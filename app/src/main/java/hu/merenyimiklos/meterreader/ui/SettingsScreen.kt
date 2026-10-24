@@ -77,6 +77,8 @@ import hu.merenyimiklos.meterreader.export.CsvManager
 import hu.merenyimiklos.meterreader.model.AppLanguage
 import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.GasBillingMode
+import hu.merenyimiklos.meterreader.model.MeterType
+import androidx.compose.foundation.shape.RoundedCornerShape
 import hu.merenyimiklos.meterreader.model.ThemeMode
 import hu.merenyimiklos.meterreader.update.UpdateState
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -844,6 +846,7 @@ internal fun SettingsScreen(
                         )
 
                         MeterToggleRow(
+                            type = MeterType.ELECTRICITY,
                             title = t("Normál áram"),
                             checked = electricityEnabled,
                             onCheckedChange = {
@@ -851,6 +854,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.ELECTRICITY_NIGHT,
                             title = t("Éjszakai áram"),
                             checked = nightEnabled,
                             onCheckedChange = {
@@ -858,6 +862,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.GAS,
                             title = t("Gáz"),
                             checked = gasEnabled,
                             onCheckedChange = {
@@ -865,6 +870,7 @@ internal fun SettingsScreen(
                             }
                         )
                         MeterToggleRow(
+                            type = MeterType.WATER,
                             title = t("Víz"),
                             checked = waterEnabled,
                             onCheckedChange = {
@@ -2441,25 +2447,32 @@ private fun TariffCard(
 
 @Composable
 private fun MeterToggleRow(
+    type: MeterType,
     title: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier =
-            Modifier.fillMaxWidth(),
-        verticalAlignment =
-            Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                playMeterColor(type).copy(alpha = 0.09f),
+                RoundedCornerShape(18.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        PlayMeterIcon(type = type, size = 42.dp)
         Text(
-            title,
-            modifier =
-                Modifier.weight(1f)
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
         )
         Switch(
             checked = checked,
-            onCheckedChange =
-                onCheckedChange
+            onCheckedChange = onCheckedChange
         )
     }
 }
