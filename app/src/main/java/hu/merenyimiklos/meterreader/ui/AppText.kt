@@ -318,7 +318,12 @@ object AppText {
             "Menü" to "Menu",
             "Felhasználó" to "User",
             "Családi csoport" to "Family group",
-            "Szinkronhiba" to "Sync error"
+            "Szinkronhiba" to "Sync error",
+            "Frissítés ellenőrzése…" to "Checking for updates…",
+            "Frissítés szükséges" to "Update required",
+            "Új verzió érhető el, az alkalmazás használatához frissítened kell." to "A new version is available. You must update before using the app.",
+            "Frissítés most" to "Update now",
+            "A frissítés után automatikusan visszatérhetsz az alkalmazáshoz." to "After updating, you can return to the app automatically."
         )
 
     fun text(
