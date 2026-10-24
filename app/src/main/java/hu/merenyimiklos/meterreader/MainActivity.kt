@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.auth.AuthViewModel
 import hu.merenyimiklos.meterreader.ui.AppText
 import hu.merenyimiklos.meterreader.ui.AuthGate
+import hu.merenyimiklos.meterreader.ui.MandatoryUpdateGate
 import hu.merenyimiklos.meterreader.ui.MeterReaderApp
 import hu.merenyimiklos.meterreader.ui.theme.MeterReaderTheme
 import hu.merenyimiklos.meterreader.viewmodel.MeterViewModel
@@ -52,16 +53,20 @@ class MainActivity : ComponentActivity() {
             MeterReaderTheme(
                 themeMode = settings.themeMode
             ) {
-                AuthGate(
-                    authViewModel =
-                        authViewModel
+                MandatoryUpdateGate(
+                    viewModel = viewModel
                 ) {
-                    MeterReaderApp(
-                        viewModel = viewModel,
+                    AuthGate(
                         authViewModel =
-                            authViewModel,
-                        startOnAdd = startOnAdd
-                    )
+                            authViewModel
+                    ) {
+                        MeterReaderApp(
+                            viewModel = viewModel,
+                            authViewModel =
+                                authViewModel,
+                            startOnAdd = startOnAdd
+                        )
+                    }
                 }
             }
         }
@@ -69,6 +74,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        viewModel.checkForUpdates()
         viewModel.syncSharedHome()
     }
 
