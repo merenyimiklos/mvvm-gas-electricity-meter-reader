@@ -71,19 +71,10 @@ jobs:
             echo "Android signing secrets are not set; using the default debug signing key."
           fi
 
-      - name: Test and build Android in one Gradle invocation
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          tasks=(testDebugUnitTest assembleDebug)
-          # Release/R8 validation is still covered on main and manual CI,
-          # but skipped on pull requests for faster feedback.
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            tasks+=(assembleRelease)
-          fi
-
-          ./gradlew --build-cache "${tasks[@]}" --stacktrace
+      # Keep push/PR feedback fast. The publish workflow separately validates
+      # the optimized release APK/AAB with R8 before creating a release.
+      - name: Run unit tests and build debug APK
+        run: ./gradlew --build-cache testDebugUnitTest assembleDebug --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v6
