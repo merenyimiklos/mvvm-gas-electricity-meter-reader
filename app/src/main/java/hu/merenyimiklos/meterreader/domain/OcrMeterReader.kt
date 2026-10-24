@@ -41,7 +41,15 @@ class OcrMeterReader(private val context: Context) {
             if (integerDigits in 4..6) score += 12
             if (integerDigits == 7) score += 4
             if (decimalDigits in 1..3) score += 2
-            if (meterType == MeterType.GAS && decimalDigits > 0) score += 2
+            if (
+                (
+                    meterType == MeterType.GAS ||
+                        meterType == MeterType.WATER
+                    ) &&
+                decimalDigits > 0
+            ) {
+                score += 2
+            }
             if (value <= 0.0) score -= 5
             Candidate(value, score)
         }.maxByOrNull { it.score }?.value
