@@ -2440,7 +2440,6 @@ private fun TariffCard(
 }
 
 @Composable
-@Composable
 private fun MeterToggleRow(
     title: String,
     checked: Boolean,
