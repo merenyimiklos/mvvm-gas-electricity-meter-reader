@@ -6,15 +6,18 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import hu.merenyimiklos.meterreader.MainActivity
 import hu.merenyimiklos.meterreader.R
 import hu.merenyimiklos.meterreader.data.MeterRepository
+import hu.merenyimiklos.meterreader.data.SettingsRepository
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
@@ -87,6 +90,11 @@ class MeterWidgetProvider : AppWidgetProvider() {
                         )
                 ).getAll()
 
+            val settings =
+                SettingsRepository(
+                    context
+                ).settings.first()
+
             val normal =
                 latest(
                     readings,
@@ -102,6 +110,11 @@ class MeterWidgetProvider : AppWidgetProvider() {
                 latest(
                     readings,
                     MeterType.GAS
+                )
+            val water =
+                latest(
+                    readings,
+                    MeterType.WATER
                 )
 
             val intent =
@@ -134,12 +147,34 @@ class MeterWidgetProvider : AppWidgetProvider() {
                             .meter_widget
                     )
 
+                views.setViewVisibility(
+                    R.id.widget_normal,
+                    if (
+                        settings.electricityEnabled
+                    ) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                )
                 views.setTextViewText(
                     R.id.widget_normal,
                     readingText(
                         "Normál",
                         normal
                     )
+                )
+
+                views.setViewVisibility(
+                    R.id.widget_night,
+                    if (
+                        settings
+                            .electricityNightEnabled
+                    ) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
                 )
                 views.setTextViewText(
                     R.id.widget_night,
@@ -148,11 +183,40 @@ class MeterWidgetProvider : AppWidgetProvider() {
                         night
                     )
                 )
+
+                views.setViewVisibility(
+                    R.id.widget_gas,
+                    if (
+                        settings.gasEnabled
+                    ) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                )
                 views.setTextViewText(
                     R.id.widget_gas,
                     readingText(
                         "Gáz",
                         gas
+                    )
+                )
+
+                views.setViewVisibility(
+                    R.id.widget_water,
+                    if (
+                        settings.waterEnabled
+                    ) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                )
+                views.setTextViewText(
+                    R.id.widget_water,
+                    readingText(
+                        "Víz",
+                        water
                     )
                 )
                 views.setOnClickPendingIntent(
