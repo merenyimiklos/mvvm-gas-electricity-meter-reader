@@ -256,6 +256,10 @@ class AuthViewModel(
             error::class.simpleName
                 .orEmpty()
 
+        val signingSha1 =
+            repository
+                .signingCertificateSha1()
+
         return when {
             className.contains(
                 "Cancellation",
@@ -267,7 +271,8 @@ class AuthViewModel(
                 "GetCredential",
                 ignoreCase = true
             ) ->
-                "A Google-belépés nem indult el. Ellenőrizd, hogy a Google bejelentkezés engedélyezve van Firebase-ben, és a telepített app aláírásának SHA-1 ujjlenyomata hozzá van adva."
+                "A Google-belépés nem indult el. Ellenőrizd a Firebase Google providert és add hozzá ezt az SHA-1-et: " +
+                    (signingSha1 ?: "ismeretlen")
 
             message.contains(
                 "DEVELOPER_ERROR",
@@ -281,7 +286,8 @@ class AuthViewModel(
                     "10:",
                     ignoreCase = true
                 ) ->
-                "Google-bejelentkezési konfigurációs hiba. Ellenőrizd a Firebase Google providert, a támogatási e-mailt és az alkalmazás SHA-1 ujjlenyomatát."
+                "Google-bejelentkezési konfigurációs hiba. Firebase-ben ellenőrizd a Google providert és ezt az SHA-1-et: " +
+                    (signingSha1 ?: "ismeretlen")
 
             message.contains(
                 "OAuth",
