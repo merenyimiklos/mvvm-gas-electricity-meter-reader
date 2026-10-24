@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -227,16 +228,36 @@ fun OnboardingScreen(
                         bottom = 20.dp
                     )
         ) {
-            Row(
+            ElevatedCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = 20.dp
+                            horizontal = 16.dp
                         ),
-                verticalAlignment =
-                    Alignment.CenterVertically
+                shape =
+                    RoundedCornerShape(
+                        22.dp
+                    ),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor =
+                            MaterialTheme
+                                .colorScheme
+                                .surface
+                    )
             ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = 16.dp,
+                                vertical = 12.dp
+                            ),
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
                 Column(
                     modifier =
                         Modifier.weight(
@@ -248,9 +269,13 @@ fun OnboardingScreen(
                         style =
                             MaterialTheme
                                 .typography
-                                .titleLarge,
+                                .titleMedium,
                         fontWeight =
-                            FontWeight.Bold
+                            FontWeight.Bold,
+                        color =
+                            MaterialTheme
+                                .colorScheme
+                                .onSurface
                     )
                     Text(
                         (pagerState.currentPage + 1)
@@ -278,7 +303,14 @@ fun OnboardingScreen(
                         t("Kihagyás")
                     )
                 }
+                }
             }
+
+            Spacer(
+                Modifier.height(
+                    10.dp
+                )
+            )
 
             HorizontalPager(
                 state = pagerState,
@@ -583,6 +615,10 @@ private fun TutorialPageContent(
                     .headlineMedium,
             fontWeight =
                 FontWeight.Bold,
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onBackground,
             textAlign =
                 TextAlign.Center
         )
@@ -676,7 +712,11 @@ private fun TutorialPageContent(
                                     .typography
                                     .titleMedium,
                             fontWeight =
-                                FontWeight.SemiBold
+                                FontWeight.SemiBold,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurface
                         )
                     }
 
@@ -687,7 +727,11 @@ private fun TutorialPageContent(
                                 .typography
                                 .bodyLarge,
                         fontWeight =
-                            FontWeight.Medium
+                            FontWeight.Medium,
+                        color =
+                            MaterialTheme
+                                .colorScheme
+                                .onSurface
                     )
 
                     Text(
