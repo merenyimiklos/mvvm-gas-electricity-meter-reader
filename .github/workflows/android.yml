@@ -7,10 +7,14 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-apk:
     name: Test and build debug APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
@@ -21,17 +25,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+      - name: Set up Gradle (cache + wrapper validation)
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
@@ -68,17 +71,22 @@ jobs:
             echo "Android signing secrets are not set; using the default debug signing key."
           fi
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+      - name: Test and build Android in one Gradle invocation
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+          tasks=(testDebugUnitTest assembleDebug)
+          # Release/R8 validation is still covered on main and manual CI,
+          # but skipped on pull requests for faster feedback.
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            tasks+=(assembleRelease)
+          fi
 
-      - name: Validate optimized release build (R8)
-        run: ./gradlew assembleRelease --stacktrace
+          ./gradlew --build-cache "${tasks[@]}" --stacktrace
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: meter-reader-debug-apk-${{ github.run_number }}
           path: app/build/outputs/apk/debug/app-debug.apk
