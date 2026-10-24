@@ -2,6 +2,8 @@ package hu.merenyimiklos.meterreader.auth
 
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -15,6 +17,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import hu.merenyimiklos.meterreader.BuildConfig
 import kotlinx.coroutines.tasks.await
+import java.security.MessageDigest
 
 data class AuthUser(
     val uid: String,
@@ -185,6 +188,58 @@ class AuthRepository(
             "A Google-belépés sikerült, de a profil nem tölthető be."
         }.toAuthUser()
     }
+
+    fun signingCertificateSha1(): String? =
+        runCatching {
+            val packageInfo =
+                if (
+                    Build.VERSION.SDK_INT >=
+                    Build.VERSION_CODES.P
+                ) {
+                    context.packageManager
+                        .getPackageInfo(
+                            context.packageName,
+                            PackageManager
+                                .GET_SIGNING_CERTIFICATES
+                        )
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.packageManager
+                        .getPackageInfo(
+                            context.packageName,
+                            PackageManager
+                                .GET_SIGNATURES
+                        )
+                }
+
+            val signature =
+                if (
+                    Build.VERSION.SDK_INT >=
+                    Build.VERSION_CODES.P
+                ) {
+                    packageInfo.signingInfo
+                        ?.apkContentsSigners
+                        ?.firstOrNull()
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.signatures
+                        ?.firstOrNull()
+                }
+                ?: return@runCatching null
+
+            MessageDigest
+                .getInstance("SHA-1")
+                .digest(
+                    signature.toByteArray()
+                )
+                .joinToString(":") {
+                    byte ->
+                    "%02X".format(
+                        byte.toInt() and
+                            0xFF
+                    )
+                }
+        }.getOrNull()
 
     suspend fun signOut() {
         if (!isConfigured) {
