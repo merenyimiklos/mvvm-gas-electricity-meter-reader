@@ -99,6 +99,10 @@ internal fun DashboardScreen(
         activeTypes.map {
             type ->
             ReadingCardData(
+                type = type,
+                trend = readings.filter { it.type == type }.sortedBy { it.dateEpochDay }
+                    .zipWithNext { a, b -> (b.value - a.value).coerceAtLeast(0.0).toFloat() }
+                    .takeLast(7),
                 title =
                     t(type.displayName),
                 reading =
@@ -158,9 +162,9 @@ internal fun DashboardScreen(
                 .background,
         topBar = {
             BrandTopBar(
-                title = t("Mérőóra"),
+                title = t("Mérőóra Napló"),
                 subtitle =
-                    t("Otthoni energia- és vízfigyelő"),
+                    t("Minden mérőállás egy helyen"),
                 icon =
                     Icons.Default.Bolt
             )
@@ -263,21 +267,12 @@ internal fun DashboardScreen(
                                 .onSurfaceVariant
                     )
                 } else {
-                    LazyRow(
-                        contentPadding =
-                            PaddingValues(
-                                horizontal = 16.dp
-                            ),
-                        horizontalArrangement =
-                            Arrangement.spacedBy(
-                                12.dp
-                            )
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(readingCards) {
-                            item ->
-                            LatestReadingCard(
-                                data = item
-                            )
+                        readingCards.forEach { reading ->
+                            LatestReadingCard(data = reading)
                         }
                     }
                 }
@@ -598,81 +593,59 @@ internal fun DashboardScreen(
 }
 
 private data class ReadingCardData(
+    val type: MeterType,
     val title: String,
     val reading: MeterReading?,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val trend: List<Float>
 )
 
 @Composable
-private fun LatestReadingCard(
-    data: ReadingCardData
-) {
+private fun LatestReadingCard(data: ReadingCardData) {
+    val accent = playMeterColor(data.type)
     ElevatedCard(
-        modifier = Modifier.width(210.dp)
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(accent.copy(alpha = 0.075f), RoundedCornerShape(24.dp))
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(
-                imageVector = data.icon,
-                contentDescription = null,
-                tint =
-                    MaterialTheme
-                        .colorScheme
-                        .primary
-            )
-
-            Text(
-                data.title,
-                style =
-                    MaterialTheme
-                        .typography
-                        .titleMedium,
-                fontWeight =
-                    FontWeight.SemiBold
-            )
-
-            if (data.reading == null) {
+            PlayMeterIcon(type = data.type)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
-                    t("Még nincs mérés"),
-                    color =
-                        MaterialTheme
-                            .colorScheme
-                            .onSurfaceVariant
+                    text = data.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
                 )
-            } else {
                 Text(
-                    formatDecimal(
-                        data.reading.value
-                    ) +
-                        " " +
-                        data.reading.type.unit,
-                    style =
-                        MaterialTheme
-                            .typography
-                            .headlineSmall,
-                    fontWeight =
-                        FontWeight.Bold
+                    text = data.reading?.let {
+                        formatDecimal(it.value) + " " + it.type.unit
+                    } ?: t("Még nincs mérés"),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-
-                Text(
-                    LocalDate
-                        .ofEpochDay(
-                            data.reading
-                                .dateEpochDay
-                        )
-                        .toString(),
-                    style =
-                        MaterialTheme
-                            .typography
-                            .bodySmall,
-                    color =
-                        MaterialTheme
-                            .colorScheme
-                            .onSurfaceVariant
-                )
+                data.reading?.let {
+                    Text(
+                        text = t("Utolsó leolvasás: ") +
+                            LocalDate.ofEpochDay(it.dateEpochDay).toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (data.trend.isNotEmpty()) {
+                PlayMiniBars(color = accent, values = data.trend)
             }
         }
     }
