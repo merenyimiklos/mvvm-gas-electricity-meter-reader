@@ -6,7 +6,7 @@ on:
       channel:
         description: "Kiadási csatorna"
         required: true
-        default: beta
+        default: stable
         type: choice
         options:
           - beta
