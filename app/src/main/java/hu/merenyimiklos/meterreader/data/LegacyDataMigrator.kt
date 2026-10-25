@@ -82,7 +82,8 @@ class LegacyDataMigrator(
     }
 
     fun dismiss() {
-        state.edit().putBoolean(marker, true).apply()
+        // Skipping affects only the current session; keep the unowned
+        // pre-upgrade data recoverable on the next sign-in.
     }
 
     private fun parseReadings(raw: String?): List<MeterReading>? {
