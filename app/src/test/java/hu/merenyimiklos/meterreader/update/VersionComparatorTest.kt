@@ -28,6 +28,28 @@ class VersionComparatorTest {
     }
 
     @Test
+    fun firstPublicReleaseIsNewerThanLegacyPreOnePointZero() {
+        assertTrue(
+            VersionComparator.isNewer(
+                current = "0.13.0",
+                latest = "1.0.0"
+            )
+        )
+        assertTrue(
+            VersionComparator.isNewer(
+                current = "0.14.0",
+                latest = "1.0.0"
+            )
+        )
+        assertFalse(
+            VersionComparator.isNewer(
+                current = "1.0.0",
+                latest = "0.14.0"
+            )
+        )
+    }
+
+    @Test
     fun olderReleaseIsNotUpdate() {
         assertFalse(
             VersionComparator.isNewer(

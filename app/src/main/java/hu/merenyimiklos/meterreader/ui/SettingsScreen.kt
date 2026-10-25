@@ -1,5 +1,8 @@
 package hu.merenyimiklos.meterreader.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,6 +44,8 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -70,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.merenyimiklos.meterreader.BuildConfig
@@ -106,6 +112,8 @@ internal fun SettingsScreen(
     val authState by
         authViewModel.state
             .collectAsStateWithLifecycle()
+    val deletingAccount by authViewModel.deletingAccount.collectAsStateWithLifecycle()
+    val accountDeletionError by authViewModel.deletionError.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -310,6 +318,9 @@ internal fun SettingsScreen(
     var showClearConfirmation by remember {
         mutableStateOf(false)
     }
+    var showDeleteAccountConfirmation by remember { mutableStateOf(false) }
+    var accountDeletionPhrase by remember { mutableStateOf("") }
+    var accountDeletionPassword by remember { mutableStateOf("") }
 
     val backupLauncher =
         rememberLauncherForActivityResult(
@@ -2265,6 +2276,65 @@ internal fun SettingsScreen(
                 }
             }
 
+            if (authState.user != null) {
+                item {
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.30f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.DeleteForever,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    "Fiók végleges törlése",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                            Text(
+                                "A Firebase-fiók és az ehhez a fiókhoz tartozó helyi mérőállások, " +
+                                    "beállítások és automatikus mentések törlésére szolgál. " +
+                                    "A megosztott családi mappa és a korábban kézzel exportált " +
+                                    "fájlok nem törlődnek automatikusan.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    accountDeletionPhrase = ""
+                                    accountDeletionPassword = ""
+                                    authViewModel.clearDeletionError()
+                                    showDeleteAccountConfirmation = true
+                                },
+                                enabled = !deletingAccount,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                )
+                            ) {
+                                Icon(Icons.Default.DeleteForever, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Fiók törlése")
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Text(
                     t("A költség- és rezsikeret-számítás becslés. A tényleges számla függhet a szolgáltatói tarifától, fűtőértéktől, korrekciós tényezőtől és az elszámolási időszaktól."),
@@ -2329,6 +2399,115 @@ internal fun SettingsScreen(
                     }
                 ) {
                     Text(t("Mégse"))
+                }
+            }
+        )
+    }
+
+    if (showDeleteAccountConfirmation && authState.user != null) {
+        val requiresPassword = authViewModel.deletionRequiresPassword
+        val activity = context.findHostActivity()
+        AlertDialog(
+            onDismissRequest = {
+                if (!deletingAccount) {
+                    showDeleteAccountConfirmation = false
+                    authViewModel.clearDeletionError()
+                }
+            },
+            icon = {
+                Icon(
+                    Icons.Default.DeleteForever,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Biztosan törlöd a fiókodat?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Ez véglegesen törli a Firebase-fiókodat és az alkalmazásban " +
+                            "ehhez a fiókhoz mentett helyi adataidat. " +
+                            "A művelet nem vonható vissza."
+                    )
+                    Text(
+                        "Fiók: " + authState.user!!.email,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "A közösen használt mappa és a korábban exportált fájlok " +
+                            "megmaradhatnak. Törlés előtt készíts mentést, ha szükséged van rájuk.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = accountDeletionPhrase,
+                        onValueChange = { accountDeletionPhrase = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        enabled = !deletingAccount,
+                        label = { Text("Írd be: TÖRLÉS") }
+                    )
+                    if (requiresPassword) {
+                        OutlinedTextField(
+                            value = accountDeletionPassword,
+                            onValueChange = { accountDeletionPassword = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !deletingAccount,
+                            label = { Text("Jelszó a megerősítéshez") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        )
+                    } else {
+                        Text(
+                            "A Google-fiókodat még egyszer meg kell erősítened.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (!accountDeletionError.isNullOrBlank()) {
+                        Text(
+                            accountDeletionError.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        activity?.let {
+                            authViewModel.deleteAccount(it, accountDeletionPassword)
+                        }
+                    },
+                    enabled = !deletingAccount &&
+                        accountDeletionPhrase.trim() == "TÖRLÉS" &&
+                        (!requiresPassword || accountDeletionPassword.isNotBlank()) &&
+                        activity != null,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    if (deletingAccount) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.width(18.dp),
+                            color = MaterialTheme.colorScheme.onError
+                        )
+                    } else {
+                        Text("Fiók végleges törlése")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !deletingAccount,
+                    onClick = {
+                        showDeleteAccountConfirmation = false
+                        authViewModel.clearDeletionError()
+                    }
+                ) {
+                    Text("Mégse")
                 }
             }
         )
@@ -2562,3 +2741,9 @@ private fun formatReminderTime(
         minute.coerceIn(0, 59)
             .toString()
             .padStart(2, '0')
+
+private fun Context.findHostActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findHostActivity()
+    else -> null
+}

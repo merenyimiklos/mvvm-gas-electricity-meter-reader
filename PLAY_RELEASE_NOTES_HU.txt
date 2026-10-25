@@ -1,9 +1,8 @@
-Megújult a Mérőóra Napló!
+Mérőóra Napló 1.0.0
 
-• Új, kék–türkiz megjelenés a Play Áruház képeinek stílusában.
-• Színkódolt mérőkártyák az Áttekintés és Leolvasás oldalakon.
-• Átdolgozott navigáció és fejléc.
-• Kiemelt fotós, OCR-alapú leolvasás.
-• Áttekinthetőbb statisztikák, előzmények és beállítások.
-• Egységesebb világos és sötét téma.
-• Apróbb felületi finomítások.
+• Első stabil, 1.0-s verzió.
+• Fiók végleges törlése a Beállítások alján, külön megerősítéssel.
+• Firebase-fiók törlése jelszavas vagy Google-azonosítással.
+• Fiókonként elkülönített helyi mérőállások és beállítások.
+• A törölt fiókhoz tartozó helyi adatok és automatikus mentések eltávolítása.
+• Biztonsági és használhatósági javítások.

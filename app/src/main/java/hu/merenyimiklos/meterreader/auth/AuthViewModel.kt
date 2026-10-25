@@ -155,6 +155,59 @@ class AuthViewModel(
         }
     }
 
+    private val _deletingAccount = MutableStateFlow(false)
+    val deletingAccount: StateFlow<Boolean> = _deletingAccount.asStateFlow()
+
+    private val _deletionError = MutableStateFlow<String?>(null)
+    val deletionError: StateFlow<String?> = _deletionError.asStateFlow()
+
+    val deletionRequiresPassword: Boolean
+        get() = repository.deletionUsesPassword()
+
+    fun clearDeletionError() {
+        _deletionError.value = null
+    }
+
+    fun deleteAccount(activity: Activity, password: String) {
+        if (_deletingAccount.value || _state.value.user == null) return
+        _deletingAccount.value = true
+        _deletionError.value = null
+
+        viewModelScope.launch {
+            try {
+                val deletedUid = repository.deleteAccount(activity, password)
+                val cleanupResult = runCatching {
+                    AccountDataCleaner(getApplication()).deleteOwnedData(deletedUid)
+                }
+                runCatching { repository.signOut() }
+                _state.value = AuthUiState(
+                    configured = repository.isConfigured,
+                    message = when {
+                        cleanupResult.isFailure ->
+                            "A Firebase-fiók törölve, de a helyi adatok egy részét nem sikerült eltávolítani. Ellenőrizd az alkalmazás tárolóját és a mentéseket."
+                        cleanupResult.getOrNull() == false ->
+                            "A fiók és a helyi adatok törölve. A külső mentési mappából nem minden mentés volt eltávolítható; ellenőrizd külön."
+                        else ->
+                            "A fiókod és a hozzá tartozó helyi adatok törölve."
+                    }
+                )
+            } catch (error: Throwable) {
+                val className = error::class.simpleName.orEmpty()
+                _deletionError.value = when {
+                    className.contains("Cancellation", ignoreCase = true) ->
+                        "A Google-fiók megerősítését megszakítottad."
+                    className.contains("RecentLoginRequired", ignoreCase = true) ->
+                        "Biztonsági okból új bejelentkezés szükséges. Jelentkezz ki, lépj vissza, és próbáld újra."
+                    className.contains("InvalidCredentials", ignoreCase = true) ->
+                        "Nem sikerült megerősíteni a fiókot. Ellenőrizd a jelszót."
+                    else -> error.message ?: "A fiók törlése nem sikerült."
+                }
+            } finally {
+                _deletingAccount.value = false
+            }
+        }
+    }
+
     fun continueOfflineDebug() {
         if (
             BuildConfig.DEBUG &&
