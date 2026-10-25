@@ -17,6 +17,7 @@ import hu.merenyimiklos.meterreader.MainActivity
 import hu.merenyimiklos.meterreader.R
 import hu.merenyimiklos.meterreader.data.MeterRepository
 import hu.merenyimiklos.meterreader.data.SettingsRepository
+import hu.merenyimiklos.meterreader.data.UserDataScope
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
 import hu.merenyimiklos.meterreader.model.MeterType
 import kotlinx.coroutines.flow.first
@@ -41,8 +42,14 @@ class ReadingReminderWorker(
         suspend fun evaluateAndNotify(
             context: Context
         ) {
+            val uid = UserDataScope.signedInUid(context)
+            if (uid == null) {
+                cancelNotification(context)
+                return
+            }
+
             val settings =
-                SettingsRepository(context)
+                SettingsRepository(context, uid)
                     .settings
                     .first()
 
@@ -65,7 +72,7 @@ class ReadingReminderWorker(
 
             val repository =
                 MeterRepository(
-                    MeterDatabase.getInstance(context)
+                    MeterDatabase.getInstance(context, uid)
                 )
             val month = YearMonth.from(today)
 
