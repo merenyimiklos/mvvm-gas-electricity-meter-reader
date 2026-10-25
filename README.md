@@ -1,5 +1,7 @@
 # Mérőóra Napló
 
+**Aktuális kiadási verzió a következő stable buildben: 1.0.0 (versionCode 20).**
+
 Modern Android alkalmazás otthoni mérőállások rögzítésére, követésére és megosztására.
 
 A cél egyszerű: az áram-, gáz- és vízfogyasztás legyen átlátható, könnyen rögzíthető és egy helyen visszanézhető.
@@ -24,6 +26,7 @@ A cél egyszerű: az áram-, gáz- és vízfogyasztás legyen átlátható, kön
   - e-mail + jelszó
   - Google-belépés
   - jelszó-visszaállítás
+  - fiók végleges törlése újraazonosítás után (Beállítások → Fiók törlése)
 - magyar és angol felület
 - világos, sötét és rendszer témamód
 - első indításkor interaktív onboarding
@@ -66,7 +69,17 @@ A megjelenített költségek becslések; a tényleges számla szolgáltatótól,
 - **Firebase Authentication** — felhasználói azonosítás
 - **JSON backup** — kézi és automatikus biztonsági mentés
 
+Minden Firebase UID külön Room-adatbázist, DataStore-beállításokat és automatikus mentést használ. A felhasználó a Beállítások alján kérheti fiókja végleges törlését; az alkalmazás friss azonosítást kér (jelszó vagy Google), törli a Firebase Authentication-fiókot, majd a hozzá tartozó helyi mérőállásokat, beállításokat és automatikus mentéseket. A megosztott családi mappa és a kézzel exportált fájlok nem törlődnek automatikusan. Az eltávolíthatatlan külső mentésekre a felület figyelmeztet.
+
 A helyi adatok frissítéskor megmaradnak, amennyiben az alkalmazás azonos csomagnévvel és megfelelő aláírással frissül.
+
+## Google Play fióktörlési megfelelés
+
+A Google Play a fiók törléséhez az alkalmazáson belüli menüpont **mellett külön nyilvános webes kérelmezési útvonalat is kér**, amely az alkalmazás újratelepítése nélkül is működik. A Play Console Data safety / Account deletion mezőjében egy üzemelő űrlap vagy támogatási e-mailt megnyitó weboldal URL-jét kell megadni. A nyilvános weboldalt és az ott beérkező kérelmek feldolgozását **külön kell beállítani**; önmagában ez az Android-funkció nem helyettesíti.
+
+## Verziózás
+
+A következő stable kiadástól a felhasználónak megjelenített verzió **1.0.0**. Hibajavítás: **1.0.1**, új funkció: **1.1.0**, jelentősebb változás: **2.0.0**. Az Android `versionCode` ettől független, minden Play feltöltéshez egyedi és növekvő; az 1.0.0 kiadás alapértelmezett kódja **20**. A `Create App Release` workflow beállított alapértékei a `version_name=1.0.0`, `version_code=20` és `channel=stable`.
 
 ## Technológia
 
