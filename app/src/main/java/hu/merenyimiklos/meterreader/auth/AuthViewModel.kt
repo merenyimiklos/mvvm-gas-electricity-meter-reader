@@ -5,6 +5,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import hu.merenyimiklos.meterreader.BuildConfig
+import hu.merenyimiklos.meterreader.reminder.ReadingReminderWorker
+import hu.merenyimiklos.meterreader.widget.MeterWidgetProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -140,6 +142,8 @@ class AuthViewModel(
         viewModelScope.launch {
             runCatching {
                 repository.signOut()
+                ReadingReminderWorker.evaluateAndNotify(getApplication())
+                MeterWidgetProvider.updateAll(getApplication())
             }
 
             _state.value =
@@ -216,6 +220,7 @@ class AuthViewModel(
                         error = null,
                         message = null
                     )
+                MeterWidgetProvider.updateAll(getApplication())
             }.onFailure {
                 error ->
                 setError(error)
