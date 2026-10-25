@@ -11,6 +11,8 @@ import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -127,52 +129,7 @@ class AuthRepository(
     ): AuthUser {
         requireConfigured()
 
-        val serverClientId =
-            defaultWebClientId()
-        val googleSignInOption =
-            GetSignInWithGoogleOption
-                .Builder(
-                    serverClientId
-                )
-                .build()
-
-        val request =
-            GetCredentialRequest
-                .Builder()
-                .addCredentialOption(
-                    googleSignInOption
-                )
-                .build()
-
-        val credential =
-            CredentialManager
-                .create(activity)
-                .getCredential(
-                    context = activity,
-                    request = request
-                )
-                .credential
-
-        require(
-            credential is CustomCredential &&
-                credential.type ==
-                GoogleIdTokenCredential
-                    .TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-        ) {
-            "A Google nem adott vissza használható azonosítót."
-        }
-
-        val googleCredential =
-            GoogleIdTokenCredential
-                .createFrom(
-                    credential.data
-                )
-        val firebaseCredential =
-            GoogleAuthProvider
-                .getCredential(
-                    googleCredential.idToken,
-                    null
-                )
+        val firebaseCredential = googleFirebaseCredential(activity)
 
         val result =
             FirebaseAuth
@@ -187,6 +144,100 @@ class AuthRepository(
         ) {
             "A Google-belépés sikerült, de a profil nem tölthető be."
         }.toAuthUser()
+    }
+
+
+    /**
+     * Firebase requires recent authentication for account deletion.
+     * Reauthenticate the current user, never call signInWithCredential here:
+     * that would allow accidentally switching to another Google account.
+     */
+    suspend fun deleteAccount(
+        activity: Activity,
+        password: String
+    ): String {
+        requireConfigured()
+        val auth = FirebaseAuth.getInstance()
+        val user = requireNotNull(auth.currentUser) {
+            "Nincs bejelentkezett felhasználó."
+        }
+        val uid = user.uid
+        val providers = user.providerData.map { it.providerId }
+
+        val credential = when {
+            "google.com" in providers -> googleFirebaseCredential(activity)
+            "password" in providers -> {
+                require(password.isNotBlank()) { "Add meg a fiókod jelszavát." }
+                val email = requireNotNull(user.email) {
+                    "A fiók e-mail címe nem érhető el."
+                }
+                EmailAuthProvider.getCredential(email, password)
+            }
+            else -> error("Ez a bejelentkezési mód nem támogatja a fiók törlését.")
+        }
+
+        user.reauthenticate(credential).await()
+        check(auth.currentUser?.uid == uid) {
+            "A bejelentkezett fiók megváltozott. Kezdd újra a törlést."
+        }
+        user.delete().await()
+        return uid
+    }
+
+    fun deletionUsesPassword(): Boolean {
+        val providers = FirebaseAuth.getInstance().currentUser
+            ?.providerData?.map { it.providerId }.orEmpty()
+        return "google.com" !in providers && "password" in providers
+    }
+
+    private suspend fun googleFirebaseCredential(activity: Activity): AuthCredential {
+            val serverClientId =
+                defaultWebClientId()
+            val googleSignInOption =
+                GetSignInWithGoogleOption
+                    .Builder(
+                        serverClientId
+                    )
+                    .build()
+    
+            val request =
+                GetCredentialRequest
+                    .Builder()
+                    .addCredentialOption(
+                        googleSignInOption
+                    )
+                    .build()
+    
+            val credential =
+                CredentialManager
+                    .create(activity)
+                    .getCredential(
+                        context = activity,
+                        request = request
+                    )
+                    .credential
+    
+            require(
+                credential is CustomCredential &&
+                    credential.type ==
+                    GoogleIdTokenCredential
+                        .TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+            ) {
+                "A Google nem adott vissza használható azonosítót."
+            }
+    
+            val googleCredential =
+                GoogleIdTokenCredential
+                    .createFrom(
+                        credential.data
+                    )
+            val firebaseCredential =
+                GoogleAuthProvider
+                    .getCredential(
+                        googleCredential.idToken,
+                        null
+                    )
+        return firebaseCredential
     }
 
     fun signingCertificateSha1(): String? =
