@@ -47,6 +47,10 @@ class AccountDataCleaner(private val context: Context) {
             SettingsRepository(context).reset()
             context.getSharedPreferences("meter_reader_store", Context.MODE_PRIVATE)
                 .edit().clear().apply()
+            val oldBackup = File(context.filesDir, "backups/auto-backup.json")
+            if (oldBackup.exists()) {
+                check(oldBackup.delete()) { "A korábbi helyi biztonsági mentés nem törölhető." }
+            }
         }
 
         // The previously-selected external backup folder may no longer be
