@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                         },
                         dismissButton = {
                             TextButton(onClick = { meterViewModel.dismissLegacyImport() }) {
-                                Text("Kihagyás")
+                                Text("Most nem")
                             }
                         }
                     )
