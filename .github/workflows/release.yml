@@ -32,14 +32,14 @@ on:
         default: main
         type: string
       version_name:
-        description: "Alapverzió, pl. 0.13.0"
+        description: "Alapverzió, pl. 1.0.0"
         required: true
-        default: "0.13.0"
+        default: "1.0.0"
         type: string
       version_code:
         description: "Android versionCode, mindig növekvő egész szám"
         required: true
-        default: "16"
+        default: "20"
         type: string
       release_notes:
         description: "Rövid kiadási megjegyzés"
