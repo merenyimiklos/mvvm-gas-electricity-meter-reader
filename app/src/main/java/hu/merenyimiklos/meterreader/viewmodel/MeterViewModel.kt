@@ -980,7 +980,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
                         )
                             ?: folder.createFile(
                                 "application/json",
-                                "auto-backup.json"
+                                "auto-backup-$ownerStorageId.json"
                             )
                             ?: error(
                                 "Nem sikerült létrehozni az automatikus mentést."
