@@ -10,6 +10,7 @@ import hu.merenyimiklos.meterreader.backup.BackupManager
 import hu.merenyimiklos.meterreader.data.LegacyDataMigrator
 import hu.merenyimiklos.meterreader.data.MeterRepository
 import hu.merenyimiklos.meterreader.data.SettingsRepository
+import hu.merenyimiklos.meterreader.data.UserDataScope
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
 import hu.merenyimiklos.meterreader.domain.OcrMeterReader
 import hu.merenyimiklos.meterreader.domain.UsageCalculator
@@ -56,14 +57,22 @@ sealed interface SharedHomeSyncState {
 }
 
 class MeterViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = MeterDatabase.getInstance(application)
+    private val ownerUid =
+        UserDataScope.signedInUid(application) ?: UserDataScope.DEBUG_GUEST
+    private val ownerStorageId = UserDataScope.storageId(ownerUid)
+    private val database = MeterDatabase.getInstance(application, ownerUid)
     private val meterRepository = MeterRepository(database)
-    private val settingsRepository = SettingsRepository(application)
+    private val settingsRepository = SettingsRepository(application, ownerUid)
     private val legacyDataMigrator = LegacyDataMigrator(
         application,
+        ownerUid,
         meterRepository,
         settingsRepository
     )
+    private val _legacyImportAvailable = MutableStateFlow(false)
+    val legacyImportAvailable: StateFlow<Boolean> = _legacyImportAvailable.asStateFlow()
+    private val _legacyImportError = MutableStateFlow<String?>(null)
+    val legacyImportError: StateFlow<String?> = _legacyImportError.asStateFlow()
     private val ocrReader = OcrMeterReader(application)
     private val exporter = XlsxExporter(application.contentResolver)
     private val csvManager = CsvManager(application.contentResolver)
@@ -88,7 +97,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
     private val autoBackupFile = File(
         application.filesDir,
-        "backups/auto-backup.json"
+        "backups/auto-backup-$ownerStorageId.json"
     )
 
     val readings = meterRepository.readings.stateIn(
@@ -114,14 +123,43 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                legacyDataMigrator.migrateIfNeeded()
-                syncAfterChange()
-                syncSharedHomeInternal(
-                    updateState = false
-                )
+                val needsReview =
+                    ownerUid != UserDataScope.DEBUG_GUEST &&
+                        legacyDataMigrator.needsReview()
+                _legacyImportAvailable.value = needsReview
+                if (!needsReview) {
+                    syncAfterChange()
+                    syncSharedHomeInternal(updateState = false)
+                }
+            }.onFailure {
+                _legacyImportError.value = it.message
             }
         }
         checkForUpdates()
+    }
+
+    fun importLegacyData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                legacyDataMigrator.importApproved()
+                syncAfterChange()
+                syncSharedHomeInternal(updateState = false)
+            }.onSuccess {
+                _legacyImportError.value = null
+                _legacyImportAvailable.value = false
+            }.onFailure {
+                _legacyImportError.value = it.message ?: "Az importálás nem sikerült."
+            }
+        }
+    }
+
+    fun dismissLegacyImport() {
+        legacyDataMigrator.dismiss()
+        _legacyImportError.value = null
+        _legacyImportAvailable.value = false
+        viewModelScope.launch(Dispatchers.IO) {
+            syncAfterChange()
+        }
     }
 
     fun checkForUpdates() {
@@ -938,7 +976,7 @@ class MeterViewModel(application: Application) : AndroidViewModel(application) {
 
                     val backupFile =
                         folder.findFile(
-                            "auto-backup.json"
+                            "auto-backup-$ownerStorageId.json"
                         )
                             ?: folder.createFile(
                                 "application/json",
