@@ -12,7 +12,9 @@ import hu.merenyimiklos.meterreader.MainActivity
 import hu.merenyimiklos.meterreader.R
 import hu.merenyimiklos.meterreader.data.MeterRepository
 import hu.merenyimiklos.meterreader.data.SettingsRepository
+import hu.merenyimiklos.meterreader.data.UserDataScope
 import hu.merenyimiklos.meterreader.data.db.MeterDatabase
+import hu.merenyimiklos.meterreader.model.BillingSettings
 import hu.merenyimiklos.meterreader.model.MeterReading
 import hu.merenyimiklos.meterreader.model.MeterType
 import kotlinx.coroutines.CoroutineScope
@@ -82,18 +84,21 @@ class MeterWidgetProvider : AppWidgetProvider() {
         ) {
             if (ids.isEmpty()) return
 
-            val readings =
+            val uid = UserDataScope.signedInUid(context)
+            // Signed-out widgets must not retain the previous account's readings.
+            val readings = if (uid == null) {
+                emptyList()
+            } else {
                 MeterRepository(
-                    MeterDatabase
-                        .getInstance(
-                            context
-                        )
+                    MeterDatabase.getInstance(context, uid)
                 ).getAll()
+            }
 
-            val settings =
-                SettingsRepository(
-                    context
-                ).settings.first()
+            val settings = if (uid == null) {
+                BillingSettings()
+            } else {
+                SettingsRepository(context, uid).settings.first()
+            }
 
             val normal =
                 latest(
