@@ -1,6 +1,10 @@
 package hu.merenyimiklos.meterreader.data
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -15,6 +19,9 @@ import hu.merenyimiklos.meterreader.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.io.IOException
 
 private val Context.billingSettingsDataStore by preferencesDataStore(
@@ -22,8 +29,33 @@ private val Context.billingSettingsDataStore by preferencesDataStore(
 )
 
 class SettingsRepository(
-    private val context: Context
+    private val context: Context,
+    userUid: String? = null
 ) {
+    // Null is reserved for the pre-upgrade unowned settings during explicit import.
+    private val dataStore: DataStore<Preferences> =
+        if (userUid == null) {
+            context.billingSettingsDataStore
+        } else {
+            scopedDataStore(context, userUid)
+        }
+
+    private companion object {
+        private val scopedStores = mutableMapOf<String, DataStore<Preferences>>()
+
+        fun scopedDataStore(context: Context, userUid: String): DataStore<Preferences> {
+            val name = "billing_settings_${UserDataScope.storageId(userUid)}"
+            return synchronized(scopedStores) {
+                scopedStores.getOrPut(name) {
+                    val application = context.applicationContext
+                    PreferenceDataStoreFactory.create(
+                        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                        produceFile = { application.preferencesDataStoreFile(name) }
+                    )
+                }
+            }
+        }
+    }
     private object Keys {
         val electricityEnabled =
             booleanPreferencesKey("electricity_enabled")
@@ -94,7 +126,7 @@ class SettingsRepository(
     }
 
     val settings: Flow<BillingSettings> =
-        context.billingSettingsDataStore.data
+        dataStore.data
             .catch { error ->
                 if (error is IOException) {
                     emit(emptyPreferences())
@@ -200,7 +232,7 @@ class SettingsRepository(
     suspend fun update(
         settings: BillingSettings
     ) {
-        context.billingSettingsDataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[Keys.electricityEnabled] =
                 settings.electricityEnabled
             preferences[Keys.electricityNightEnabled] =
@@ -271,7 +303,7 @@ class SettingsRepository(
     }
 
     suspend fun reset() {
-        context.billingSettingsDataStore.edit {
+        dataStore.edit {
             it.clear()
         }
     }
