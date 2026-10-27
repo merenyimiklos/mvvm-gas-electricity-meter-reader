@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fiók és adatok törlése – Mérőóra Napló</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f4f7fb;--card:#fff;--text:#17202a;--muted:#5f6b7a;--accent:#0f8f7a;--danger:#b42318}
+    @media(prefers-color-scheme:dark){:root{--bg:#0f141a;--card:#171d24;--text:#f2f5f7;--muted:#aeb7c2;--accent:#38c7a8;--danger:#ff8a80}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);line-height:1.7}
+    main{max-width:900px;margin:auto;padding:46px 20px 80px}.card{background:var(--card);border-radius:24px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.06)}
+    h1,h2{line-height:1.2}h1{font-size:2.35rem;margin-top:0}h2{margin-top:2rem}.muted{color:var(--muted)}a{color:var(--accent)}ul,ol{padding-left:1.4rem}.back{display:inline-block;margin-bottom:18px;text-decoration:none}
+    .notice{padding:16px 18px;border-radius:16px;background:color-mix(in srgb,var(--danger) 10%,var(--card));border:1px solid color-mix(in srgb,var(--danger) 30%,transparent)}
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← Vissza</a>
+  <article class="card">
+    <h1>Fiók és adatok törlése</h1>
+    <p class="muted">Mérőóra Napló • Hatályos: 2026. október 27.</p>
+
+    <h2>Törlés az alkalmazásból</h2>
+    <p>Bejelentkezés után nyisd meg a <strong>Beállítások → Fiók</strong> részt, majd válaszd a <strong>Fiók törlése</strong> lehetőséget. Biztonsági okból az alkalmazás friss azonosítást kérhet jelszóval vagy Google-belépéssel.</p>
+
+    <h2>Mi törlődik?</h2>
+    <ul>
+      <li>a Mérőóra Naplóhoz tartozó Firebase Authentication-fiók;</li>
+      <li>az adott felhasználóhoz tartozó helyi mérőállások;</li>
+      <li>az alkalmazás helyi beállításai;</li>
+      <li>az alkalmazás által kezelt helyi automatikus mentések.</li>
+    </ul>
+
+    <h2>Mi nem törlődik automatikusan?</h2>
+    <div class="notice">
+      <p>A felhasználó által kézzel exportált JSON, CSV vagy XLSX fájlok, illetve külső Google Drive/OneDrive/egyéb megosztott mappában található fájlok nem minden esetben törölhetők automatikusan. Ezeket a saját tárhelyszolgáltatódon külön kell eltávolítanod.</p>
+    </div>
+
+    <h2>Ha nem tudsz belépni az alkalmazásba</h2>
+    <p>Ha a fióktörlést nem tudod az alkalmazásból elindítani, nyiss támogatási kérelmet a projekt GitHub-oldalán, és jelezd, hogy <strong>Mérőóra Napló fióktörlést</strong> kérsz. Soha ne küldj jelszót vagy más hitelesítési adatot.</p>
+
+    <p><a href="https://github.com/merenyimiklos/mvvm-gas-electricity-meter-reader/issues">Fióktörlési kérés / kapcsolat a GitHubon</a></p>
+
+    <h2>Kapcsolódó dokumentumok</h2>
+    <p><a href="privacy.html">Adatvédelmi tájékoztató</a> · <a href="terms.html">Felhasználási feltételek</a></p>
+  </article>
+</main>
+</body>
+</html>
