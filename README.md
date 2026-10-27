@@ -146,6 +146,16 @@ Android package:
 hu.merenyimiklos.meterreader
 ```
 
+## Jogi oldalak
+
+A Google Play számára használt publikus jogi oldalak a `docs/` mappában találhatók:
+
+- `docs/privacy.html` — Adatvédelmi tájékoztató
+- `docs/terms.html` — Felhasználási feltételek / ÁSZF
+- `docs/account-deletion.html` — Fiók és adatok törlése
+
+GitHub Pages engedélyezése után ezek nyilvános HTTPS URL-en érhetők el.
+
 ## Megjegyzés
 
 Az OCR és a költségbecslés segédfunkció. A felismert mérőállást mentés előtt mindig érdemes ellenőrizni.
