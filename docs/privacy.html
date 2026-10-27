@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Adatvédelmi tájékoztató – Mérőóra Napló</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f4f7fb;--card:#fff;--text:#17202a;--muted:#5f6b7a;--accent:#0f8f7a}
+    @media(prefers-color-scheme:dark){:root{--bg:#0f141a;--card:#171d24;--text:#f2f5f7;--muted:#aeb7c2;--accent:#38c7a8}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);line-height:1.7}
+    main{max-width:900px;margin:auto;padding:46px 20px 80px}.card{background:var(--card);border-radius:24px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.06)}h1,h2{line-height:1.2}h1{font-size:2.35rem;margin-top:0}h2{margin-top:2rem}.muted{color:var(--muted)}a{color:var(--accent)}ul{padding-left:1.3rem}.back{display:inline-block;margin-bottom:18px;text-decoration:none}
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← Vissza</a>
+  <article class="card">
+    <h1>Adatvédelmi tájékoztató</h1>
+    <p class="muted">Mérőóra Napló • Hatályos: 2026. október 27.</p>
+
+    <h2>1. A tájékoztató célja</h2>
+    <p>Ez a tájékoztató bemutatja, hogy a Mérőóra Napló alkalmazás milyen adatokat kezel, milyen célból és milyen külső szolgáltatásokat használ.</p>
+
+    <h2>2. Kezelt adatok</h2>
+    <p>Az alkalmazás működésétől és a felhasználó által választott funkcióktól függően az alábbi adatok kezelhetők:</p>
+    <ul>
+      <li>fiókadatok: e-mail-cím, megjelenített név, valamint Google-belépés esetén a Google által átadott alap profiladatok;</li>
+      <li>mérőállások és kapcsolódó adatok: normál áram, éjszakai áram, gáz és víz mérőállásai, dátum, megjegyzés;</li>
+      <li>beállítások: tarifák, havi célok, emlékeztetők, nyelv- és megjelenési beállítások;</li>
+      <li>a felhasználó által készített vagy kiválasztott mérőóra-fotók, amennyiben a fotóalapú leolvasást használja;</li>
+      <li>biztonsági mentések és exportfájlok, amennyiben a felhasználó ezeket létrehozza.</li>
+    </ul>
+
+    <h2>3. Firebase Authentication és Google-belépés</h2>
+    <p>Az alkalmazás felhasználói fiókkezeléshez Firebase Authentication szolgáltatást használhat. E-mail/jelszó alapú regisztráció, illetve Google-belépés esetén az azonosításhoz szükséges adatokat a Google/Firebase rendszerei kezelik. A Mérőóra Napló nem tárol felhasználói jelszavakat saját adatbázisban.</p>
+
+    <h2>4. Mérőállások és helyi adattárolás</h2>
+    <p>A mérőállások és az alkalmazás működéséhez szükséges adatok alapvetően a felhasználó készülékén kerülnek tárolásra. Az alkalmazás saját célú központi szerverre nem tölti fel automatikusan a helyi mérőállásokat.</p>
+
+    <h2>5. Családi megosztás és közös mappa</h2>
+    <p>Ha a felhasználó a közös otthon / megosztási funkciót használja, az alkalmazás a felhasználó által kiválasztott és engedélyezett megosztott mappába írhat és onnan olvashat adatfájlokat. A külső tárhelyszolgáltató – például Google Drive, OneDrive vagy más dokumentumszolgáltató – saját adatvédelmi feltételei szerint kezeli az ott tárolt adatokat.</p>
+
+    <h2>6. Fotó és OCR</h2>
+    <p>A fotóalapú mérőállás-felismeréshez az alkalmazás Google ML Kit szövegfelismerést használ. A mérőóra-fotó a készüléken kerül feldolgozásra; az alkalmazás nem üzemeltet saját szervert a fotók feltöltésére vagy tárolására. A felismert értéket a felhasználó mentés előtt ellenőrizheti.</p>
+
+    <h2>7. Biztonsági mentés és export</h2>
+    <p>A felhasználó JSON, CSV vagy XLSX formátumú mentést/exportot hozhat létre. Ezek a fájlok a felhasználó által választott helyre kerülnek, így azok további kezelése a felhasználó és az adott tárhelyszolgáltató ellenőrzése alatt áll.</p>
+
+    <h2>8. Értesítések</h2>
+    <p>Az alkalmazás helyi értesítéseket küldhet a havi mérőóra-leolvasás emlékeztetőjeként. Az értesítési engedély bármikor visszavonható az Android rendszerbeállításaiban.</p>
+
+    <h2>9. Adatok megőrzése és törlése</h2>
+    <p>A készüléken tárolt mérőadatok addig maradnak meg, amíg a felhasználó nem törli őket, nem törli az alkalmazás adatait vagy magát az alkalmazást. A fióktörlés funkció használatával a felhasználó kérheti az alkalmazásban használt hitelesítési fiók törlését is, amennyiben ez a funkció az adott kiadásban elérhető.</p>
+
+    <h2>10. Harmadik felek szolgáltatásai</h2>
+    <p>Az alkalmazás a működéshez többek között Google Firebase Authentication, Google Sign-In / Android Credential Manager és Google ML Kit szolgáltatásokat használhat. E szolgáltatások adatkezelésére a Google saját adatvédelmi feltételei is vonatkoznak.</p>
+
+    <h2>11. Gyermekek adatai</h2>
+    <p>Az alkalmazás nem kifejezetten gyermekek számára készült, és nem célja gyermekek személyes adatainak gyűjtése.</p>
+
+    <h2>12. Biztonság</h2>
+    <p>Az alkalmazás fejlesztése során törekszünk az adatok védelmére és az indokolatlan adatgyűjtés kerülésére. Internetes és külső szolgáltatások használata esetén azonban teljes kockázatmentesség nem garantálható.</p>
+
+    <h2>13. A tájékoztató módosítása</h2>
+    <p>Az adatvédelmi tájékoztató az alkalmazás funkcióinak vagy az alkalmazott szolgáltatásoknak a változásával módosulhat. A mindenkor aktuális verzió ezen az oldalon érhető el.</p>
+
+    <h2>14. Kapcsolat</h2>
+    <p>Adatvédelmi kérdés vagy fióktörléssel kapcsolatos kérés esetén a felhasználó a Google Play Áruházban feltüntetett fejlesztői kapcsolattartási adatokon, illetve a projekt GitHub felületén veheti fel a kapcsolatot a fejlesztővel.</p>
+
+    <p class="muted">Ez a tájékoztató általános tájékoztatást szolgál, és nem minősül egyedi jogi tanácsadásnak.</p>
+  </article>
+</main>
+</body>
+</html>
