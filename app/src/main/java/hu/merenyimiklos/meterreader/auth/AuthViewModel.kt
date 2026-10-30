@@ -455,7 +455,7 @@ class AuthViewModel(
                 "OperationNotAllowed",
                 ignoreCase = true
             ) ->
-                "Túl sok próbálkozás történt. Próbáld újra később."
+                "A Firebase Anonymous bejelentkezést engedélyezni kell a Firebase Console-ban."
 
             message.contains(
                 "password",
