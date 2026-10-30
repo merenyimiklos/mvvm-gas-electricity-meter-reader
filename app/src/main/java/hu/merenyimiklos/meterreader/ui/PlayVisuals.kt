@@ -35,7 +35,7 @@ fun playMeterColor(type: MeterType): Color = when (type) {
     MeterType.ELECTRICITY_NIGHT -> PlayColors.NightElectricity
     MeterType.GAS -> PlayColors.Gas
     MeterType.WATER -> PlayColors.Water
-    MeterType.WATER_HOT -> PlayColors.Gas
+    MeterType.WATER_HOT -> Color(0xFFE66C53)
 }
 
 fun playMeterIcon(type: MeterType): ImageVector = when (type) {
