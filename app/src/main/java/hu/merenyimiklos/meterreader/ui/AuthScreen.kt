@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -96,6 +97,26 @@ fun AuthGate(
             else ->
                 "auth"
         }
+
+    if (state.showGuestSignOutConfirmation) {
+        AlertDialog(
+            onDismissRequest = { authViewModel.cancelGuestSignOut() },
+            title = { Text(t("Vendégfiók elhagyása")) },
+            text = {
+                Text(t("Ha most kijelentkezel, a vendégfiókodhoz tartozó helyi mérőállásokat nem tudod új vendégbelépéssel visszahozni. Az adatok megőrzéséhez előbb kapcsold össze a fiókodat Google-lel vagy e-maillel, vagy készíts JSON mentést."))
+            },
+            confirmButton = {
+                Button(onClick = { authViewModel.confirmGuestSignOut() }) {
+                    Text(t("Kijelentkezés"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { authViewModel.cancelGuestSignOut() }) {
+                    Text(t("Maradok"))
+                }
+            }
+        )
+    }
 
     AnimatedContent(
         targetState = destination,
@@ -744,6 +765,19 @@ private fun AuthScreen(
                                         )
                                     }
 
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        enabled = !state.loading,
+                                        onClick = { authViewModel.signInAnonymously() }
+                                    ) {
+                                        Text(t("Folytatás regisztráció nélkül"))
+                                    }
+                                    Text(
+                                        t("Vendégként az adatok ezen a készüléken maradnak. A fiókodat később összekapcsolhatod."),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
                                     OutlinedButton(
                                         modifier =
                                             Modifier
@@ -851,7 +885,7 @@ private fun AuthScreen(
 
             Text(
                 text =
-                    t("A fiók a családi szinkronhoz és a több készülékes használathoz szükséges."),
+                    t("A használatot vendégként is elkezdheted. A fiókhoz kapcsolás megőrzi a helyi adataidat; a mentésről külön gondoskodj."),
                 style =
                     MaterialTheme
                         .typography
@@ -892,7 +926,7 @@ private fun FirebaseSetupContent(
             "2. Package: " +
             BuildConfig.APPLICATION_ID +
             "\n3. google-services.json → app/\n" +
-            "4. Authentication → Email/Password + Google"
+            "4. Authentication → Email/Password + Google + Anonymous"
     )
 
     if (BuildConfig.DEBUG) {
