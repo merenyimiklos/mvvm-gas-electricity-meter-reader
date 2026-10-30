@@ -72,7 +72,8 @@ private enum class StatisticsMetric(
     NIGHT(t("Éjszakai"), "kWh"),
     TOTAL_ELECTRICITY(t("Összes áram"), "kWh"),
     GAS(t("Gáz"), "m³"),
-    WATER(t("Víz"), "m³")
+    WATER(t("Hideg víz"), "m³"),
+    WATER_HOT(t("Meleg víz"), "m³")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,6 +109,9 @@ internal fun StatisticsScreen(
             }
             if (settings.waterEnabled) {
                 add(StatisticsMetric.WATER)
+            }
+            if (settings.waterHotEnabled) {
+                add(StatisticsMetric.WATER_HOT)
             }
         }
 
@@ -300,6 +304,7 @@ internal fun StatisticsScreen(
                         StatisticsMetric.TOTAL_ELECTRICITY -> PlayColors.Blue
                         StatisticsMetric.GAS -> PlayColors.Gas
                         StatisticsMetric.WATER -> PlayColors.Water
+                        StatisticsMetric.WATER_HOT -> PlayColors.Gas
                     }
                 )
             }
@@ -674,6 +679,7 @@ private fun MetricOverview(
                     StatisticsMetric.NIGHT -> PlayMeterIcon(MeterType.ELECTRICITY_NIGHT, size = 46.dp)
                     StatisticsMetric.GAS -> PlayMeterIcon(MeterType.GAS, size = 46.dp)
                     StatisticsMetric.WATER -> PlayMeterIcon(MeterType.WATER, size = 46.dp)
+                    StatisticsMetric.WATER_HOT -> PlayMeterIcon(MeterType.WATER_HOT, size = 46.dp)
                     StatisticsMetric.TOTAL_ELECTRICITY -> Unit
                 }
 
@@ -1996,6 +2002,38 @@ private fun projectedMonthlyCost(
                     }
             }
         }
+ 
+
+        StatisticsMetric.WATER_HOT -> {
+            val usage =
+                projectedUsage(
+                    MeterType.WATER_HOT
+                ) ?: return null
+
+            when (
+                settings.waterHotBillingMode
+            ) {
+                hu.merenyimiklos.meterreader.model.GasBillingMode.FLAT_RATE ->
+                    settings
+                        .waterHotFlatMonthlyPayment
+                        .takeIf {
+                            it > 0.0
+                        }
+
+                hu.merenyimiklos.meterreader.model.GasBillingMode.METERED ->
+                    if (
+                        settings.waterHotUnitPrice >
+                        0.0
+                    ) {
+                        usage *
+                            settings.waterHotUnitPrice +
+                            settings
+                                .waterHotMonthlyFixedFee
+                    } else {
+                        null
+                    }
+            }
+        }
     }
 }
 
@@ -2051,6 +2089,8 @@ private fun goalForMetric(
         StatisticsMetric.WATER ->
             settings
                 .waterMonthlyGoalM3
+        StatisticsMetric.WATER_HOT ->
+            settings.waterHotMonthlyGoalM3
     }
 
 private fun consumptionValues(
@@ -2090,6 +2130,8 @@ private fun consumptionValues(
 
                 StatisticsMetric.WATER ->
                     summary.waterUsage
+                StatisticsMetric.WATER_HOT ->
+                    summary.waterHotUsage
             }
 
         value?.let {
@@ -2137,6 +2179,8 @@ private fun dailyAverage(
                     readings,
                     MeterType.WATER
                 )
+        StatisticsMetric.WATER_HOT ->
+            AnalyticsCalculator.latestDailyAverage(readings, MeterType.WATER_HOT)
     }
 
 private fun formatMonth(
