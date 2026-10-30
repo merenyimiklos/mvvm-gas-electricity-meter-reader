@@ -2140,22 +2140,16 @@ internal fun SettingsScreen(
                         val authUser =
                             authState.user
 
-                        if (authUser != null) {
+                        if (authUser?.isAnonymous == true) {
+                            GuestAccountLinkCard(authViewModel = authViewModel)
+                        } else if (authUser != null) {
                             AppInfoLine(
                                 t("Név"),
-                                authUser
-                                    .displayName
-                                    .ifBlank {
-                                        "–"
-                                    }
+                                authUser.displayName.ifBlank { "–" }
                             )
                             AppInfoLine(
                                 t("E-mail"),
-                                authUser
-                                    .email
-                                    .ifBlank {
-                                        "–"
-                                    }
+                                authUser.email.ifBlank { "–" }
                             )
                         } else if (
                             authState.guestMode
@@ -2555,7 +2549,11 @@ internal fun SettingsScreen(
                             "A művelet nem vonható vissza."
                     )
                     Text(
-                        "Fiók: " + authState.user!!.email,
+                        if (authState.user!!.isAnonymous) {
+                            t("Fiók: névtelen vendég")
+                        } else {
+                            "Fiók: " + authState.user!!.email
+                        },
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
@@ -2582,7 +2580,7 @@ internal fun SettingsScreen(
                             visualTransformation = PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                         )
-                    } else {
+                    } else if (authState.user?.isAnonymous != true) {
                         Text(
                             "A Google-fiókodat még egyszer meg kell erősítened.",
                             style = MaterialTheme.typography.bodySmall

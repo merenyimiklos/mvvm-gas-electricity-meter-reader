@@ -18,6 +18,7 @@ data class AuthUiState(
     val user: AuthUser? = null,
     val guestMode: Boolean = false,
     val showOnboarding: Boolean = false,
+    val showGuestSignOutConfirmation: Boolean = false,
     val error: String? = null,
     val message: String? = null
 ) {
@@ -65,6 +66,51 @@ class AuthViewModel(
     val state:
         StateFlow<AuthUiState> =
         _state.asStateFlow()
+
+    fun signInAnonymously() {
+        launchAuth { repository.signInAnonymously() }
+    }
+
+    private val _linkingAccount = MutableStateFlow(false)
+    val linkingAccount: StateFlow<Boolean> = _linkingAccount.asStateFlow()
+
+    private val _linkError = MutableStateFlow<String?>(null)
+    val linkError: StateFlow<String?> = _linkError.asStateFlow()
+
+    fun clearLinkError() { _linkError.value = null }
+
+    fun linkGuestWithEmail(name: String, email: String, password: String) {
+        linkGuest { repository.linkAnonymousWithEmail(name, email, password) }
+    }
+
+    fun linkGuestWithGoogle(activity: Activity) {
+        linkGuest { repository.linkAnonymousWithGoogle(activity) }
+    }
+
+    private fun linkGuest(action: suspend () -> AuthUser) {
+        if (_linkingAccount.value || _state.value.user?.isAnonymous != true) return
+        _linkingAccount.value = true
+        _linkError.value = null
+        viewModelScope.launch {
+            try {
+                val originalUid = requireNotNull(_state.value.user).uid
+                val upgraded = action()
+                check(upgraded.uid == originalUid && !upgraded.isAnonymous) {
+                    "Nem sikerült biztonságosan összekapcsolni a vendégfiókot."
+                }
+                _state.value = _state.value.copy(
+                    user = upgraded,
+                    error = null,
+                    message = "A vendégfiókot sikeresen összekapcsoltuk. A mérőállásaid megmaradtak."
+                )
+                MeterWidgetProvider.updateAll(getApplication())
+            } catch (error: Throwable) {
+                _linkError.value = friendlyMessage(error)
+            } finally {
+                _linkingAccount.value = false
+            }
+        }
+    }
 
     fun signIn(
         email: String,
@@ -139,19 +185,34 @@ class AuthViewModel(
     }
 
     fun signOut() {
+        if (_state.value.user?.isAnonymous == true) {
+            _state.value = _state.value.copy(
+                showGuestSignOutConfirmation = true
+            )
+            return
+        }
+        performSignOut()
+    }
+
+    fun cancelGuestSignOut() {
+        _state.value = _state.value.copy(
+            showGuestSignOutConfirmation = false
+        )
+    }
+
+    fun confirmGuestSignOut() {
+        if (_state.value.user?.isAnonymous != true) return
+        performSignOut()
+    }
+
+    private fun performSignOut() {
         viewModelScope.launch {
             runCatching {
                 repository.signOut()
                 ReadingReminderWorker.evaluateAndNotify(getApplication())
                 MeterWidgetProvider.updateAll(getApplication())
             }
-
-            _state.value =
-                AuthUiState(
-                    configured =
-                        repository
-                            .isConfigured
-                )
+            _state.value = AuthUiState(configured = repository.isConfigured)
         }
     }
 
@@ -385,6 +446,16 @@ class AuthViewModel(
                 ignoreCase = true
             ) ->
                 "Túl sok próbálkozás történt. Próbáld újra később."
+
+            message.contains("OPERATION_NOT_ALLOWED", ignoreCase = true) ||
+                message.contains("ADMIN_ONLY_OPERATION", ignoreCase = true) ->
+                "A Firebase anonim belépés nincs engedélyezve. A Firebase Console → Authentication → Sign-in method alatt kapcsold be az Anonymous szolgáltatót."
+
+            className.contains(
+                "OperationNotAllowed",
+                ignoreCase = true
+            ) ->
+                "A Firebase Anonymous bejelentkezést engedélyezni kell a Firebase Console-ban."
 
             message.contains(
                 "password",
