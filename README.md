@@ -25,8 +25,9 @@ A cél egyszerű: az áram-, gáz- és vízfogyasztás legyen átlátható, kön
 - Firebase Authentication
   - e-mail + jelszó
   - Google-belépés
+  - névtelen Firebase-vendégbelépés, később biztonságos összekapcsolás Google-lel vagy új e-mailes fiókkal
   - jelszó-visszaállítás
-  - fiók végleges törlése újraazonosítás után (Beállítások → Fiók törlése)
+  - fiók végleges törlése (Google/e-mail esetén újraazonosítással, vendégként külön jelszó nélkül; Beállítások → Fiók törlése)
 - magyar és angol felület
 - világos, sötét és rendszer témamód
 - első indításkor interaktív onboarding
@@ -69,7 +70,7 @@ A megjelenített költségek becslések; a tényleges számla szolgáltatótól,
 - **Firebase Authentication** — felhasználói azonosítás
 - **JSON backup** — kézi és automatikus biztonsági mentés
 
-Minden Firebase UID külön Room-adatbázist, DataStore-beállításokat és automatikus mentést használ. A felhasználó a Beállítások alján kérheti fiókja végleges törlését; az alkalmazás friss azonosítást kér (jelszó vagy Google), törli a Firebase Authentication-fiókot, majd a hozzá tartozó helyi mérőállásokat, beállításokat és automatikus mentéseket. A megosztott családi mappa és a kézzel exportált fájlok nem törlődnek automatikusan. Az eltávolíthatatlan külső mentésekre a felület figyelmeztet.
+Minden Firebase UID (a névtelen felhasználókat is beleértve) külön Room-adatbázist, DataStore-beállításokat és automatikus mentést használ. Vendégfiók Google-lel vagy új e-mailes fiókkal a Settings / Fiók résznél kapcsolható össze: ugyanaz a Firebase UID marad, tehát a helyi mérőállások nem költöznek. Már létező fiók adatai nem egyesülnek automatikusan; előbb készíts JSON mentést. A vendég kijelentkezése után ugyanaz az anonim fiók nem állítható vissza egyszerű belépéssel; a készülék törlése/újratelepítése a helyi adatokat is eltávolíthatja. A Firebase Identity Platform anonim fiókok 30 napos automatikus tisztítása (ha bekapcsolták) az összekapcsolás nélküli fiókokat érintheti. A felhasználó a Beállítások alján kérheti fiókja végleges törlését; az alkalmazás friss azonosítást kér (jelszó vagy Google), törli a Firebase Authentication-fiókot, majd a hozzá tartozó helyi mérőállásokat, beállításokat és automatikus mentéseket. A megosztott családi mappa és a kézzel exportált fájlok nem törlődnek automatikusan. Az eltávolíthatatlan külső mentésekre a felület figyelmeztet.
 
 A helyi adatok frissítéskor megmaradnak, amennyiben az alkalmazás azonos csomagnévvel és megfelelő aláírással frissül.
 
