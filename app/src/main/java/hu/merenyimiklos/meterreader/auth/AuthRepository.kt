@@ -15,6 +15,7 @@ import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import hu.merenyimiklos.meterreader.BuildConfig
@@ -25,7 +26,8 @@ data class AuthUser(
     val uid: String,
     val email: String,
     val displayName: String,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val isAnonymous: Boolean = false
 )
 
 class AuthRepository(
@@ -45,6 +47,89 @@ class AuthRepository(
         } else {
             null
         }
+
+    /** Firebase anonymous users get their own stable UID and scoped local storage. */
+    suspend fun signInAnonymously(): AuthUser {
+        requireConfigured()
+        val auth = FirebaseAuth.getInstance()
+        val existing = auth.currentUser
+        if (existing != null) {
+            return existing.toAuthUser()
+        }
+        val result = auth.signInAnonymously().await()
+        return requireNotNull(result.user) {
+            "Nem sikerült létrehozni a vendégfiókot."
+        }.toAuthUser()
+    }
+
+    /**
+     * Upgrade in place, never create a new Firebase account with another UID:
+     * all Room/DataStore data is keyed by this UID.
+     */
+    suspend fun linkAnonymousWithEmail(
+        displayName: String,
+        email: String,
+        password: String
+    ): AuthUser {
+        requireConfigured()
+        require(password.length >= 6) { "A jelszó legalább 6 karakter legyen." }
+        val user = requireAnonymousUser()
+        val originalUid = user.uid
+        try {
+            user.linkWithCredential(
+                EmailAuthProvider.getCredential(email.trim(), password)
+            ).await()
+        } catch (error: FirebaseAuthUserCollisionException) {
+            throw IllegalStateException(
+                "Ehhez az e-mail címhez már tartozik fiók. A vendégadatok automatikusan " +
+                    "nem egyesíthetők. Készíts JSON mentést, mielőtt másik fiókba lépsz.",
+                error
+            )
+        }
+        check(FirebaseAuth.getInstance().currentUser?.uid == originalUid) {
+            "A fiókazonosító megváltozott. Ellenőrizd az adataidat."
+        }
+        if (displayName.isNotBlank()) {
+            runCatching {
+                user.updateProfile(
+                    UserProfileChangeRequest.Builder()
+                        .setDisplayName(displayName.trim())
+                        .build()
+                ).await()
+            }
+        }
+        return requireNotNull(FirebaseAuth.getInstance().currentUser).toAuthUser()
+    }
+
+    suspend fun linkAnonymousWithGoogle(activity: Activity): AuthUser {
+        requireConfigured()
+        val user = requireAnonymousUser()
+        val originalUid = user.uid
+        val credential = googleFirebaseCredential(activity)
+        try {
+            user.linkWithCredential(credential).await()
+        } catch (error: FirebaseAuthUserCollisionException) {
+            throw IllegalStateException(
+                "Ez a Google-fiók már létezik. A vendégadatok nem egyesíthetők " +
+                    "automatikusan. Készíts JSON mentést, mielőtt másik fiókba lépsz.",
+                error
+            )
+        }
+        check(FirebaseAuth.getInstance().currentUser?.uid == originalUid) {
+            "A fiókazonosító megváltozott. Ellenőrizd az adataidat."
+        }
+        return requireNotNull(FirebaseAuth.getInstance().currentUser).toAuthUser()
+    }
+
+    private fun requireAnonymousUser(): FirebaseUser {
+        val current = requireNotNull(FirebaseAuth.getInstance().currentUser) {
+            "Nincs bejelentkezett vendégfiók."
+        }
+        check(current.isAnonymous) {
+            "Csak vendégfiókot lehet így összekapcsolni."
+        }
+        return current
+    }
 
     suspend fun signIn(
         email: String,
@@ -162,6 +247,10 @@ class AuthRepository(
             "Nincs bejelentkezett felhasználó."
         }
         val uid = user.uid
+        if (user.isAnonymous) {
+            user.delete().await()
+            return uid
+        }
         val providers = user.providerData.map { it.providerId }
 
         val credential = when {
@@ -360,6 +449,7 @@ class AuthRepository(
                         .orEmpty(),
             photoUrl =
                 photoUrl
-                    ?.toString()
+                    ?.toString(),
+            isAnonymous = isAnonymous
         )
 }
