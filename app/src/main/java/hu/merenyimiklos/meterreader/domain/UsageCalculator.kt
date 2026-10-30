@@ -120,6 +120,7 @@ object UsageCalculator {
                     ?.get(
                         MeterType.WATER
                     )
+            val hotWaterUsage = usageByMonth[month]?.get(MeterType.WATER_HOT)
 
             val normalCost =
                 if (
@@ -212,6 +213,18 @@ object UsageCalculator {
                     0.0
                 }
 
+            val hotWaterConsumptionCost = if (settings.waterHotEnabled) {
+                hotWaterUsage?.let {
+                    it * settings.waterHotUnitPrice + settings.waterHotMonthlyFixedFee
+                } ?: 0.0
+            } else 0.0
+            val hotWaterPayable = if (settings.waterHotEnabled) {
+                when (settings.waterHotBillingMode) {
+                    BillingMode.FLAT_RATE -> settings.waterHotFlatMonthlyPayment
+                    BillingMode.METERED -> hotWaterConsumptionCost
+                }
+            } else 0.0
+
             MonthlySummary(
                 month = month,
                 electricityUsage =
@@ -220,6 +233,9 @@ object UsageCalculator {
                     nightUsage,
                 gasUsage = gasUsage,
                 waterUsage = waterUsage,
+                waterHotUsage = hotWaterUsage,
+                waterHotConsumptionCost = hotWaterConsumptionCost,
+                waterHotPayable = hotWaterPayable,
                 electricityCost =
                     normalCost,
                 electricityNightCost =
@@ -236,7 +252,8 @@ object UsageCalculator {
                     normalCost +
                         nightCost +
                         gasPayable +
-                        waterPayable
+                        waterPayable +
+                        hotWaterPayable
             )
         }
     }
@@ -292,6 +309,17 @@ object UsageCalculator {
                         BillingMode.METERED ->
                             consumptionCost
                     }
+                consumptionCost to payable
+            }
+
+            MeterType.WATER_HOT -> {
+                val consumptionCost = consumption?.let {
+                    it * settings.waterHotUnitPrice + settings.waterHotMonthlyFixedFee
+                }
+                val payable = when (settings.waterHotBillingMode) {
+                    BillingMode.FLAT_RATE -> settings.waterHotFlatMonthlyPayment
+                    BillingMode.METERED -> consumptionCost
+                }
                 consumptionCost to payable
             }
 
