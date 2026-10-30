@@ -83,7 +83,7 @@ class BackupManager(
                 0
             )
 
-        require(version in 1..5) {
+        require(version in 1..6) {
             "Nem támogatott mentési formátum."
         }
 
@@ -161,7 +161,7 @@ class BackupManager(
         JSONObject()
             .put(
                 "version",
-                5
+                6
             )
             .put(
                 "exportedAt",
@@ -241,6 +241,7 @@ class BackupManager(
                 "waterEnabled",
                 settings.waterEnabled
             )
+            .put("waterHotEnabled", settings.waterHotEnabled)
             .put(
                 "electricityUnitPrice",
                 settings
@@ -284,6 +285,7 @@ class BackupManager(
                 "waterMonthlyGoalM3",
                 settings.waterMonthlyGoalM3
             )
+            .put("waterHotMonthlyGoalM3", settings.waterHotMonthlyGoalM3)
             .put(
                 "reminderEnabled",
                 settings.reminderEnabled
@@ -340,6 +342,10 @@ class BackupManager(
                 settings
                     .waterFlatMonthlyPayment
             )
+            .put("waterHotBillingMode", settings.waterHotBillingMode.name)
+            .put("waterHotUnitPrice", settings.waterHotUnitPrice)
+            .put("waterHotMonthlyFixedFee", settings.waterHotMonthlyFixedFee)
+            .put("waterHotFlatMonthlyPayment", settings.waterHotFlatMonthlyPayment)
             .put(
                 "appLanguage",
                 settings.appLanguage.name
@@ -373,6 +379,7 @@ class BackupManager(
                     "waterEnabled",
                     false
                 ),
+            waterHotEnabled = item.optBoolean("waterHotEnabled", false),
             electricityUnitPrice =
                 item.optDouble(
                     "electricityUnitPrice",
@@ -418,6 +425,7 @@ class BackupManager(
                     "waterMonthlyGoalM3",
                     0.0
                 ),
+            waterHotMonthlyGoalM3 = item.optDouble("waterHotMonthlyGoalM3", 0.0),
             reminderEnabled =
                 item.optBoolean(
                     "reminderEnabled",
@@ -495,6 +503,12 @@ class BackupManager(
                     "waterFlatMonthlyPayment",
                     0.0
                 ),
+            waterHotBillingMode = runCatching {
+                BillingMode.valueOf(item.optString("waterHotBillingMode", BillingMode.METERED.name))
+            }.getOrDefault(BillingMode.METERED),
+            waterHotUnitPrice = item.optDouble("waterHotUnitPrice", 0.0),
+            waterHotMonthlyFixedFee = item.optDouble("waterHotMonthlyFixedFee", 0.0),
+            waterHotFlatMonthlyPayment = item.optDouble("waterHotFlatMonthlyPayment", 0.0),
             appLanguage =
                 runCatching {
                     AppLanguage.valueOf(
