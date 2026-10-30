@@ -44,7 +44,8 @@ class OcrMeterReader(private val context: Context) {
             if (
                 (
                     meterType == MeterType.GAS ||
-                        meterType == MeterType.WATER
+                        meterType == MeterType.WATER ||
+                        meterType == MeterType.WATER_HOT
                     ) &&
                 decimalDigits > 0
             ) {
