@@ -116,7 +116,8 @@ internal fun DashboardScreen(
                             Icons.Default.Bedtime
                         MeterType.GAS ->
                             Icons.Default.LocalFireDepartment
-                        MeterType.WATER ->
+                        MeterType.WATER,
+                        MeterType.WATER_HOT ->
                             Icons.Default.WaterDrop
                     }
             )
@@ -154,6 +155,16 @@ internal fun DashboardScreen(
                     settings.waterBillingMode ==
                     GasBillingMode.METERED &&
                     settings.waterUnitPrice <= 0.0
+                ) ||
+            (
+                settings.waterHotEnabled &&
+                    settings.waterHotBillingMode == GasBillingMode.FLAT_RATE &&
+                    settings.waterHotFlatMonthlyPayment <= 0.0
+                ) ||
+            (
+                settings.waterHotEnabled &&
+                    settings.waterHotBillingMode == GasBillingMode.METERED &&
+                    settings.waterHotUnitPrice <= 0.0
                 )
 
     Scaffold(
@@ -405,7 +416,7 @@ internal fun DashboardScreen(
 
                             if (settings.waterEnabled) {
                                 SummaryLine(
-                                    label = t("Víz"),
+                                    label = t("Hideg víz"),
                                     usage =
                                         latestSummary
                                             .waterUsage,
@@ -413,6 +424,18 @@ internal fun DashboardScreen(
                                     cost =
                                         latestSummary
                                             .waterPayable
+                                )
+                            }
+                            if (settings.waterHotEnabled) {
+                                SummaryLine(
+                                    label = t("Meleg víz"),
+                                    usage =
+                                        latestSummary
+                                            .waterHotUsage,
+                                    unit = "m³",
+                                    cost =
+                                        latestSummary
+                                            .waterHotPayable
                                 )
                             }
 
@@ -540,10 +563,21 @@ internal fun DashboardScreen(
 
                         if (settings.waterEnabled) {
                             MetricRow(
-                                t("Víz"),
+                                t("Hideg víz"),
                                 formatDecimal(
                                     yearSummaries.sumOf {
                                         it.waterUsage
+                                            ?: 0.0
+                                    }
+                                ) + " m³"
+                            )
+                        }
+                        if (settings.waterHotEnabled) {
+                            MetricRow(
+                                t("Meleg víz"),
+                                formatDecimal(
+                                    yearSummaries.sumOf {
+                                        it.waterHotUsage
                                             ?: 0.0
                                     }
                                 ) + " m³"
@@ -616,11 +650,25 @@ internal fun DashboardScreen(
                 item {
                     UsageChart(
                         title =
-                            t("Víz · 6 hónap"),
+                            t("Hideg víz · 6 hónap"),
                         summaries =
                             summaries,
                         valueSelector = {
                             it.waterUsage
+                        },
+                        unit = "m³"
+                    )
+                }
+            }
+            if (settings.waterHotEnabled) {
+                item {
+                    UsageChart(
+                        title =
+                            t("Meleg víz · 6 hónap"),
+                        summaries =
+                            summaries,
+                        valueSelector = {
+                            it.waterHotUsage
                         },
                         unit = "m³"
                     )

@@ -121,6 +121,7 @@ class MeterWidgetProvider : AppWidgetProvider() {
                     readings,
                     MeterType.WATER
                 )
+            val hotWater = latest(readings, MeterType.WATER_HOT)
 
             val intent =
                 Intent(
@@ -220,9 +221,17 @@ class MeterWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(
                     R.id.widget_water,
                     readingText(
-                        "Víz",
+                        "Hideg víz",
                         water
                     )
+                )
+                views.setViewVisibility(
+                    R.id.widget_water_hot,
+                    if (settings.waterHotEnabled) View.VISIBLE else View.GONE
+                )
+                views.setTextViewText(
+                    R.id.widget_water_hot,
+                    readingText("Meleg víz", hotWater)
                 )
                 views.setOnClickPendingIntent(
                     R.id.widget_root,

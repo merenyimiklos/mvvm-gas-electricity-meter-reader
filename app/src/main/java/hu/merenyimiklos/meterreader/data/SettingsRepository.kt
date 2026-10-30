@@ -65,6 +65,7 @@ class SettingsRepository(
             booleanPreferencesKey("gas_enabled")
         val waterEnabled =
             booleanPreferencesKey("water_enabled")
+        val waterHotEnabled = booleanPreferencesKey("water_hot_enabled")
         val electricityUnitPrice =
             doublePreferencesKey("electricity_unit_price")
         val electricityMonthlyFixedFee =
@@ -81,6 +82,7 @@ class SettingsRepository(
             doublePreferencesKey("gas_monthly_goal_m3")
         val waterMonthlyGoalM3 =
             doublePreferencesKey("water_monthly_goal_m3")
+        val waterHotMonthlyGoalM3 = doublePreferencesKey("water_hot_monthly_goal_m3")
         val gasHeatingValueMjPerM3 =
             doublePreferencesKey("gas_heating_value_mj_per_m3")
         val reminderEnabled =
@@ -109,6 +111,10 @@ class SettingsRepository(
             doublePreferencesKey("water_monthly_fixed_fee")
         val waterFlatMonthlyPayment =
             doublePreferencesKey("water_flat_monthly_payment")
+        val waterHotBillingMode = stringPreferencesKey("water_hot_billing_mode")
+        val waterHotUnitPrice = doublePreferencesKey("water_hot_unit_price")
+        val waterHotMonthlyFixedFee = doublePreferencesKey("water_hot_monthly_fixed_fee")
+        val waterHotFlatMonthlyPayment = doublePreferencesKey("water_hot_flat_monthly_payment")
         val appLanguage =
             stringPreferencesKey("app_language")
         val themeMode =
@@ -144,6 +150,7 @@ class SettingsRepository(
                         preferences[Keys.gasEnabled] ?: true,
                     waterEnabled =
                         preferences[Keys.waterEnabled] ?: false,
+                    waterHotEnabled = preferences[Keys.waterHotEnabled] ?: false,
                     electricityUnitPrice =
                         preferences[Keys.electricityUnitPrice] ?: 0.0,
                     electricityMonthlyFixedFee =
@@ -160,6 +167,7 @@ class SettingsRepository(
                         preferences[Keys.gasMonthlyGoalM3] ?: 0.0,
                     waterMonthlyGoalM3 =
                         preferences[Keys.waterMonthlyGoalM3] ?: 0.0,
+                    waterHotMonthlyGoalM3 = preferences[Keys.waterHotMonthlyGoalM3] ?: 0.0,
                     gasHeatingValueMjPerM3 =
                         preferences[Keys.gasHeatingValueMjPerM3] ?: 34.8,
                     reminderEnabled =
@@ -200,6 +208,12 @@ class SettingsRepository(
                         preferences[Keys.waterMonthlyFixedFee] ?: 0.0,
                     waterFlatMonthlyPayment =
                         preferences[Keys.waterFlatMonthlyPayment] ?: 0.0,
+                    waterHotBillingMode = preferences[Keys.waterHotBillingMode]
+                        ?.let { runCatching { BillingMode.valueOf(it) }.getOrNull() }
+                        ?: BillingMode.METERED,
+                    waterHotUnitPrice = preferences[Keys.waterHotUnitPrice] ?: 0.0,
+                    waterHotMonthlyFixedFee = preferences[Keys.waterHotMonthlyFixedFee] ?: 0.0,
+                    waterHotFlatMonthlyPayment = preferences[Keys.waterHotFlatMonthlyPayment] ?: 0.0,
                     appLanguage =
                         preferences[Keys.appLanguage]
                             ?.let { value ->
@@ -241,6 +255,7 @@ class SettingsRepository(
                 settings.gasEnabled
             preferences[Keys.waterEnabled] =
                 settings.waterEnabled
+            preferences[Keys.waterHotEnabled] = settings.waterHotEnabled
             preferences[Keys.electricityUnitPrice] =
                 settings.electricityUnitPrice
             preferences[Keys.electricityMonthlyFixedFee] =
@@ -257,6 +272,7 @@ class SettingsRepository(
                 settings.gasMonthlyGoalM3
             preferences[Keys.waterMonthlyGoalM3] =
                 settings.waterMonthlyGoalM3
+            preferences[Keys.waterHotMonthlyGoalM3] = settings.waterHotMonthlyGoalM3
             preferences[Keys.gasHeatingValueMjPerM3] =
                 settings.gasHeatingValueMjPerM3
             preferences[Keys.reminderEnabled] =
@@ -285,6 +301,10 @@ class SettingsRepository(
                 settings.waterMonthlyFixedFee
             preferences[Keys.waterFlatMonthlyPayment] =
                 settings.waterFlatMonthlyPayment
+            preferences[Keys.waterHotBillingMode] = settings.waterHotBillingMode.name
+            preferences[Keys.waterHotUnitPrice] = settings.waterHotUnitPrice
+            preferences[Keys.waterHotMonthlyFixedFee] = settings.waterHotMonthlyFixedFee
+            preferences[Keys.waterHotFlatMonthlyPayment] = settings.waterHotFlatMonthlyPayment
             preferences[Keys.appLanguage] =
                 settings.appLanguage.name
             preferences[Keys.themeMode] =

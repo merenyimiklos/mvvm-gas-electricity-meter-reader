@@ -48,7 +48,17 @@
         android:id="@+id/widget_water"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Víz: –"
+        android:text="Hideg víz: –"
+        android:textSize="15sp"
+        android:textColor="#FFFFFFFF"
+        android:paddingVertical="3dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_water_hot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Meleg víz: –"
         android:textSize="15sp"
         android:textColor="#FFFFFFFF"
         android:paddingVertical="3dp"

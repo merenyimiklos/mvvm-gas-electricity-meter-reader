@@ -140,6 +140,9 @@ internal fun SettingsScreen(
             settings.waterEnabled
         )
     }
+    var waterHotEnabled by remember(settings) {
+        mutableStateOf(settings.waterHotEnabled)
+    }
 
     var electricityUnitPrice by remember(settings) {
         mutableStateOf(
@@ -200,6 +203,9 @@ internal fun SettingsScreen(
             settings.waterBillingMode
         )
     }
+    var waterHotMode by remember(settings) {
+        mutableStateOf(settings.waterHotBillingMode)
+    }
     var waterUnitPrice by remember(settings) {
         mutableStateOf(
             editableNumber(
@@ -220,6 +226,15 @@ internal fun SettingsScreen(
                 settings.waterFlatMonthlyPayment
             )
         )
+    }
+    var waterHotFlatPayment by remember(settings) {
+        mutableStateOf(editableNumber(settings.waterHotFlatMonthlyPayment))
+    }
+    var waterHotUnitPrice by remember(settings) {
+        mutableStateOf(editableNumber(settings.waterHotUnitPrice))
+    }
+    var waterHotFixedFee by remember(settings) {
+        mutableStateOf(editableNumber(settings.waterHotMonthlyFixedFee))
     }
 
     var normalGoal by remember(settings) {
@@ -249,6 +264,9 @@ internal fun SettingsScreen(
                 settings.waterMonthlyGoalM3
             )
         )
+    }
+    var waterHotGoal by remember(settings) {
+        mutableStateOf(editableNumber(settings.waterHotMonthlyGoalM3))
     }
     var gasHeatingValue by remember(settings) {
         mutableStateOf(
@@ -391,6 +409,7 @@ internal fun SettingsScreen(
                 gasEnabled,
             waterEnabled =
                 waterEnabled,
+            waterHotEnabled = waterHotEnabled,
             electricityUnitPrice =
                 parseDecimal(
                     electricityUnitPrice
@@ -423,6 +442,7 @@ internal fun SettingsScreen(
                 parseDecimal(
                     waterGoal
                 ),
+            waterHotMonthlyGoalM3 = parseDecimal(waterHotGoal),
             gasHeatingValueMjPerM3 =
                 parseDecimal(
                     gasHeatingValue
@@ -472,6 +492,10 @@ internal fun SettingsScreen(
                 parseDecimal(
                     waterFlatPayment
                 ),
+            waterHotBillingMode = waterHotMode,
+            waterHotUnitPrice = parseDecimal(waterHotUnitPrice),
+            waterHotMonthlyFixedFee = parseDecimal(waterHotFixedFee),
+            waterHotFlatMonthlyPayment = parseDecimal(waterHotFlatPayment),
             appLanguage =
                 appLanguage,
             themeMode =
@@ -894,11 +918,17 @@ internal fun SettingsScreen(
                         )
                         MeterToggleRow(
                             type = MeterType.WATER,
-                            title = t("Víz"),
+                            title = t("Hideg víz"),
                             checked = waterEnabled,
                             onCheckedChange = {
                                 waterEnabled = it
                             }
+                        )
+                        MeterToggleRow(
+                            type = MeterType.WATER_HOT,
+                            title = t("Meleg víz"),
+                            checked = waterHotEnabled,
+                            onCheckedChange = { waterHotEnabled = it }
                         )
                     }
                 }
@@ -1373,7 +1403,7 @@ internal fun SettingsScreen(
             if (waterEnabled) {
                 item {
                     TariffCard(
-                        title = t("Víz"),
+                        title = t("Hideg víz"),
                         subtitle =
                             t("Átalány vagy fogyasztás alapján"),
                         icon =
@@ -1452,6 +1482,93 @@ internal fun SettingsScreen(
                             },
                             label =
                                 t("Víz havi fix díj (Ft)")
+                        )
+                    }
+                }
+            }
+
+            if (waterHotEnabled) {
+                item {
+                    TariffCard(
+                        title = t("Meleg víz"),
+                        subtitle =
+                            t("Átalány vagy fogyasztás alapján"),
+                        icon =
+                            Icons.Default.WaterDrop,
+                        containerColor =
+                            MaterialTheme
+                                .colorScheme
+                                .primaryContainer
+                    ) {
+                        Text(
+                            t("Elszámolás módja"),
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+
+                        Row(
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    8.dp
+                                )
+                        ) {
+                            GasBillingMode.entries
+                                .forEach { mode ->
+                                    FilterChip(
+                                        selected =
+                                            waterHotMode ==
+                                                mode,
+                                        onClick = {
+                                            waterHotMode =
+                                                mode
+                                        },
+                                        label = {
+                                            Text(
+                                                t(
+                                                    mode.displayName
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                        }
+
+                        MoneyField(
+                            value =
+                                waterHotFlatPayment,
+                            onValueChange = {
+                                waterHotFlatPayment =
+                                    it
+                            },
+                            label =
+                                t("Havi melegvíz-átalány (Ft)")
+                        )
+                        MoneyField(
+                            value =
+                                waterHotUnitPrice,
+                            onValueChange = {
+                                waterHotUnitPrice =
+                                    it
+                            },
+                            label =
+                                if (
+                                    waterHotMode ==
+                                    GasBillingMode.FLAT_RATE
+                                ) {
+                                    t("Melegvíz egységár – kimutatáshoz (Ft/m³)")
+                                } else {
+                                    t("Melegvíz egységár (Ft/m³)")
+                                }
+                        )
+                        MoneyField(
+                            value =
+                                waterHotFixedFee,
+                            onValueChange = {
+                                waterHotFixedFee =
+                                    it
+                            },
+                            label =
+                                t("Melegvíz havi fix díj (Ft)")
                         )
                     }
                 }
@@ -1547,7 +1664,14 @@ internal fun SettingsScreen(
                                     waterGoal = it
                                 },
                                 label =
-                                    t("Víz cél (m³/hó)")
+                                    t("Hideg víz cél (m³/hó)")
+                            )
+                        }
+                        if (waterHotEnabled) {
+                            MoneyField(
+                                value = waterHotGoal,
+                                onValueChange = { waterHotGoal = it },
+                                label = t("Meleg víz cél (m³/hó)")
                             )
                         }
                     }

@@ -1344,6 +1344,31 @@ private fun estimateCost(
                         null
                     }
             }
+
+        MeterType.WATER_HOT ->
+            when (
+                settings.waterHotBillingMode
+            ) {
+                GasBillingMode.FLAT_RATE ->
+                    settings
+                        .waterHotFlatMonthlyPayment
+                        .takeIf {
+                            it > 0.0
+                        }
+
+                GasBillingMode.METERED ->
+                    if (
+                        settings.waterHotUnitPrice >
+                        0.0
+                    ) {
+                        value *
+                            settings.waterHotUnitPrice +
+                            settings
+                                .waterHotMonthlyFixedFee
+                    } else {
+                        null
+                    }
+            }
     }
 }
 
