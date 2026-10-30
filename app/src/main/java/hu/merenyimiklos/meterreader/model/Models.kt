@@ -10,7 +10,8 @@ enum class MeterType(
     ELECTRICITY("Normál áram", "Normál", "kWh"),
     ELECTRICITY_NIGHT("Éjszakai áram", "Éjszakai", "kWh"),
     GAS("Gáz", "Gáz", "m³"),
-    WATER("Víz", "Víz", "m³");
+    WATER("Hideg víz", "Hideg", "m³"),
+    WATER_HOT("Meleg víz", "Meleg", "m³");
 
     val isElectricity: Boolean
         get() =
@@ -54,6 +55,7 @@ data class BillingSettings(
     val electricityNightEnabled: Boolean = true,
     val gasEnabled: Boolean = true,
     val waterEnabled: Boolean = false,
+    val waterHotEnabled: Boolean = false,
     val electricityUnitPrice: Double = 0.0,
     val electricityMonthlyFixedFee: Double = 0.0,
     val electricityNightUnitPrice: Double = 0.0,
@@ -62,6 +64,7 @@ data class BillingSettings(
     val electricityNightMonthlyGoalKwh: Double = 0.0,
     val gasMonthlyGoalM3: Double = 0.0,
     val waterMonthlyGoalM3: Double = 0.0,
+    val waterHotMonthlyGoalM3: Double = 0.0,
     val gasHeatingValueMjPerM3: Double = 34.8,
     val reminderEnabled: Boolean = true,
     val reminderDayOfMonth: Int = 23,
@@ -78,6 +81,10 @@ data class BillingSettings(
     val waterUnitPrice: Double = 0.0,
     val waterMonthlyFixedFee: Double = 0.0,
     val waterFlatMonthlyPayment: Double = 0.0,
+    val waterHotBillingMode: BillingMode = BillingMode.METERED,
+    val waterHotUnitPrice: Double = 0.0,
+    val waterHotMonthlyFixedFee: Double = 0.0,
+    val waterHotFlatMonthlyPayment: Double = 0.0,
     val appLanguage: AppLanguage =
         AppLanguage.HUNGARIAN,
     val themeMode: ThemeMode =
@@ -102,6 +109,9 @@ data class BillingSettings(
             if (waterEnabled) {
                 add(MeterType.WATER)
             }
+            if (waterHotEnabled) {
+                add(MeterType.WATER_HOT)
+            }
         }
 
     fun isMeterEnabled(
@@ -116,6 +126,8 @@ data class BillingSettings(
                 gasEnabled
             MeterType.WATER ->
                 waterEnabled
+            MeterType.WATER_HOT ->
+                waterHotEnabled
         }
 }
 
@@ -131,7 +143,10 @@ data class MonthlySummary(
     val gasPayable: Double,
     val waterConsumptionCost: Double,
     val waterPayable: Double,
-    val totalEstimatedPayable: Double
+    val totalEstimatedPayable: Double,
+    val waterHotUsage: Double? = null,
+    val waterHotConsumptionCost: Double = 0.0,
+    val waterHotPayable: Double = 0.0
 ) {
     val totalElectricityUsage: Double
         get() =
