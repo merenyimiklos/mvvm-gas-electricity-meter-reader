@@ -35,13 +35,14 @@ fun playMeterColor(type: MeterType): Color = when (type) {
     MeterType.ELECTRICITY_NIGHT -> PlayColors.NightElectricity
     MeterType.GAS -> PlayColors.Gas
     MeterType.WATER -> PlayColors.Water
+    MeterType.WATER_HOT -> PlayColors.Gas
 }
 
 fun playMeterIcon(type: MeterType): ImageVector = when (type) {
     MeterType.ELECTRICITY -> Icons.Default.Bolt
     MeterType.ELECTRICITY_NIGHT -> Icons.Default.Bedtime
     MeterType.GAS -> Icons.Default.LocalFireDepartment
-    MeterType.WATER -> Icons.Default.WaterDrop
+    MeterType.WATER, MeterType.WATER_HOT -> Icons.Default.WaterDrop
 }
 
 /** Branded, recognisable meter icon shared across dashboard, input and history. */
