@@ -68,6 +68,7 @@ import hu.merenyimiklos.meterreader.BuildConfig
 import hu.merenyimiklos.meterreader.R
 import hu.merenyimiklos.meterreader.auth.AuthUiState
 import hu.merenyimiklos.meterreader.auth.AuthViewModel
+import hu.merenyimiklos.meterreader.model.AppLanguage
 
 private enum class AuthMode {
     LOGIN,
@@ -219,6 +220,25 @@ private fun AuthScreen(
             verticalArrangement =
                 Arrangement.Center
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { AppText.language = AppLanguage.HUNGARIAN }) {
+                    Text(
+                        "🇭🇺 Magyar",
+                        fontWeight = if (AppText.language == AppLanguage.HUNGARIAN) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+                TextButton(onClick = { AppText.language = AppLanguage.ENGLISH }) {
+                    Text(
+                        "🇬🇧 English",
+                        fontWeight = if (AppText.language == AppLanguage.ENGLISH) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+
             LottieAnimation(
                 composition =
                     composition,
@@ -509,10 +529,12 @@ private fun AuthScreen(
                                 ) {
                                     Text(
                                         text =
-                                            localError
-                                                ?: state
-                                                    .error
-                                                    .orEmpty(),
+                                            authFeedbackText(
+                                                localError
+                                                    ?: state
+                                                        .error
+                                                        .orEmpty()
+                                            ),
                                         color =
                                             MaterialTheme
                                                 .colorScheme
@@ -533,8 +555,10 @@ private fun AuthScreen(
                                 ) {
                                     Text(
                                         text =
-                                            state.message
-                                                .orEmpty(),
+                                            authFeedbackText(
+                                                state.message
+                                                    .orEmpty()
+                                            ),
                                         color =
                                             MaterialTheme
                                                 .colorScheme
