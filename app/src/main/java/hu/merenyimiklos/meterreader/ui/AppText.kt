@@ -344,7 +344,15 @@ object AppText {
             "A Rögzítésnél gyorsan felviheted az összes bekapcsolt mérőt, a vizet is, vagy fotóból felismerheted a mérőállást." to "Quickly add all enabled meters, including water, or recognize a reading from a photo.",
             "Normál ✓  Éjszakai ✓  Gáz ✓  Víz ○" to "Day ✓  Night ✓  Gas ✓  Water ○",
             "Az Áttekintés képernyőn azonnal látod az áram-, gáz- és vízmérőket, a havi fogyasztást és a becsült költséget." to "The Overview instantly shows electricity, gas and water meters, monthly consumption and estimated cost.",
-            "A frissítés után automatikusan visszatérhetsz az alkalmazáshoz." to "After updating, you can return to the app automatically."
+            "A frissítés után automatikusan visszatérhetsz az alkalmazáshoz." to "After updating, you can return to the app automatically.",
+            "Add meg az e-mail címed." to "Enter your email address.",
+            "Elküldtük a jelszó-visszaállító e-mailt." to "We sent the password reset email.",
+            "A Google-belépést megszakítottad." to "Google sign-in was cancelled.",
+            "Hibás e-mail cím vagy jelszó." to "Incorrect email address or password.",
+            "Ehhez az e-mail címhez már tartozik fiók." to "An account already exists for this email address.",
+            "Nincs megfelelő internetkapcsolat." to "No network connection is available.",
+            "A művelet nem sikerült." to "The operation failed.",
+            "Hiányzik vagy elavult a Google OAuth konfiguráció. Engedélyezd a Google belépést Firebase-ben, majd töltsd le újra a google-services.json fájlt." to "The Google OAuth configuration is missing or outdated. Enable Google Sign-In in Firebase, then download google-services.json again."
         )
 
     fun text(
@@ -361,3 +369,18 @@ fun t(
     hungarian: String
 ): String =
     AppText.text(hungarian)
+
+fun authFeedbackText(message: String): String {
+    if (AppText.language != AppLanguage.ENGLISH) return message
+
+    val direct = AppText.text(message)
+    if (direct != message) return direct
+
+    return when {
+        message.startsWith("A Google-belépés nem indult el.") ->
+            "Google sign-in could not start. Check the Firebase Google provider and the configured SHA-1 certificate."
+        message.startsWith("Google-bejelentkezési konfigurációs hiba.") ->
+            "Google sign-in configuration error. Check the Google provider and SHA-1 certificate in Firebase."
+        else -> message
+    }
+}
