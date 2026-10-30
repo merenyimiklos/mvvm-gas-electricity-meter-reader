@@ -698,6 +698,7 @@ internal fun SettingsScreen(
             contentPadding =
                 PaddingValues(
                     start = 16.dp,
+                    top = 12.dp,
                     end = 16.dp,
                     bottom = 24.dp
                 ),
