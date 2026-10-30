@@ -276,6 +276,62 @@ class UsageCalculatorTest {
         )
     }
 
+    @Test
+    fun hotAndColdWaterAreIndependentAndAddedToTotal() {
+        val readings = listOf(
+            reading("cold1", MeterType.WATER, 100.0, "2026-01-01"),
+            reading("cold2", MeterType.WATER, 110.0, "2026-02-01"),
+            reading("hot1", MeterType.WATER_HOT, 40.0, "2026-01-01"),
+            reading("hot2", MeterType.WATER_HOT, 44.0, "2026-02-01")
+        )
+        val settings = BillingSettings(
+            electricityEnabled = false,
+            electricityNightEnabled = false,
+            gasEnabled = false,
+            waterEnabled = true,
+            waterBillingMode = GasBillingMode.METERED,
+            waterUnitPrice = 300.0,
+            waterMonthlyFixedFee = 100.0,
+            waterHotEnabled = true,
+            waterHotBillingMode = GasBillingMode.METERED,
+            waterHotUnitPrice = 900.0,
+            waterHotMonthlyFixedFee = 200.0
+        )
+        val result = UsageCalculator.monthlySummaries(readings, settings)
+            .first { it.month.monthValue == 2 }
+        assertEquals(10.0, result.waterUsage ?: 0.0, 0.001)
+        assertEquals(4.0, result.waterHotUsage ?: 0.0, 0.001)
+        assertEquals(3100.0, result.waterPayable, 0.001)
+        assertEquals(3800.0, result.waterHotPayable, 0.001)
+        assertEquals(6900.0, result.totalEstimatedPayable, 0.001)
+    }
+
+    @Test
+    fun legacyColdWaterRemainsEnabledWithoutHotWater() {
+        val settings = BillingSettings(waterEnabled = true)
+        assertTrue(settings.isMeterEnabled(MeterType.WATER))
+        assertFalse(settings.isMeterEnabled(MeterType.WATER_HOT))
+        assertFalse(MeterType.WATER_HOT in settings.enabledMeterTypes())
+    }
+
+    @Test
+    fun hotWaterFlatRateUsesItsOwnMonthlyPayment() {
+        val readings = listOf(
+            reading("hot1", MeterType.WATER_HOT, 0.0, "2026-01-01"),
+            reading("hot2", MeterType.WATER_HOT, 5.0, "2026-02-01")
+        )
+        val settings = BillingSettings(
+            waterHotEnabled = true,
+            waterHotBillingMode = GasBillingMode.FLAT_RATE,
+            waterHotFlatMonthlyPayment = 2500.0,
+            waterHotUnitPrice = 800.0
+        )
+        val result = UsageCalculator.monthlySummaries(readings, settings)
+            .first { it.month.monthValue == 2 }
+        assertEquals(4000.0, result.waterHotConsumptionCost, 0.001)
+        assertEquals(2500.0, result.waterHotPayable, 0.001)
+    }
+
     private fun reading(
         id: String,
         type: MeterType,
