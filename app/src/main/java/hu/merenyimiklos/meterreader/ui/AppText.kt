@@ -12,6 +12,16 @@ object AppText {
     private val english =
         mapOf(
             "Áttekintés" to "Overview",
+            "Hideg víz" to "Cold water",
+            "Meleg víz" to "Hot water",
+            "Hideg víz · 6 hónap" to "Cold water · 6 months",
+            "Meleg víz · 6 hónap" to "Hot water · 6 months",
+            "Hideg víz cél (m³/hó)" to "Cold water goal (m³/month)",
+            "Meleg víz cél (m³/hó)" to "Hot water goal (m³/month)",
+            "Havi melegvíz-átalány (Ft)" to "Monthly hot water flat-rate (HUF)",
+            "Melegvíz egységár – kimutatáshoz (Ft/m³)" to "Hot water unit price – for reports (HUF/m³)",
+            "Melegvíz egységár (Ft/m³)" to "Hot water unit price (HUF/m³)",
+            "Melegvíz havi fix díj (Ft)" to "Monthly hot water fixed fee (HUF)",
             "Rögzítés" to "Add",
             "Napló" to "History",
             "Statisztika" to "Statistics",
