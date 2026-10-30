@@ -182,6 +182,7 @@ internal fun DashboardScreen(
                     ),
             contentPadding =
                 PaddingValues(
+                    top = 12.dp,
                     bottom = 24.dp
                 ),
             verticalArrangement =
