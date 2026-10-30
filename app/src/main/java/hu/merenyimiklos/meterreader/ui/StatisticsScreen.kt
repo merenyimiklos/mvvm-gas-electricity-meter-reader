@@ -206,6 +206,7 @@ internal fun StatisticsScreen(
                 .padding(innerPadding),
             contentPadding =
                 PaddingValues(
+                    top = 12.dp,
                     bottom = 28.dp
                 ),
             verticalArrangement =
