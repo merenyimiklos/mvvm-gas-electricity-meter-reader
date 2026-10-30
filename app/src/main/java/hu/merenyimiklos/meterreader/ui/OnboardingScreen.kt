@@ -58,6 +58,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import hu.merenyimiklos.meterreader.R
 import hu.merenyimiklos.meterreader.auth.AuthViewModel
+import hu.merenyimiklos.meterreader.model.AppLanguage
 import kotlinx.coroutines.launch
 
 private data class TutorialPage(
@@ -228,6 +229,27 @@ fun OnboardingScreen(
                         bottom = 20.dp
                     )
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { AppText.language = AppLanguage.HUNGARIAN }) {
+                    Text(
+                        "🇭🇺 Magyar",
+                        fontWeight = if (AppText.language == AppLanguage.HUNGARIAN) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+                TextButton(onClick = { AppText.language = AppLanguage.ENGLISH }) {
+                    Text(
+                        "🇬🇧 English",
+                        fontWeight = if (AppText.language == AppLanguage.ENGLISH) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+
             ElevatedCard(
                 modifier =
                     Modifier
