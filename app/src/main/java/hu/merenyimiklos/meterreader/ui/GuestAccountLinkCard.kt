@@ -132,7 +132,7 @@ internal fun GuestAccountLinkCard(authViewModel: AuthViewModel) {
         }
         if (!linkError.isNullOrBlank()) {
             Text(
-                linkError.orEmpty(),
+                authFeedbackText(linkError.orEmpty()),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )
