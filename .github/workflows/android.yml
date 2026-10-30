@@ -71,6 +71,9 @@ jobs:
             echo "Android signing secrets are not set; using the default debug signing key."
           fi
 
+      - name: Test automatic release versioning (offline)
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
+
       # Keep push/PR feedback fast. The publish workflow separately validates
       # the optimized release APK/AAB with R8 before creating a release.
       - name: Run unit tests and build debug APK
