@@ -352,6 +352,7 @@ object AppText {
             "Ehhez az e-mail címhez már tartozik fiók." to "An account already exists for this email address.",
             "Nincs megfelelő internetkapcsolat." to "No network connection is available.",
             "A művelet nem sikerült." to "The operation failed.",
+            "Túl sok próbálkozás történt. Próbáld újra később." to "Too many attempts. Please try again later.",
             "Hiányzik vagy elavult a Google OAuth konfiguráció. Engedélyezd a Google belépést Firebase-ben, majd töltsd le újra a google-services.json fájlt." to "The Google OAuth configuration is missing or outdated. Enable Google Sign-In in Firebase, then download google-services.json again."
         )
 
