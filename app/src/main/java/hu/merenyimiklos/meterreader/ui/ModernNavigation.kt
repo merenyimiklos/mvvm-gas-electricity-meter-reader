@@ -197,8 +197,8 @@ fun ModernDrawerContent(
                             Alignment.Center
                     ) {
                         Text(
-                            authState.user
-                                ?.displayName
+                            (if (authState.user?.isAnonymous == true) "V"
+                                else authState.user?.displayName)
                                 ?.firstOrNull()
                                 ?.uppercaseChar()
                                 ?.toString()
@@ -223,12 +223,13 @@ fun ModernDrawerContent(
                                 )
                     ) {
                         Text(
-                            authState.user
-                                ?.displayName
-                                ?.ifBlank {
+                            if (authState.user?.isAnonymous == true) {
+                                t("Vendégfiók")
+                            } else {
+                                authState.user?.displayName?.ifBlank {
                                     t("Felhasználó")
-                                }
-                                ?: t("Felhasználó"),
+                                } ?: t("Felhasználó")
+                            },
                             style =
                                 MaterialTheme
                                     .typography
