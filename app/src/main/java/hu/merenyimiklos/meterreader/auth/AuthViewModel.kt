@@ -358,6 +358,34 @@ class AuthViewModel(
                 "Hiányzik vagy elavult a Google OAuth konfiguráció. Engedélyezd a Google belépést Firebase-ben, majd töltsd le újra a google-services.json fájlt."
 
 
+            className.contains(
+                "InvalidCredential",
+                ignoreCase = true
+            ) ||
+                className.contains(
+                    "InvalidUser",
+                    ignoreCase = true
+                ) ->
+                "Hibás e-mail cím vagy jelszó."
+
+            className.contains(
+                "UserCollision",
+                ignoreCase = true
+            ) ->
+                "Ehhez az e-mail címhez már tartozik fiók."
+
+            className.contains(
+                "WeakPassword",
+                ignoreCase = true
+            ) ->
+                "A jelszó legalább 6 karakter legyen."
+
+            className.contains(
+                "TooManyRequests",
+                ignoreCase = true
+            ) ->
+                "Túl sok próbálkozás történt. Próbáld újra később."
+
             message.contains(
                 "password",
                 ignoreCase = true
